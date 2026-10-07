@@ -8,6 +8,7 @@ from app.models.theater import Theater, Hall
 from app.schemas.movie import MovieOut
 from app.schemas.showtime import ShowtimeOut, ShowtimeGroupedByTheater
 from app.schemas.theater import TheaterOut
+from app.services.ai_recommendation import AIRecommendationEngine
 
 router = APIRouter(prefix="/movies", tags=["Movies & Showtimes"])
 
@@ -37,6 +38,12 @@ def get_movie_detail(movie_id: int, db: Session = Depends(get_db)):
     if not movie:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
     return movie
+
+
+@router.get("/{movie_id}/recommendations", response_model=List[MovieOut])
+def get_movie_ai_recommendations(movie_id: int, limit: int = 4, db: Session = Depends(get_db)):
+    """AI Recommendation Engine: Suggests similar blockbusters based on genre and language similarity."""
+    return AIRecommendationEngine.recommend_similar_movies(movie_id, db, limit=limit)
 
 
 @router.get("/{movie_id}/showtimes", response_model=List[ShowtimeGroupedByTheater])

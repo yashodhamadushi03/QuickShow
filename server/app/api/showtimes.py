@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
@@ -7,6 +7,7 @@ from app.models.theater import Seat
 from app.models.booking import Booking, BookingSeat, BookingStatus
 from app.schemas.showtime import ShowtimeOut
 from app.schemas.theater import SeatOut
+from app.services.ai_recommendation import AIRecommendationEngine
 
 router = APIRouter(prefix="/showtimes", tags=["Showtimes & Seats"])
 
@@ -65,3 +66,18 @@ def get_showtime_seat_layout(showtime_id: int, db: Session = Depends(get_db)):
         result.append(seat_dict)
 
     return result
+
+
+@router.get("/{showtime_id}/best-seats", response_model=List[int])
+def get_best_seats_recommendation(
+    showtime_id: int,
+    count: int = Query(2, ge=1, le=10, description="Number of seats requested"),
+    db: Session = Depends(get_db)
+):
+    """
+    Smart Seat Optimizer Algorithm ("Best Seat in the House"):
+    Evaluates acoustic sweet-spot (Rows D, E, F) and center viewing angles (Seats 5, 6, 7, 8).
+    Returns list of recommended seat IDs.
+    """
+    seats_layout = get_showtime_seat_layout(showtime_id, db)
+    return AIRecommendationEngine.recommend_best_seats(seats_layout, count=count)
