@@ -101,30 +101,103 @@ const SeatLayout = () => {
     }
   };
 
-  // AI Smart Seat Optimizer Algorithm Helper
-  const recommendBestSeats = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/showtimes/${showtimeId}/best-seats?count=2`);
-      if (res.ok) {
-        const bestIds = await res.json();
-        if (bestIds && bestIds.length > 0) {
-          setSelectedSeatIds(bestIds);
-          toast.success("✨ Smart Seat Optimizer selected the best acoustic & center viewing seats!", { icon: "🎧" });
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn("AI best seats API fallback.", err);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [partySize, setPartySize] = useState(2);
+  const [aiPreference, setAiPreference] = useState("acoustic");
+  const [aiRecommendationInfo, setAiRecommendationInfo] = useState(null);
+
+  // Advanced AI Smart Seat Optimizer Algorithm
+  const recommendBestSeats = (count = partySize, pref = aiPreference) => {
+    let targetRowLabels = ["D", "E", "F"];
+    let prefTitle = "Dolby Atmos Acoustic Sweet-Spot";
+    let explanationText = `Positioned at the 3D Dolby Atmos audio convergence zone with zero neck strain.`;
+    let matchScore = 98;
+
+    if (pref === "vip") {
+      targetRowLabels = ["G", "H"];
+      prefTitle = "VIP Recliner Suite";
+      explanationText = `Luxury recliner seats with extended legroom and elevated sightlines.`;
+      matchScore = 96;
+    } else if (pref === "view") {
+      targetRowLabels = ["C", "D", "E"];
+      prefTitle = "100% Full Field of View";
+      explanationText = `Direct visual line-of-sight covering 100% of the cinema screen.`;
+      matchScore = 95;
+    } else if (pref === "aisle") {
+      targetRowLabels = ["C", "D", "E", "F", "G"];
+      prefTitle = "Quick-Access Side Aisle";
+      explanationText = `Convenient side-aisle seating for easy entrance and lobby access.`;
+      matchScore = 91;
     }
 
-    // Fallback best seat algorithm: Middle row D, seats 6 & 7
-    const bestFallback = seats.filter(s => s.row_label === "D" && (s.seat_number === 6 || s.seat_number === 7) && s.status === "Available");
-    if (bestFallback.length > 0) {
-      setSelectedSeatIds(bestFallback.map(s => s.seat_id));
-      toast.success("✨ Selected prime middle-row center seats!", { icon: "🎧" });
-    } else {
-      toast("Auto-selected best available seats", { icon: "🎟️" });
+    const available = seats.filter((s) => s.status === "Available");
+    if (available.length === 0) {
+      toast.error("No available seats left for this showtime!");
+      return;
     }
+
+    // Filter by target rows
+    const rowFiltered = available.filter((s) => targetRowLabels.includes(s.row_label));
+    const targetPool = rowFiltered.length >= count ? rowFiltered : available;
+
+    // Group by row
+    const rowsMap = {};
+    targetPool.forEach((s) => {
+      if (!rowsMap[s.row_label]) rowsMap[s.row_label] = [];
+      rowsMap[s.row_label].push(s);
+    });
+
+    let selectedIds = [];
+    let selectedSeatNames = [];
+
+    // Find contiguous seats in same row closest to center (seats 6, 7)
+    for (const rLabel of targetRowLabels) {
+      if (rowsMap[rLabel]) {
+        const rSeats = rowsMap[rLabel].sort((a, b) => a.seat_number - b.seat_number);
+
+        if (pref === "aisle") {
+          // Aisle seats 1, 2, 11, 12
+          const aisleSeats = rSeats.filter((s) => s.seat_number <= 2 || s.seat_number >= 11);
+          if (aisleSeats.length >= count) {
+            selectedIds = aisleSeats.slice(0, count).map((s) => s.seat_id);
+            selectedSeatNames = aisleSeats.slice(0, count).map((s) => `${s.row_label}${s.seat_number}`);
+            break;
+          }
+        }
+
+        // Center search
+        for (let i = 0; i <= rSeats.length - count; i++) {
+          const subset = rSeats.slice(i, i + count);
+          const isContiguous = subset.every((s, idx) => idx === 0 || s.seat_number === subset[idx - 1].seat_number + 1);
+          if (isContiguous) {
+            selectedIds = subset.map((s) => s.seat_id);
+            selectedSeatNames = subset.map((s) => `${s.row_label}${s.seat_number}`);
+            break;
+          }
+        }
+      }
+      if (selectedIds.length > 0) break;
+    }
+
+    // Fallback if contiguous not found
+    if (selectedIds.length === 0) {
+      const fallbackSubset = targetPool.slice(0, count);
+      selectedIds = fallbackSubset.map((s) => s.seat_id);
+      selectedSeatNames = fallbackSubset.map((s) => `${s.row_label}${s.seat_number}`);
+    }
+
+    setSelectedSeatIds(selectedIds);
+    setAiRecommendationInfo({
+      title: prefTitle,
+      score: matchScore,
+      seats: selectedSeatNames,
+      explanation: explanationText,
+    });
+
+    toast.success(`✨ AI Selected ${selectedSeatNames.join(", ")} (${prefTitle})`, {
+      icon: "🤖",
+      style: { background: "#0f172a", color: "#fff", border: "1px solid #f43f5e" },
+    });
   };
 
   const toggleSeatSelection = (seat) => {
@@ -294,11 +367,12 @@ const SeatLayout = () => {
         </div>
 
         <button
-          onClick={recommendBestSeats}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-full text-xs font-bold transition-all"
-          title="AI Smart Seat Optimizer"
+          onClick={() => setShowAiModal(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-full text-xs font-extrabold shadow-lg shadow-rose-600/30 transition-all hover:scale-105 cursor-pointer"
+          title="AI Smart Seat Optimizer Assistant"
         >
-          <Sparkles className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Best Seats</span>
+          <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+          <span>✨ AI Seat Assistant</span>
         </button>
       </div>
 
@@ -372,8 +446,139 @@ const SeatLayout = () => {
       ) : (
         /* Interactive Seat Matrix */
         <div className="max-w-4xl mx-auto">
+          {/* AI SMART SEAT OPTIMIZER WIDGET BAR */}
+          <div className="mb-6 bg-slate-900/90 border border-rose-500/30 rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-600/20 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                    AI Smart Seat Optimizer Assistant
+                    <span className="px-2 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-full text-[10px] uppercase font-mono">
+                      v2.4 Active
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Select your party size and experience preset for acoustic & visual optimization.
+                  </p>
+                </div>
+              </div>
+
+              {/* Party Size Selector */}
+              <div className="flex items-center gap-1.5 self-start md:self-auto bg-slate-950 p-1 rounded-xl border border-slate-800">
+                <span className="text-[10px] font-bold text-slate-500 uppercase px-2">Party:</span>
+                {[1, 2, 3, 4].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => {
+                      setPartySize(num);
+                      recommendBestSeats(num, aiPreference);
+                    }}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                      partySize === num
+                        ? "bg-rose-600 text-white shadow-md shadow-rose-600/40"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {num} {num === 1 ? "Seat" : "Seats"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Experience Presets */}
+            <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setAiPreference("acoustic");
+                  recommendBestSeats(partySize, "acoustic");
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  aiPreference === "acoustic"
+                    ? "bg-rose-600 text-white shadow-md"
+                    : "bg-slate-950 border border-slate-800 text-slate-300 hover:border-rose-500/50"
+                }`}
+              >
+                🎧 Dolby Atmos Acoustic Sweet-Spot
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAiPreference("vip");
+                  recommendBestSeats(partySize, "vip");
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  aiPreference === "vip"
+                    ? "bg-amber-500 text-slate-950 font-black shadow-md"
+                    : "bg-slate-950 border border-slate-800 text-amber-300 hover:border-amber-500/50"
+                }`}
+              >
+                👑 VIP Recliner Suite (Rows G & H)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAiPreference("view");
+                  recommendBestSeats(partySize, "view");
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  aiPreference === "view"
+                    ? "bg-rose-600 text-white shadow-md"
+                    : "bg-slate-950 border border-slate-800 text-slate-300 hover:border-rose-500/50"
+                }`}
+              >
+                👁️ 100% Full FOV Screen View
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAiPreference("aisle");
+                  recommendBestSeats(partySize, "aisle");
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  aiPreference === "aisle"
+                    ? "bg-rose-600 text-white shadow-md"
+                    : "bg-slate-950 border border-slate-800 text-slate-300 hover:border-rose-500/50"
+                }`}
+              >
+                🚪 Side Aisle Access
+              </button>
+            </div>
+
+            {/* AI Recommendation Insights Card */}
+            {aiRecommendationInfo && (
+              <div className="mt-3 bg-slate-950 border border-rose-500/40 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+                <div className="flex items-center gap-2.5">
+                  <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md text-xs font-extrabold font-mono">
+                    {aiRecommendationInfo.score}% AI Match
+                  </span>
+                  <div>
+                    <span className="text-xs font-bold text-white">
+                      Selected Seats: <strong className="text-rose-400">{aiRecommendationInfo.seats.join(", ")}</strong>
+                    </span>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                      {aiRecommendationInfo.explanation}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAiModal(true)}
+                  className="text-xs text-rose-400 hover:text-white font-bold underline whitespace-nowrap"
+                >
+                  View AI Concierge Details &rarr;
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Cinema Screen Curve */}
-          <div className="mb-8 sm:mb-12 text-center">
+          <div className="mb-8 sm:mb-10 text-center">
             <div className="w-3/4 mx-auto h-2.5 sm:h-3 bg-gradient-to-r from-rose-500/10 via-rose-500/80 to-rose-500/10 rounded-full shadow-[0_10px_30px_rgba(225,29,72,0.5)] mb-3"></div>
             <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-500">
               DOLBY ATMOS CINEMA SCREEN THIS WAY
@@ -511,6 +716,147 @@ const SeatLayout = () => {
                     <CreditCard className="w-4 h-4" /> Reserve & Send Email Pass
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* INTERACTIVE AI SEAT ASSISTANT CONCIERGE MODAL */}
+      {showAiModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-600/20 text-rose-400 border border-rose-500/30 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-white flex items-center gap-2">
+                    AI Cinema Seat Concierge
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Acoustic physics & field-of-view viewing angle calculator.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowAiModal(false)}
+                className="p-1.5 text-slate-400 hover:text-white bg-slate-950 border border-slate-800 rounded-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Step 1: Party Size */}
+            <div className="mb-6">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                1. Select Number of Tickets / Party Size
+              </label>
+              <div className="grid grid-cols-4 gap-3">
+                {[1, 2, 3, 4].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setPartySize(num)}
+                    className={`py-3 rounded-2xl font-extrabold text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                      partySize === num
+                        ? "bg-rose-600 text-white shadow-lg shadow-rose-600/40 border border-rose-500 scale-105"
+                        : "bg-slate-950 border border-slate-800 text-slate-300 hover:border-slate-700"
+                    }`}
+                  >
+                    <span className="text-base">{num}</span>
+                    <span className="text-[10px] opacity-80">{num === 1 ? "Solo Fan" : num === 2 ? "Couple" : "Group"}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Step 2: Experience Preference */}
+            <div className="mb-6">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                2. Select Cinema Experience Preference
+              </label>
+              <div className="space-y-2.5">
+                <button
+                  type="button"
+                  onClick={() => setAiPreference("acoustic")}
+                  className={`w-full p-3.5 rounded-2xl border text-left flex items-center justify-between transition-all ${
+                    aiPreference === "acoustic"
+                      ? "bg-rose-600/10 border-rose-500 text-white shadow-md"
+                      : "bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700"
+                  }`}
+                >
+                  <div>
+                    <div className="font-bold text-xs text-white">🎧 Dolby Atmos Acoustic Sweet-Spot</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">Rows D, E, F Center — 3D Surround sound center</div>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-emerald-400">98% Match</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAiPreference("vip")}
+                  className={`w-full p-3.5 rounded-2xl border text-left flex items-center justify-between transition-all ${
+                    aiPreference === "vip"
+                      ? "bg-amber-500/10 border-amber-500 text-white shadow-md"
+                      : "bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700"
+                  }`}
+                >
+                  <div>
+                    <div className="font-bold text-xs text-amber-300">👑 VIP Recliner Luxury Suite</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">Rows G & H — Plush recliners with legroom</div>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-amber-400">96% Match</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAiPreference("view")}
+                  className={`w-full p-3.5 rounded-2xl border text-left flex items-center justify-between transition-all ${
+                    aiPreference === "view"
+                      ? "bg-rose-600/10 border-rose-500 text-white shadow-md"
+                      : "bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700"
+                  }`}
+                >
+                  <div>
+                    <div className="font-bold text-xs text-white">👁️ 100% Full FOV Visual Field</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">Direct center alignment with total screen coverage</div>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-emerald-400">95% Match</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAiPreference("aisle")}
+                  className={`w-full p-3.5 rounded-2xl border text-left flex items-center justify-between transition-all ${
+                    aiPreference === "aisle"
+                      ? "bg-rose-600/10 border-rose-500 text-white shadow-md"
+                      : "bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700"
+                  }`}
+                >
+                  <div>
+                    <div className="font-bold text-xs text-white">🚪 Side Aisle Access</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">Easy entrance and exit access</div>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-sky-400">91% Match</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  recommendBestSeats(partySize, aiPreference);
+                  setShowAiModal(false);
+                }}
+                className="flex-1 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-2xl text-xs sm:text-sm shadow-lg shadow-rose-600/30 transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Sparkles className="w-4 h-4 text-amber-300" /> Calculate & Select Best Seats
               </button>
             </div>
           </div>
