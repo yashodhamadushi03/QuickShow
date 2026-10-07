@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
@@ -7,7 +7,10 @@ from app.models.payment import PaymentStatus
 
 class PaymentCreate(BaseModel):
     booking_id: int
-    payment_method: str  # Card, UPI, NetBanking, PayPal
+    payment_method: str = "Card / Instant Pay"
+    customer_email: Optional[EmailStr] = None
+    customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
 
 
 class PaymentOut(BaseModel):

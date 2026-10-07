@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
@@ -10,6 +10,9 @@ from app.schemas.showtime import ShowtimeOut
 class BookingCreate(BaseModel):
     showtime_id: int
     seat_ids: List[int]
+    customer_email: Optional[EmailStr] = None
+    customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
 
 
 class BookingSeatOut(BaseModel):

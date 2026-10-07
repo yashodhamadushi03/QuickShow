@@ -1,22 +1,38 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ShieldCheck, Ticket, CheckCircle2, ArrowLeft, CreditCard } from "lucide-react";
+import { ShieldCheck, Ticket, CheckCircle2, ArrowLeft, CreditCard, Mail, User } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useUser } from "@clerk/clerk-react";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
 const SeatLayout = () => {
   const { id: showtimeIdParam } = useParams();
   const navigate = useNavigate();
+  const { user: clerkUser } = useUser();
 
   const showtimeId = parseInt(showtimeIdParam) || 1;
 
   const [seats, setSeats] = useState([]);
   const [selectedSeatIds, setSelectedSeatIds] = useState([]);
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [loading, setLoading] = useState(true);
   const [showtime, setShowtime] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingConfirmation, setBookingConfirmation] = useState(null);
+
+  // Pre-fill email from Clerk user if signed in
+  useEffect(() => {
+    if (clerkUser) {
+      if (clerkUser.primaryEmailAddress?.emailAddress) {
+        setCustomerEmail(clerkUser.primaryEmailAddress.emailAddress);
+      }
+      if (clerkUser.fullName) {
+        setCustomerName(clerkUser.fullName);
+      }
+    }
+  }, [clerkUser]);
 
   // Generate Matrix Grid: Rows A-H (8 rows) x Seats 1-12 (96 total seats!)
   const generateSriLankanSeatMatrix = () => {
@@ -116,6 +132,13 @@ const SeatLayout = () => {
       return;
     }
 
+    if (!customerEmail) {
+      toast.error("Please enter your email address to receive your ticket.", {
+        style: { background: "#1e293b", color: "#fff", border: "1px solid #e11d48" }
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -129,6 +152,8 @@ const SeatLayout = () => {
         body: JSON.stringify({
           showtime_id: showtimeId,
           seat_ids: selectedSeatIds,
+          customer_email: customerEmail,
+          customer_name: customerName || "Cinema Fan",
         }),
       });
 
@@ -148,6 +173,8 @@ const SeatLayout = () => {
         body: JSON.stringify({
           booking_id: bookingData.booking_id,
           payment_method: "Visa / Mastercard / Instant Pay",
+          customer_email: customerEmail,
+          customer_name: customerName || "Cinema Fan",
         }),
       });
 
@@ -161,8 +188,13 @@ const SeatLayout = () => {
             return `${s.row_label}${s.seat_number}`;
           }),
           total: calculateTotal(),
+          email: customerEmail,
         });
-        toast.success("Ticket Confirmed! Confirmation dispatched via Email & SMS.", { icon: "🎟️" });
+        toast.success(`Ticket Confirmed! Ticket pass sent to ${customerEmail}`, {
+          icon: "🎟️",
+          duration: 5000,
+          style: { background: "#1e293b", color: "#fff", border: "1px solid #10b981" }
+        });
       } else {
         throw new Error("Payment processing failed.");
       }
@@ -177,8 +209,12 @@ const SeatLayout = () => {
           return `${s.row_label}${s.seat_number}`;
         }),
         total: calculateTotal(),
+        email: customerEmail,
       });
-      toast.success("Ticket Confirmed! Digital Entrance Passcode Generated.", { icon: "🎟️" });
+      toast.success(`Ticket Confirmed! Entrance Passcode Generated. Sent to ${customerEmail}`, {
+        icon: "🎟️",
+        duration: 5000
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -218,15 +254,15 @@ const SeatLayout = () => {
           <div className="w-10 h-10 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : bookingConfirmation ? (
-        /* Confirmation Modal */
+        /* Confirmation Screen */
         <div className="max-w-lg mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 text-center shadow-2xl">
           <div className="w-16 h-16 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-10 h-10" />
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">Booking Confirmed!</h2>
-          <p className="text-slate-400 text-xs sm:text-sm mb-6">
-            Your entrance passcode has been generated and sent via SMS & Email.
+          <p className="text-emerald-400 font-medium text-xs sm:text-sm mb-6">
+            🎟️ Digital Ticket Pass dispatched to: <strong>{bookingConfirmation.email}</strong>
           </p>
 
           <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-left mb-6 space-y-3">
@@ -260,7 +296,7 @@ const SeatLayout = () => {
           </div>
         </div>
       ) : (
-        /* Interactive Seat Matrix (Responsive Laptop & Mobile) */
+        /* Interactive Seat Matrix */
         <div className="max-w-4xl mx-auto">
           {/* Cinema Screen Curve */}
           <div className="mb-8 sm:mb-12 text-center">
@@ -338,7 +374,25 @@ const SeatLayout = () => {
             </div>
           </div>
 
-          {/* Checkout Bar (Responsive Mobile Stack) */}
+          {/* Customer Email Input for Ticket Dispatch */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-6">
+            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+              <Mail className="w-4 h-4 text-rose-500" /> Customer Email for Digital Ticket Delivery
+            </label>
+            <input
+              type="email"
+              required
+              placeholder="e.g. yourname@gmail.com"
+              value={customerEmail}
+              onChange={(e) => setCustomerEmail(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+            />
+            <p className="text-[11px] text-slate-500 mt-1.5">
+              Your HTML entrance pass and entry QR passcode will be delivered to this email.
+            </p>
+          </div>
+
+          {/* Checkout Bar */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 shadow-xl">
             <div className="text-center sm:text-left w-full sm:w-auto">
               <div className="text-[11px] sm:text-xs uppercase font-semibold text-slate-400 mb-0.5">
@@ -365,10 +419,10 @@ const SeatLayout = () => {
               </div>
 
               <button
-                disabled={selectedSeatIds.length === 0 || isProcessing}
+                disabled={selectedSeatIds.length === 0 || isProcessing || !customerEmail}
                 onClick={handleBooking}
                 className={`py-3 px-6 sm:px-8 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center gap-2 shrink-0 ${
-                  selectedSeatIds.length === 0 || isProcessing
+                  selectedSeatIds.length === 0 || isProcessing || !customerEmail
                     ? "bg-slate-800 text-slate-500 cursor-not-allowed"
                     : "bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 hover:scale-[1.02]"
                 }`}
@@ -380,7 +434,7 @@ const SeatLayout = () => {
                   </>
                 ) : (
                   <>
-                    <CreditCard className="w-4 h-4" /> Reserve & Pay
+                    <CreditCard className="w-4 h-4" /> Reserve & Send Email Pass
                   </>
                 )}
               </button>
