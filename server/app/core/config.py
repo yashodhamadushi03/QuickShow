@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
-import os
 
 
 class Settings(BaseSettings):
@@ -11,6 +10,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
 
+    # MySQL Configuration
     MYSQL_SERVER: str = "localhost"
     MYSQL_PORT: int = 3306
     MYSQL_USER: str = "root"
@@ -18,6 +18,18 @@ class Settings(BaseSettings):
     MYSQL_DB: str = "quickshow_db"
 
     DATABASE_URL: Optional[str] = None
+
+    # SMTP Email Configuration
+    SMTP_HOST: Optional[str] = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    EMAILS_FROM: str = "tickets@quickshow.lk"
+
+    # Twilio SMS Configuration
+    TWILIO_ACCOUNT_SID: Optional[str] = None
+    TWILIO_AUTH_TOKEN: Optional[str] = None
+    TWILIO_PHONE_NUMBER: Optional[str] = None
 
     model_config = SettingsConfigDict(
         env_file=".env",
