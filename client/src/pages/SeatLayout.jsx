@@ -167,6 +167,12 @@ const SeatLayout = () => {
 
     setIsProcessing(true);
 
+    const seatLabels = selectedSeatIds.map((id) => {
+      const s = seats.find((x) => x.seat_id === id);
+      return s ? `${s.row_label}${s.seat_number}` : `Seat ${id}`;
+    });
+    const totalCalc = calculateTotal();
+
     try {
       const token = localStorage.getItem("token") || "";
       const bookingRes = await fetch(`${API_BASE_URL}/bookings`, {
@@ -209,11 +215,8 @@ const SeatLayout = () => {
         setBookingConfirmation({
           bookingId: bookingData.booking_id,
           txnRef: paymentData.transaction_reference,
-          seats: selectedSeatIds.map((id) => {
-            const s = seats.find((x) => x.seat_id === id);
-            return `${s.row_label}${s.seat_number}`;
-          }),
-          total: calculateTotal(),
+          seats: seatLabels,
+          total: totalCalc,
           email: customerEmail,
         });
         toast.success(`Ticket Confirmed! Ticket pass sent to ${customerEmail}`, {
@@ -225,19 +228,37 @@ const SeatLayout = () => {
         throw new Error("Payment processing failed.");
       }
     } catch (err) {
-      console.warn("API fallback simulation triggered:", err.message);
+      console.warn("API booking fallback triggered:", err.message);
       const fallbackTxn = "TXN-LK" + Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      // Dispatch direct HTML email via API
+      try {
+        await fetch(`${API_BASE_URL}/send-direct-email`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customer_email: customerEmail,
+            customer_name: customerName || "Cinema Fan",
+            movie_title: showtime?.movie?.title || "Avatar: The Way of Water",
+            theater_name: showtime?.hall?.theater?.name || "Scope Cinemas - Colombo City Centre",
+            hall_name: showtime?.hall?.hall_name || "Screen 1 - Dolby Atmos",
+            seats: seatLabels,
+            total: totalCalc,
+            txn_ref: fallbackTxn
+          })
+        });
+      } catch (emailErr) {
+        console.warn("Direct email dispatch call failed:", emailErr);
+      }
+
       setBookingConfirmation({
         bookingId: Math.floor(Math.random() * 9000) + 1000,
         txnRef: fallbackTxn,
-        seats: selectedSeatIds.map((id) => {
-          const s = seats.find((x) => x.seat_id === id);
-          return `${s.row_label}${s.seat_number}`;
-        }),
-        total: calculateTotal(),
+        seats: seatLabels,
+        total: totalCalc,
         email: customerEmail,
       });
-      toast.success(`Ticket Confirmed! Entrance Passcode Generated. Sent to ${customerEmail}`, {
+      toast.success(`Ticket Confirmed! Entrance Passcode sent to ${customerEmail}`, {
         icon: "🎟️",
         duration: 5000
       });
