@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, X, TicketPlus, Clock, Film } from "lucide-react";
+import { Search, Menu, X, TicketPlus, Clock, Film, ShieldCheck, User } from "lucide-react";
 import { useClerk, UserButton, useUser } from "@clerk/clerk-react";
+import AuthModal from "./AuthModal";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -108,6 +110,13 @@ const Navbar = () => {
         >
           Favourites
         </Link>
+        <Link
+          to="/admin"
+          onClick={() => setIsOpen(false)}
+          className="hover:text-rose-400 text-rose-400 font-bold transition-colors py-1 flex items-center gap-1"
+        >
+          <ShieldCheck className="w-4 h-4 text-amber-300" /> Admin Dashboard
+        </Link>
       </div>
 
       {/* RIGHT SIDE ACTIONS */}
@@ -123,10 +132,10 @@ const Navbar = () => {
 
         {!user ? (
           <button
-            onClick={() => openSignIn()}
-            className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-full shadow-lg shadow-rose-600/30 transition-all hover:scale-105"
+            onClick={() => setShowAuthModal(true)}
+            className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-full shadow-lg shadow-rose-600/30 transition-all hover:scale-105 flex items-center gap-1.5 cursor-pointer"
           >
-            Sign In
+            <User className="w-4 h-4" /> Sign In / Admin
           </button>
         ) : (
           <UserButton>
@@ -145,6 +154,9 @@ const Navbar = () => {
           onClick={() => setIsOpen(true)}
         />
       </div>
+
+      {/* DUAL ROLE AUTHENTICATION MODAL */}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
 
       {/* Interactive Search Overlay Modal */}
       {showSearchModal && (
