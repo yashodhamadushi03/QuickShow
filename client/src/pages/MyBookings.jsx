@@ -12,7 +12,7 @@ const MyBookings = () => {
     {
       booking_id: 1001,
       status: "Confirmed",
-      total_amount: "29.00",
+      total_amount: "3000.00",
       created_at: "2026-10-07T12:00:00Z",
       showtime: {
         movie: {
@@ -22,7 +22,7 @@ const MyBookings = () => {
         },
         hall: {
           hall_name: "Screen 1 - IMAX",
-          theater: { name: "QuickShow Grand Cinema", city: "New York" }
+          theater: { name: "Scope Cinemas - Colombo City Centre", city: "Colombo" }
         },
         start_time: "2026-10-08T18:30:00Z"
       },
@@ -31,7 +31,7 @@ const MyBookings = () => {
         { seat: { row_label: "D", seat_number: 6 } }
       ],
       payment: {
-        transaction_reference: "TXN-A98B7C6D"
+        transaction_reference: "TXN-LK8F92A1"
       }
     }
   ];
@@ -142,7 +142,7 @@ const MyBookings = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <span>Total Paid: <strong className="text-emerald-400">${parseFloat(booking.total_amount).toFixed(2)}</strong></span>
+                          <span>Total Paid: <strong className="text-emerald-400">LKR {parseFloat(booking.total_amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong></span>
                         </div>
                       </div>
                     </div>

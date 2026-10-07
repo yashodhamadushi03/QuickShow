@@ -77,7 +77,7 @@ class NotificationService:
                         </div>
                         <div class="info-item">
                             <div class="label">Total Paid</div>
-                            <div class="value">${total_amount:.2f}</div>
+                            <div class="value">LKR {total_amount:,.2f}</div>
                         </div>
                     </div>
 
@@ -123,7 +123,7 @@ class NotificationService:
             f"To: {user_email}\n"
             f"Subject: {subject}\n"
             f"Movie: {movie_title} | Theater: {theater_name} | Seats: {seats_display}\n"
-            f"Ref: {transaction_ref} | Amount: ${total_amount:.2f}\n"
+            f"Ref: {transaction_ref} | Amount: LKR {total_amount:,.2f}\n"
         )
         return False
 
