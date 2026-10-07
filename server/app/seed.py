@@ -9,7 +9,7 @@ from app.models.showtime import Showtime
 
 
 def seed_database():
-    print("🇱🇰 Initializing QuickShow Database Seeding with Sri Lankan Cinemas & Blockbusters...")
+    print("🇱🇰 Initializing QuickShow Islandwide Sri Lankan Theater Network & Dynamic Schedules...")
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
@@ -21,14 +21,14 @@ def seed_database():
         admin = db.query(User).filter(User.email == admin_email).first()
         if not admin:
             admin = User(
-                name="Scope Admin Sri Lanka",
+                name="Scope & PVR Islandwide Admin",
                 email=admin_email,
                 password_hash=get_password_hash("admin123"),
                 phone="+94771234567",
                 role=UserRole.ADMIN
             )
             db.add(admin)
-            print("  ✓ Created Sri Lankan Admin User: admin@quickshow.lk")
+            print("  ✓ Created Admin User: admin@quickshow.lk")
 
         customer = db.query(User).filter(User.email == customer_email).first()
         if not customer:
@@ -44,7 +44,7 @@ def seed_database():
 
         db.flush()
 
-        # 2. Seed Movies (Sinhala, Tamil & English Blockbusters)
+        # 2. Seed Movies
         movies_data = [
             {
                 "title": "Dune: Part Two",
@@ -95,7 +95,7 @@ def seed_database():
                 "description": "An epic action saga set against coastal lands, depicting coastal power struggles and legendary courage.",
                 "genre": "Action / Drama",
                 "duration_min": 170,
-                "language": "Tamil",
+                "language": "Tamil / Telugu",
                 "poster_url": "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=800",
                 "rating": "U/A",
                 "release_date": date(2024, 9, 27),
@@ -127,8 +127,9 @@ def seed_database():
         db.flush()
         print(f"  ✓ Seeded {len(movie_objs)} Movies (English, Sinhala & Tamil)")
 
-        # 3. Seed Authentic Sri Lankan Cinema Theaters
+        # 3. Islandwide Sri Lankan Theater Network
         theaters_data = [
+            # Colombo & Suburbs
             {
                 "name": "Scope Cinemas Multiplex - Colombo City Centre",
                 "city": "Colombo 02",
@@ -141,28 +142,64 @@ def seed_database():
                 "city": "Colombo 05",
                 "address": "324 Havelock Rd, Colombo 00500",
                 "phone": "+94 11 208 3005",
-                "halls": ["Screen 1 - IMAX 3D", "Screen 2 - Dolby Surround"]
+                "halls": ["Screen 1 - IMAX 3D Laser", "Screen 2 - Dolby Surround"]
             },
             {
                 "name": "Liberty by Scope Cinemas",
                 "city": "Colombo 03",
                 "address": "35 R. A. De Mel Mawatha, Colpetty, Colombo 00300",
                 "phone": "+94 11 232 5250",
-                "halls": ["Cinema 1 - Main Auditorium", "Cinema 2 - VIP Suites"]
+                "halls": ["Cinema 1 - Main Auditorium", "Cinema 2 - VIP Recliner Suite"]
             },
             {
                 "name": "Savoy 3D Dolby Atmos",
                 "city": "Colombo 06",
                 "address": "12 Galle Rd, Wellawatte, Colombo 00600",
                 "phone": "+94 11 236 2200",
-                "halls": ["Savoy 3D Hall 1", "Savoy Premier Lounge"]
+                "halls": ["Savoy 3D Main Screen", "Savoy Premier Lounge"]
             },
             {
-                "name": "Savoy Metro",
-                "city": "Maharagama",
-                "address": "High Level Rd, Maharagama 10280",
-                "phone": "+94 11 285 0200",
-                "halls": ["Metro Screen 1", "Metro Screen 2"]
+                "name": "PVR Cinemas - One Galle Face Mall",
+                "city": "Colombo 02",
+                "address": "1A Centre Road, Galle Face, Colombo 00200",
+                "phone": "+94 11 208 4000",
+                "halls": ["PVR Playhouse", "PVR LUXE Lounge", "PVR Screen 3 4K"]
+            },
+            # Major Islandwide Cities
+            {
+                "name": "Regal Cinema - Cargills Square",
+                "city": "Jaffna",
+                "address": "Cargills Square, Kandy Road, Jaffna 40000",
+                "phone": "+94 21 222 4500",
+                "halls": ["Regal Screen 1", "Regal Screen 2"]
+            },
+            {
+                "name": "Regal Cinema - Cargills Square",
+                "city": "Gampaha",
+                "address": "15 Cargills Square, Colombo Rd, Gampaha 11000",
+                "phone": "+94 33 223 8900",
+                "halls": ["Auditorium A", "Auditorium B"]
+            },
+            {
+                "name": "Imperial 3D Cinema",
+                "city": "Kurunegala",
+                "address": "45 Colombo Rd, Kurunegala 60000",
+                "phone": "+94 37 222 1200",
+                "halls": ["Imperial 3D Main Screen"]
+            },
+            {
+                "name": "Sky Lite 3D Cinema",
+                "city": "Matara",
+                "address": "88 Anagarika Dharmapala Mawatha, Matara 81000",
+                "phone": "+94 41 222 3400",
+                "halls": ["Sky Lite Screen 1"]
+            },
+            {
+                "name": "Regal Cinema",
+                "city": "Nuwara Eliya",
+                "address": "Park Road, Nuwara Eliya 22200",
+                "phone": "+94 52 222 2300",
+                "halls": ["Regal Nuwara Eliya Main"]
             }
         ]
 
@@ -184,7 +221,7 @@ def seed_database():
                     db.flush()
                     halls_created.append(h)
 
-                    # Generate Seat Grid (Rows A to H, Seats 1 to 12 = 96 Seats per hall!)
+                    # Generate Seat Grid (Rows A to H, Seats 1 to 12 = 96 Seats per hall)
                     rows = ["A", "B", "C", "D", "E", "F", "G", "H"]
                     for row in rows:
                         for num in range(1, 13):
@@ -195,39 +232,58 @@ def seed_database():
                     halls_created.append(existing_h)
 
         db.flush()
-        print(f"  ✓ Seeded 5 Sri Lankan Cinema Theaters & Halls with Seat Matrix (Rows A-H x 12)")
+        print(f"  ✓ Seeded 10 Islandwide Sri Lankan Theaters & Halls across Colombo, Jaffna, Gampaha, Kurunegala, Matara & Nuwara Eliya")
 
-        # 4. Seed Showtimes for Now Showing Movies
-        now_showing_movies = [m for m in movie_objs if m.status == MovieStatus.NOW_SHOWING]
+        # 4. Real-Time Dynamic Scheduling Engine (Relative to datetime.now())
         now = datetime.now(timezone.utc)
+        now_showing_movies = [m for m in movie_objs if m.status == MovieStatus.NOW_SHOWING]
+
+        # Showtimes slots: 10:30 AM, 1:45 PM, 5:15 PM, 8:45 PM for Today, Tomorrow, and Next 3 Days!
+        time_slots = [
+            (10, 30),  # Morning Show
+            (13, 45),  # Afternoon Show
+            (17, 15),  # Evening Show
+            (20, 45),  # Night Show
+        ]
 
         showtime_count = 0
-        for m in now_showing_movies:
-            for h in halls_created[:4]:  # Seed across halls
-                for hours_offset in [3, 7, 27, 31]:
-                    start_time = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=hours_offset)
-                    end_time = start_time + timedelta(minutes=m.duration_min)
-                    
-                    existing_st = db.query(Showtime).filter(
-                        Showtime.movie_id == m.movie_id,
-                        Showtime.hall_id == h.hall_id,
-                        Showtime.start_time == start_time
-                    ).first()
-
-                    if not existing_st:
-                        st = Showtime(
-                            movie_id=m.movie_id,
-                            hall_id=h.hall_id,
-                            start_time=start_time,
-                            end_time=end_time,
-                            base_price=Decimal("1500.00") if "Gold" not in h.hall_name else Decimal("2800.00")
+        for day_offset in range(0, 5):  # Next 5 days
+            current_date = now.date() + timedelta(days=day_offset)
+            for m_idx, m in enumerate(now_showing_movies):
+                # Distribute showtimes across halls
+                target_halls = halls_created[(m_idx * 2):(m_idx * 2 + 3)]
+                for h in target_halls:
+                    for hour, minute in time_slots:
+                        start_time = datetime(
+                            current_date.year, current_date.month, current_date.day,
+                            hour, minute, tzinfo=timezone.utc
                         )
-                        db.add(st)
-                        showtime_count += 1
+                        end_time = start_time + timedelta(minutes=m.duration_min)
+
+                        existing_st = db.query(Showtime).filter(
+                            Showtime.movie_id == m.movie_id,
+                            Showtime.hall_id == h.hall_id,
+                            Showtime.start_time == start_time
+                        ).first()
+
+                        if not existing_st:
+                            base_price = Decimal("1500.00")
+                            if "IMAX" in h.hall_name or "Gold" in h.hall_name or "LUXE" in h.hall_name:
+                                base_price = Decimal("2800.00")
+
+                            st = Showtime(
+                                movie_id=m.movie_id,
+                                hall_id=h.hall_id,
+                                start_time=start_time,
+                                end_time=end_time,
+                                base_price=base_price
+                            )
+                            db.add(st)
+                            showtime_count += 1
 
         db.commit()
-        print(f"  ✓ Seeded {showtime_count} Showtimes across Sri Lankan halls")
-        print("\n🇱🇰 QuickShow Sri Lanka Database Seeding Completed Successfully!\n")
+        print(f"  ✓ Dynamic Scheduling Engine generated {showtime_count} real-time showtime slots across Sri Lanka")
+        print("\n🇱🇰 QuickShow Islandwide Sri Lanka Database Seeding Completed Successfully!\n")
 
     except Exception as e:
         db.rollback()

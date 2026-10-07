@@ -11,6 +11,7 @@ const Theaters = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const fallbackTheaters = [
+    // Colombo & Suburbs
     {
       theater_id: 1,
       name: "Scope Cinemas Multiplex - Colombo City Centre",
@@ -58,13 +59,67 @@ const Theaters = () => {
     },
     {
       theater_id: 5,
-      name: "Savoy Metro",
-      city: "Maharagama",
-      address: "High Level Rd, Maharagama 10280",
-      phone: "+94 11 285 0200",
+      name: "PVR Cinemas - One Galle Face Mall",
+      city: "Colombo 02",
+      address: "1A Centre Road, Galle Face, Colombo 00200",
+      phone: "+94 11 208 4000",
       halls: [
-        { hall_id: 501, hall_name: "Metro Screen 1", total_capacity: 96 },
-        { hall_id: 502, hall_name: "Metro Screen 2", total_capacity: 96 }
+        { hall_id: 501, hall_name: "PVR Playhouse", total_capacity: 90 },
+        { hall_id: 502, hall_name: "PVR LUXE Lounge", total_capacity: 45 },
+        { hall_id: 503, hall_name: "PVR Screen 3 4K", total_capacity: 96 }
+      ]
+    },
+    // Major Regional Cities
+    {
+      theater_id: 6,
+      name: "Regal Cinema - Cargills Square",
+      city: "Jaffna",
+      address: "Cargills Square, Kandy Road, Jaffna 40000",
+      phone: "+94 21 222 4500",
+      halls: [
+        { hall_id: 601, hall_name: "Regal Screen 1", total_capacity: 96 },
+        { hall_id: 602, hall_name: "Regal Screen 2", total_capacity: 96 }
+      ]
+    },
+    {
+      theater_id: 7,
+      name: "Regal Cinema - Cargills Square",
+      city: "Gampaha",
+      address: "15 Cargills Square, Colombo Rd, Gampaha 11000",
+      phone: "+94 33 223 8900",
+      halls: [
+        { hall_id: 701, hall_name: "Auditorium A", total_capacity: 96 },
+        { hall_id: 702, hall_name: "Auditorium B", total_capacity: 96 }
+      ]
+    },
+    {
+      theater_id: 8,
+      name: "Imperial 3D Cinema",
+      city: "Kurunegala",
+      address: "45 Colombo Rd, Kurunegala 60000",
+      phone: "+94 37 222 1200",
+      halls: [
+        { hall_id: 801, hall_name: "Imperial 3D Main Screen", total_capacity: 110 }
+      ]
+    },
+    {
+      theater_id: 9,
+      name: "Sky Lite 3D Cinema",
+      city: "Matara",
+      address: "88 Anagarika Dharmapala Mawatha, Matara 81000",
+      phone: "+94 41 222 3400",
+      halls: [
+        { hall_id: 901, hall_name: "Sky Lite Screen 1", total_capacity: 96 }
+      ]
+    },
+    {
+      theater_id: 10,
+      name: "Regal Cinema",
+      city: "Nuwara Eliya",
+      address: "Park Road, Nuwara Eliya 22200",
+      phone: "+94 52 222 2300",
+      halls: [
+        { hall_id: 1001, hall_name: "Regal Nuwara Eliya Main", total_capacity: 90 }
       ]
     }
   ];
@@ -83,7 +138,7 @@ const Theaters = () => {
         setTheaters(fallbackTheaters);
       }
     } catch (err) {
-      console.warn("Backend API unavailable, using fallback Sri Lankan theater data.", err);
+      console.warn("Backend API unavailable, using fallback islandwide theater data.", err);
       setTheaters(fallbackTheaters);
     } finally {
       setLoading(false);
@@ -106,13 +161,13 @@ const Theaters = () => {
       {/* Header Banner */}
       <div className="max-w-7xl mx-auto mb-12 text-center md:text-left border-b border-slate-800 pb-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 text-rose-400 text-sm font-medium mb-4 border border-rose-500/20">
-          <Sparkles className="w-4 h-4" /> Sri Lankan Cinema Locations
+          <Sparkles className="w-4 h-4" /> Islandwide Sri Lankan Cinema Network
         </div>
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-3">
-          Explore Cinema Theaters in Sri Lanka
+          Explore Cinema Theaters Across Sri Lanka
         </h1>
-        <p className="text-slate-400 text-lg max-w-2xl">
-          Book tickets at Scope Cinemas Colombo City Centre, Havelock City Mall, Liberty Colpetty, Savoy Wellawatte, and Savoy Metro.
+        <p className="text-slate-400 text-lg max-w-3xl">
+          Book movie showtimes across Scope Cinemas, Savoy, PVR, Regal, Imperial, and Sky Lite in Colombo, Jaffna, Gampaha, Kurunegala, Matara, and Nuwara Eliya.
         </p>
 
         {/* Filter Controls */}
@@ -123,7 +178,7 @@ const Theaters = () => {
               <button
                 key={city}
                 onClick={() => setSelectedCity(city)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+                className={`px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 ${
                   selectedCity === city
                     ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
                     : "bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800"
@@ -157,7 +212,7 @@ const Theaters = () => {
         ) : filteredTheaters.length === 0 ? (
           <div className="text-center py-16 bg-slate-900/50 rounded-2xl border border-slate-800">
             <MapPin className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400 text-lg">No Sri Lankan theaters match your search criteria.</p>
+            <p className="text-slate-400 text-lg">No cinema locations match your search criteria.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -194,7 +249,7 @@ const Theaters = () => {
                   {/* Screening Halls */}
                   <div className="space-y-3 mb-6">
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                      <Film className="w-3.5 h-3.5 text-slate-400" /> Screening Halls ({theater.halls?.length || 0})
+                      <Film className="w-3.5 h-3.5 text-slate-400" /> Auditoriums ({theater.halls?.length || 0})
                     </div>
                     <div className="flex flex-col gap-2">
                       {theater.halls && theater.halls.length > 0 ? (
@@ -210,7 +265,7 @@ const Theaters = () => {
                           </div>
                         ))
                       ) : (
-                        <p className="text-xs text-slate-500 italic">Screening halls updating...</p>
+                        <p className="text-xs text-slate-500 italic">Auditoriums updating...</p>
                       )}
                     </div>
                   </div>
