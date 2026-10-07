@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, X, TicketPlus, Clock } from "lucide-react";
+import { Search, Menu, X, TicketPlus, Clock, Film } from "lucide-react";
 import { useClerk, UserButton, useUser } from "@clerk/clerk-react";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const { user } = useUser();
@@ -31,6 +33,15 @@ const Navbar = () => {
     month: "short",
     day: "numeric",
   });
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/movies?search=${encodeURIComponent(searchQuery.trim())}`);
+      setShowSearchModal(false);
+      setSearchQuery("");
+    }
+  };
 
   return (
     <nav className="fixed top-0 left-0 z-50 w-full flex items-center justify-between px-4 sm:px-6 md:px-10 py-3 md:py-4 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-white transition-all duration-300">
@@ -101,10 +112,14 @@ const Navbar = () => {
 
       {/* RIGHT SIDE ACTIONS */}
       <div className="flex items-center gap-3 sm:gap-4">
-        <Search
-          className="w-5 h-5 cursor-pointer text-slate-400 hover:text-white transition-colors"
-          onClick={() => navigate("/movies")}
-        />
+        {/* Interactive Search Trigger Icon */}
+        <button
+          onClick={() => setShowSearchModal(!showSearchModal)}
+          className="p-2 text-slate-400 hover:text-white bg-slate-900/60 hover:bg-slate-800 border border-slate-800 rounded-full transition-colors"
+          title="Search Movies"
+        >
+          <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+        </button>
 
         {!user ? (
           <button
@@ -130,6 +145,43 @@ const Navbar = () => {
           onClick={() => setIsOpen(true)}
         />
       </div>
+
+      {/* Interactive Search Overlay Modal */}
+      {showSearchModal && (
+        <div className="fixed inset-0 top-16 z-50 bg-slate-950/80 backdrop-blur-md flex items-start justify-center pt-8 px-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-rose-400 text-sm font-bold">
+                <Film className="w-4 h-4" /> Live Movie Search
+              </div>
+              <button
+                onClick={() => setShowSearchModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSearchSubmit} className="relative">
+              <Search className="absolute left-4 top-3.5 w-5 h-5 text-rose-500" />
+              <input
+                type="text"
+                autoFocus
+                placeholder="Type movie name (e.g. Dune, Avatar, Kandak Sema, GOAT)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl pl-12 pr-28 py-3 text-sm text-white placeholder-slate-500 focus:outline-none transition-colors"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-2 bottom-2 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg transition-colors"
+              >
+                Search
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

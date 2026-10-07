@@ -9,7 +9,7 @@ from app.models.showtime import Showtime
 
 
 def seed_database():
-    print("🇱🇰 Initializing QuickShow Islandwide Sri Lankan Theater Network & Dynamic Schedules...")
+    print("🎬 Seeding Expanded QuickShow Movie Catalog & Islandwide Sri Lankan Theaters...")
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
@@ -21,7 +21,7 @@ def seed_database():
         admin = db.query(User).filter(User.email == admin_email).first()
         if not admin:
             admin = User(
-                name="Scope & PVR Islandwide Admin",
+                name="Scope & Savoy Admin",
                 email=admin_email,
                 password_hash=get_password_hash("admin123"),
                 phone="+94771234567",
@@ -44,8 +44,20 @@ def seed_database():
 
         db.flush()
 
-        # 2. Seed Movies
+        # 2. Expanded Movies Collection (English, Sinhala, Tamil & Hindi)
         movies_data = [
+            # NOW SHOWING
+            {
+                "title": "Avatar: The Way of Water",
+                "description": "Jake Sully lives with his newfound family formed on the extrasolar moon Pandora. Once a familiar threat returns, Jake must work with Neytiri to protect their land.",
+                "genre": "Sci-Fi / Action",
+                "duration_min": 192,
+                "language": "English",
+                "poster_url": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800",
+                "rating": "PG-13",
+                "release_date": date(2022, 12, 16),
+                "status": MovieStatus.NOW_SHOWING
+            },
             {
                 "title": "Dune: Part Two",
                 "description": "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.",
@@ -59,18 +71,18 @@ def seed_database():
             },
             {
                 "title": "Kandak Sema",
-                "description": "A poignant Sri Lankan cinema drama depicting love, resilience, and personal triumph across generations.",
+                "description": "A poignant Sri Lankan drama depicting love, resilience, and personal triumph across generations amidst picturesque landscapes.",
                 "genre": "Drama / Romance",
                 "duration_min": 135,
                 "language": "Sinhala",
-                "poster_url": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800",
+                "poster_url": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800",
                 "rating": "U/A",
                 "release_date": date(2024, 5, 10),
                 "status": MovieStatus.NOW_SHOWING
             },
             {
                 "title": "The Greatest Of All Time (GOAT)",
-                "description": "An action-packed sci-fi thriller featuring dual roles and high-octane suspense across international missions.",
+                "description": "An action-packed sci-fi thriller featuring Vijay in dual roles with high-octane suspense across international covert operations.",
                 "genre": "Action / Sci-Fi",
                 "duration_min": 178,
                 "language": "Tamil",
@@ -90,6 +102,30 @@ def seed_database():
                 "release_date": date(2023, 7, 21),
                 "status": MovieStatus.NOW_SHOWING
             },
+            {
+                "title": "Spider-Man: Across the Spider-Verse",
+                "description": "Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its existence.",
+                "genre": "Animation / Action",
+                "duration_min": 140,
+                "language": "English",
+                "poster_url": "https://images.unsplash.com/photo-1635805737707-575885ab0820?q=80&w=800",
+                "rating": "PG",
+                "release_date": date(2023, 6, 2),
+                "status": MovieStatus.NOW_SHOWING
+            },
+            {
+                "title": "Stree 2",
+                "description": "The town of Chanderi is haunted once again, this time by a headless entity known as Sarkata. Vicky and his friends reunite to save the town.",
+                "genre": "Comedy / Horror",
+                "duration_min": 147,
+                "language": "Hindi",
+                "poster_url": "https://images.unsplash.com/photo-1509281373149-e957c6296406?q=80&w=800",
+                "rating": "U/A",
+                "release_date": date(2024, 8, 15),
+                "status": MovieStatus.NOW_SHOWING
+            },
+
+            # COMING SOON
             {
                 "title": "Devara: Part 1",
                 "description": "An epic action saga set against coastal lands, depicting coastal power struggles and legendary courage.",
@@ -111,6 +147,39 @@ def seed_database():
                 "rating": "R",
                 "release_date": date(2024, 10, 4),
                 "status": MovieStatus.COMING_SOON
+            },
+            {
+                "title": "Kanguva",
+                "description": "A warrior's struggle for survival across centuries connects a modern bounty hunter with an ancient tribal hero.",
+                "genre": "Action / Fantasy / Epic",
+                "duration_min": 154,
+                "language": "Tamil",
+                "poster_url": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800",
+                "rating": "U/A",
+                "release_date": date(2024, 11, 14),
+                "status": MovieStatus.COMING_SOON
+            },
+            {
+                "title": "Deadpool & Wolverine",
+                "description": "Wolverine is recovering from his injuries when he crosses paths with the loudmouth Deadpool to defeat a common multiverse threat.",
+                "genre": "Action / Comedy",
+                "duration_min": 127,
+                "language": "English",
+                "poster_url": "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800",
+                "rating": "R",
+                "release_date": date(2024, 7, 26),
+                "status": MovieStatus.COMING_SOON
+            },
+            {
+                "title": "Gladiator II",
+                "description": "Lucius enters the Colosseum years after witnessing the fall of Maximus to fight against emperor tyranny in Rome.",
+                "genre": "Action / History",
+                "duration_min": 150,
+                "language": "English",
+                "poster_url": "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=800",
+                "rating": "R",
+                "release_date": date(2024, 11, 22),
+                "status": MovieStatus.COMING_SOON
             }
         ]
 
@@ -125,11 +194,10 @@ def seed_database():
                 movie_objs.append(existing_m)
         
         db.flush()
-        print(f"  ✓ Seeded {len(movie_objs)} Movies (English, Sinhala & Tamil)")
+        print(f"  ✓ Seeded {len(movie_objs)} Movies (English, Sinhala, Tamil & Hindi)")
 
         # 3. Islandwide Sri Lankan Theater Network
         theaters_data = [
-            # Colombo & Suburbs
             {
                 "name": "Scope Cinemas Multiplex - Colombo City Centre",
                 "city": "Colombo 02",
@@ -165,7 +233,6 @@ def seed_database():
                 "phone": "+94 11 208 4000",
                 "halls": ["PVR Playhouse", "PVR LUXE Lounge", "PVR Screen 3 4K"]
             },
-            # Major Islandwide Cities
             {
                 "name": "Regal Cinema - Cargills Square",
                 "city": "Jaffna",
@@ -221,7 +288,6 @@ def seed_database():
                     db.flush()
                     halls_created.append(h)
 
-                    # Generate Seat Grid (Rows A to H, Seats 1 to 12 = 96 Seats per hall)
                     rows = ["A", "B", "C", "D", "E", "F", "G", "H"]
                     for row in rows:
                         for num in range(1, 13):
@@ -232,26 +298,18 @@ def seed_database():
                     halls_created.append(existing_h)
 
         db.flush()
-        print(f"  ✓ Seeded 10 Islandwide Sri Lankan Theaters & Halls across Colombo, Jaffna, Gampaha, Kurunegala, Matara & Nuwara Eliya")
 
-        # 4. Real-Time Dynamic Scheduling Engine (Relative to datetime.now())
+        # 4. Real-Time Dynamic Scheduling Engine
         now = datetime.now(timezone.utc)
         now_showing_movies = [m for m in movie_objs if m.status == MovieStatus.NOW_SHOWING]
 
-        # Showtimes slots: 10:30 AM, 1:45 PM, 5:15 PM, 8:45 PM for Today, Tomorrow, and Next 3 Days!
-        time_slots = [
-            (10, 30),  # Morning Show
-            (13, 45),  # Afternoon Show
-            (17, 15),  # Evening Show
-            (20, 45),  # Night Show
-        ]
+        time_slots = [(10, 30), (13, 45), (17, 15), (20, 45)]
 
         showtime_count = 0
-        for day_offset in range(0, 5):  # Next 5 days
+        for day_offset in range(0, 5):
             current_date = now.date() + timedelta(days=day_offset)
             for m_idx, m in enumerate(now_showing_movies):
-                # Distribute showtimes across halls
-                target_halls = halls_created[(m_idx * 2):(m_idx * 2 + 3)]
+                target_halls = halls_created[(m_idx * 2) % len(halls_created) : (m_idx * 2 + 3) % len(halls_created) + 1]
                 for h in target_halls:
                     for hour, minute in time_slots:
                         start_time = datetime(
@@ -282,8 +340,8 @@ def seed_database():
                             showtime_count += 1
 
         db.commit()
-        print(f"  ✓ Dynamic Scheduling Engine generated {showtime_count} real-time showtime slots across Sri Lanka")
-        print("\n🇱🇰 QuickShow Islandwide Sri Lanka Database Seeding Completed Successfully!\n")
+        print(f"  ✓ Dynamic Scheduling Engine generated {showtime_count} real-time showtime slots")
+        print("\n🎬 QuickShow Movie Catalog Seeding Completed Successfully!\n")
 
     except Exception as e:
         db.rollback()
