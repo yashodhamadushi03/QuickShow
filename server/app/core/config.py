@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
+from pathlib import Path
 
 
 class Settings(BaseSettings):
@@ -20,11 +21,11 @@ class Settings(BaseSettings):
     DATABASE_URL: Optional[str] = None
 
     # SMTP Email Configuration
-    SMTP_HOST: Optional[str] = "smtp.gmail.com"
+    SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
-    SMTP_USER: Optional[str] = None
-    SMTP_PASSWORD: Optional[str] = None
-    EMAILS_FROM: str = "tickets@quickshow.lk"
+    SMTP_USER: str = "yashodhamadushi03@gmail.com"
+    SMTP_PASSWORD: str = "xqmgnjpgamwrcpxv"
+    EMAILS_FROM: str = "yashodhamadushi03@gmail.com"
 
     # Twilio SMS Configuration
     TWILIO_ACCOUNT_SID: Optional[str] = None
@@ -32,7 +33,7 @@ class Settings(BaseSettings):
     TWILIO_PHONE_NUMBER: Optional[str] = None
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(Path(__file__).resolve().parent.parent.parent / ".env"),
         env_file_encoding="utf-8",
         extra="ignore"
     )

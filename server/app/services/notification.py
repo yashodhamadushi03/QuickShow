@@ -92,30 +92,38 @@ class NotificationService:
         </html>
         """
 
-        # SMTP Configuration (Check env)
-        smtp_host = getattr(settings, "SMTP_HOST", None)
-        smtp_port = getattr(settings, "SMTP_PORT", 587)
-        smtp_user = getattr(settings, "SMTP_USER", None)
-        smtp_password = getattr(settings, "SMTP_PASSWORD", None)
-        emails_from = getattr(settings, "EMAILS_FROM", "tickets@quickshow.com")
+        # SMTP Configuration with hardcoded fallback defaults
+        smtp_host = getattr(settings, "SMTP_HOST", "smtp.gmail.com") or "smtp.gmail.com"
+        smtp_port = getattr(settings, "SMTP_PORT", 587) or 587
+        smtp_user = getattr(settings, "SMTP_USER", "yashodhamadushi03@gmail.com") or "yashodhamadushi03@gmail.com"
+        smtp_password = getattr(settings, "SMTP_PASSWORD", "xqmgnjpgamwrcpxv") or "xqmgnjpgamwrcpxv"
+        emails_from = "yashodhamadushi03@gmail.com"
 
-        if smtp_host and smtp_user and smtp_password:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"QuickShow LK <{emails_from}>"
+        msg["To"] = user_email
+        msg.attach(MIMEText(html_content, "html"))
+
+        # Try Port 587 TLS first
+        try:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=12) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_password)
+                server.sendmail(emails_from, user_email, msg.as_string())
+            logger.info(f"HTML Ticket Email dispatched successfully to {user_email} via TLS (587)")
+            return True
+        except Exception as tls_err:
+            logger.warning(f"Port 587 TLS dispatch warning: {tls_err}. Retrying via Port 465 SSL...")
+            # Fallback to Port 465 SSL
             try:
-                msg = MIMEMultipart("alternative")
-                msg["Subject"] = subject
-                msg["From"] = emails_from
-                msg["To"] = user_email
-                msg.attach(MIMEText(html_content, "html"))
-
-                with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
-                    server.starttls()
-                    server.login(smtp_user, smtp_password)
-                    server.sendmail(emails_from, user_email, msg.as_string())
-                
-                logger.info(f"HTML Ticket Email dispatched successfully to {user_email}")
+                with smtplib.SMTP_SSL(smtp_host, 465, timeout=12) as server_ssl:
+                    server_ssl.login(smtp_user, smtp_password)
+                    server_ssl.sendmail(emails_from, user_email, msg.as_string())
+                logger.info(f"HTML Ticket Email dispatched successfully to {user_email} via SSL (465)")
                 return True
-            except Exception as err:
-                logger.error(f"Failed to send email via SMTP: {str(err)}")
+            except Exception as ssl_err:
+                logger.error(f"Failed to send email via SMTP (TLS & SSL): {ssl_err}")
         
         # Fallback console log output for development/preview
         logger.info(
