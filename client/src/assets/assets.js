@@ -5,8 +5,6 @@ import appStore from './appStore.svg'
 import screenImage from './screenImage.svg'
 import profile from './profile.png'
 
-
-
 export const assets = {
     logo,
     marvelLogo,
@@ -80,7 +78,7 @@ export const dummyShowsData = [
         "_id": "1232546",
         "id": 1232546,
         "title": "Until Dawn",
-        "overview": "One year after her sister Melanie mysteriously disappeared, Clover and her friends head into the remote valley where she vanished in search of answers. Exploring an abandoned visitor center, they find themselves stalked by a masked killer and horrifically murdered one by one...only to wake up and find themselves back at the beginning of the same evening.",
+        "overview": "One year after her sister Melanie mysteriously disappeared, Clover and her friends head into the remote valley where she vanished in search of answers.",
         "poster_path": "https://image.tmdb.org/t/p/original/juA4IWO52Fecx8lhAsxmDgy3M3.jpg",
         "backdrop_path": "https://image.tmdb.org/t/p/original/icFWIk1KfkWLZnugZAJEDauNZ94.jpg",
         "genres": [
@@ -119,7 +117,7 @@ export const dummyShowsData = [
         "_id": "668489",
         "id": 668489,
         "title": "Havoc",
-        "overview": "When a drug heist swerves lethally out of control, a jaded cop fights his way through a corrupt city's criminal underworld to save a politician's son.",
+        "overview": "When a drug heist swerves lethally out of control, a jaded cop fights his way through a corrupt city's criminal underworld.",
         "poster_path": "https://image.tmdb.org/t/p/original/ubP2OsF3GlfqYPvXyLw9d78djGX.jpg",
         "backdrop_path": "https://image.tmdb.org/t/p/original/65MVgDa6YjSdqzh7YOA04mYkioo.jpg",
         "genres": [
@@ -134,90 +132,43 @@ export const dummyShowsData = [
         "vote_average": 6.537,
         "vote_count": 35960,
         "runtime": 107,
-    },
-    {
-        "_id": "950387",
-        "id": 950387,
-        "title": "A Minecraft Movie",
-        "overview": "Four misfits find themselves struggling with ordinary problems when they are suddenly pulled through a mysterious portal into the Overworld: a bizarre, cubic wonderland that thrives on imagination. To get back home, they'll have to master this world while embarking on a magical quest with an unexpected, expert crafter, Steve.",
-        "poster_path": "https://image.tmdb.org/t/p/original/yFHHfHcUgGAxziP1C3lLt0q2T4s.jpg",
-        "backdrop_path": "https://image.tmdb.org/t/p/original/2Nti3gYAX513wvhp8IiLL6ZDyOm.jpg",
-        "genres": [
-            { "id": 10751, "name": "Family" },
-            { "id": 35, "name": "Comedy" },
-            { "id": 12, "name": "Adventure" },
-            { "id": 14, "name": "Fantasy" }
-        ],
-        "casts": dummyCastsData,
-        "release_date": "2025-03-31",
-        "original_language": "en",
-        "tagline": "Be there and be square.",
-        "vote_average": 6.516,
-        "vote_count": 15225,
-        "runtime": 101,
-    },
-    {
-        "_id": "575265",
-        "id": 575265,
-        "title": "Mission: Impossible - The Final Reckoning",
-        "overview": "Ethan Hunt and team continue their search for the terrifying AI known as the Entity — which has infiltrated intelligence networks all over the globe — with the world's governments and a mysterious ghost from Hunt's past on their trail. Joined by new allies and armed with the means to shut the Entity down for good, Hunt is in a race against time to prevent the world as we know it from changing forever.",
-        "poster_path": "https://image.tmdb.org/t/p/original/z53D72EAOxGRqdr7KXXWp9dJiDe.jpg",
-        "backdrop_path": "https://image.tmdb.org/t/p/original/1p5aI299YBnqrEEvVGJERk2MXXb.jpg",
-        "genres": [
-            { "id": 28, "name": "Action" },
-            { "id": 12, "name": "Adventure" },
-            { "id": 53, "name": "Thriller" }
-        ],
-        "casts": dummyCastsData,
-        "release_date": "2025-05-17",
-        "original_language": "en",
-        "tagline": "Our lives are the sum of our choices.",
-        "vote_average": 7.042,
-        "vote_count": 19885,
-        "runtime": 170,
-    },
-    {
-        "_id": "986056",
-        "id": 986056,
-        "title": "Thunderbolts*",
-        "overview": "After finding themselves ensnared in a death trap, seven disillusioned castoffs must embark on a dangerous mission that will force them to confront the darkest corners of their pasts.",
-        "poster_path": "https://image.tmdb.org/t/p/original/m9EtP1Yrzv6v7dMaC9mRaGhd1um.jpg",
-        "backdrop_path": "https://image.tmdb.org/t/p/original/rthMuZfFv4fqEU4JVbgSW9wQ8rs.jpg",
-        "genres": [
-            { "id": 28, "name": "Action" },
-            { "id": 878, "name": "Science Fiction" },
-            { "id": 12, "name": "Adventure" }
-        ],
-        "casts": dummyCastsData,
-        "release_date": "2025-04-30",
-        "original_language": "en",
-        "tagline": "Everyone deserves a second shot.",
-        "vote_average": 7.443,
-        "vote_count": 23569,
-        "runtime": 127,
     }
 ]
 
+// Dynamic Date Generator relative to real-world current date
+const getDynamicDateString = (offsetDays) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().split('T')[0];
+};
+
+const d0 = getDynamicDateString(0);
+const d1 = getDynamicDateString(1);
+const d2 = getDynamicDateString(2);
+const d3 = getDynamicDateString(3);
+
 export const dummyDateTimeData = {
-    "2025-07-24": [
-        { "time": "2025-07-24T01:00:00.000Z", "showId": "68395b407f6329be2bb45bd1" },
-        { "time": "2025-07-24T03:00:00.000Z", "showId": "68395b407f6329be2bb45bd2" },
-        { "time": "2025-07-24T05:00:00.000Z", "showId": "68395b407f6329be2bb45bd3" }
+    [d0]: [
+        { "time": `${d0}T10:30:00.000Z`, "showId": "show_1" },
+        { "time": `${d0}T13:45:00.000Z`, "showId": "show_2" },
+        { "time": `${d0}T17:15:00.000Z`, "showId": "show_3" },
+        { "time": `${d0}T20:45:00.000Z`, "showId": "show_4" }
     ],
-    "2025-07-25": [
-        { "time": "2025-07-25T01:00:00.000Z", "showId": "68395b407f6329be2bb45bd4" },
-        { "time": "2025-07-25T03:00:00.000Z", "showId": "68395b407f6329be2bb45bd5" },
-        { "time": "2025-07-25T05:00:00.000Z", "showId": "68395b407f6329be2bb45bd6" }
+    [d1]: [
+        { "time": `${d1}T10:30:00.000Z`, "showId": "show_5" },
+        { "time": `${d1}T13:45:00.000Z`, "showId": "show_6" },
+        { "time": `${d1}T17:15:00.000Z`, "showId": "show_7" },
+        { "time": `${d1}T20:45:00.000Z`, "showId": "show_8" }
     ],
-    "2025-07-26": [
-        { "time": "2025-07-26T01:00:00.000Z", "showId": "68395b407f6329be2bb45bd7" },
-        { "time": "2025-07-26T03:00:00.000Z", "showId": "68395b407f6329be2bb45bd8" },
-        { "time": "2025-07-26T05:00:00.000Z", "showId": "68395b407f6329be2bb45bd9" }
+    [d2]: [
+        { "time": `${d2}T10:30:00.000Z`, "showId": "show_9" },
+        { "time": `${d2}T13:45:00.000Z`, "showId": "show_10" },
+        { "time": `${d2}T17:15:00.000Z`, "showId": "show_11" }
     ],
-    "2025-07-27": [
-        { "time": "2025-07-27T01:00:00.000Z", "showId": "68395b407f6329be2bb45bda" },
-        { "time": "2025-07-27T03:00:00.000Z", "showId": "68395b407f6329be2bb45bdb" },
-        { "time": "2025-07-27T05:00:00.000Z", "showId": "68395b407f6329be2bb45bdc" }
+    [d3]: [
+        { "time": `${d3}T10:30:00.000Z`, "showId": "show_12" },
+        { "time": `${d3}T17:15:00.000Z`, "showId": "show_13" },
+        { "time": `${d3}T20:45:00.000Z`, "showId": "show_14" }
     ]
 }
 
@@ -225,111 +176,7 @@ export const dummyDashboardData = {
     "totalBookings": 14,
     "totalRevenue": 1517,
     "totalUser": 5,
-    "activeShows": [
-        {
-            "_id": "68352363e96d99513e4221a4",
-            "movie": dummyShowsData[0],
-            "showDateTime": "2025-06-30T02:30:00.000Z",
-            "showPrice": 59,
-            "occupiedSeats": {
-                "A1": "user_2xO4XPCgWWwWq9EHuQxc5UWqIok",
-                "B1": "user_2xO4XPCgWWwWq9EHuQxc5UWqIok",
-                "C1": "user_2xO4XPCgWWwWq9EHuQxc5UWqIok"
-            },
-        },
-        {
-            "_id": "6835238fe96d99513e4221a8",
-            "movie": dummyShowsData[1],
-            "showDateTime": "2025-06-30T15:30:00.000Z",
-            "showPrice": 81,
-            "occupiedSeats": {},
-        },
-        {
-            "_id": "6835238fe96d99513e4221a9",
-            "movie": dummyShowsData[2],
-            "showDateTime": "2025-06-30T03:30:00.000Z",
-            "showPrice": 81,
-            "occupiedSeats": {},
-        },
-        {
-            "_id": "6835238fe96d99513e4221aa",
-            "movie": dummyShowsData[3],
-            "showDateTime": "2025-07-15T16:30:00.000Z",
-            "showPrice": 81,
-            "occupiedSeats": {
-                "A1": "user_2xO4XPCgWWwWq9EHuQxc5UWqIok",
-                "A2": "user_2xO4XPCgWWwWq9EHuQxc5UWqIok",
-                "A3": "user_2xO4XPCgWWwWq9EHuQxc5UWqIok",
-                "A4": "user_2xO4XPCgWWwWq9EHuQxc5UWqIok"
-            },
-        },
-        {
-            "_id": "683682072b5989c29fc6dc0d",
-            "movie": dummyShowsData[4],
-            "showDateTime": "2025-06-05T15:30:00.000Z",
-            "showPrice": 49,
-            "occupiedSeats": {
-                "A1": "user_2xO4XPCgWWwWq9EHuQxc5UWqIok",
-                "A2": "user_2xO4XPCgWWwWq9EHuQxc5UWqIok",
-                "A3": "user_2xO4XPCgWWwWq9EHuQxc5UWqIok",
-                "B1": "user_2xO4XPCgWWwWq9EHuQxc5UWqIok",
-                "B2": "user_2xO4XPCgWWwWq9EHuQxc5UWqIok",
-                "B3": "user_2xO4XPCgWWwWq9EHuQxc5UWqIok"
-            },
-            "__v": 0
-        },
-        {
-            "_id": "68380044686d454f2116b39a",
-            "movie": dummyShowsData[5],
-            "showDateTime": "2025-06-20T16:00:00.000Z",
-            "showPrice": 79,
-            "occupiedSeats": {
-                "A1": "user_2xl7eCSUHddibk5lRxfOtw9RMwX",
-                "A2": "user_2xl7eCSUHddibk5lRxfOtw9RMwX"
-            }
-        }
-    ]
+    "activeShows": []
 }
 
-
-export const dummyBookingData = [
-    {
-        "_id": "68396334fb83252d82e17295",
-        "user": { "name": "GreatStack", },
-        "show": {
-            _id: "68352363e96d99513e4221a4",
-            movie: dummyShowsData[0],
-            showDateTime: "2025-06-30T02:30:00.000Z",
-            showPrice: 59,
-        },
-        "amount": 98,
-        "bookedSeats": ["D1", "D2"],
-        "isPaid": false,
-    },
-    {
-        "_id": "68396334fb83252d82e17295",
-        "user": { "name": "GreatStack", },
-        "show": {
-            _id: "68352363e96d99513e4221a4",
-            movie: dummyShowsData[0],
-            showDateTime: "2025-06-30T02:30:00.000Z",
-            showPrice: 59,
-        },
-        "amount": 49,
-        "bookedSeats": ["A1"],
-        "isPaid": true,
-    },
-    {
-        "_id": "68396334fb83252d82e17295",
-        "user": { "name": "GreatStack", },
-        "show": {
-            _id: "68352363e96d99513e4221a4",
-            movie: dummyShowsData[0],
-            showDateTime: "2025-06-30T02:30:00.000Z",
-            showPrice: 59,
-        },
-        "amount": 147,
-        "bookedSeats": ["A1", "A2","A3"],
-        "isPaid": true,
-    },
-]
+export const dummyBookingData = []
