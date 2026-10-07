@@ -67,10 +67,14 @@ def get_current_user(
 
 
 def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
-    """Ensure the authenticated user has the Admin role."""
-    if current_user.role != UserRole.ADMIN:
+    """Ensure the authenticated user has Admin or Theater Manager role (Role-Based Access Control)."""
+    if current_user.role not in [UserRole.ADMIN, UserRole.THEATER_MANAGER]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Operation restricted to Cinema Administrators",
+            detail="Operation restricted to Cinema Administrators and Theater Managers.",
         )
     return current_user
+
+
+admin_required = get_current_admin
+

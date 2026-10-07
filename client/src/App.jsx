@@ -10,6 +10,7 @@ import MyBookings from './pages/MyBookings';
 import Favourite from './pages/Favourite';
 import Theaters from './pages/Theaters';
 import Releases from './pages/Releases';
+import AdminDashboard from './pages/AdminDashboard';
 import Chatbot from './components/Chatbot';
 
 import { Toaster } from 'react-hot-toast';
@@ -37,6 +38,8 @@ const App = () => {
         <Route path='/favourite' element={<Favourite />} />
         <Route path='/theaters' element={<Theaters />} />
         <Route path='/releases' element={<Releases />} />
+        <Route path='/admin' element={<AdminDashboard />} />
+        <Route path='/admin/*' element={<AdminDashboard />} />
       </Routes>
 
       {/* Floating AI Cinema Assistant Chatbox */}
