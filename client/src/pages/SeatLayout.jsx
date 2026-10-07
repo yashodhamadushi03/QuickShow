@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ShieldCheck, Ticket, CheckCircle2, AlertCircle, ArrowLeft, CreditCard } from "lucide-react";
+import { ShieldCheck, Ticket, CheckCircle2, ArrowLeft, CreditCard, Sparkles } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
 const SeatLayout = () => {
-  const { id: showtimeIdParam, date: dateParam } = useParams();
+  const { id: showtimeIdParam } = useParams();
   const navigate = useNavigate();
 
-  // If showtimeIdParam is numeric use it, else default to 1 for demonstration
   const showtimeId = parseInt(showtimeIdParam) || 1;
 
   const [seats, setSeats] = useState([]);
@@ -19,26 +18,25 @@ const SeatLayout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingConfirmation, setBookingConfirmation] = useState(null);
 
-  // Fallback Seats Grid Generator
-  const generateFallbackSeats = () => {
-    const rows = ["A", "B", "C", "D", "E"];
-    const seatsPerRow = 10;
+  // Generate Matrix Grid: Rows A-H (8 rows) x Seats 1-12 (96 total seats!)
+  const generateSriLankanSeatMatrix = () => {
+    const rows = ["A", "B", "C", "D", "E", "F", "G", "H"];
+    const seatsPerRow = 12;
     const generated = [];
 
     rows.forEach((row, rIdx) => {
       for (let i = 1; i <= seatsPerRow; i++) {
         const id = rIdx * seatsPerRow + i;
-        // Simulate a few booked/locked seats
         let status = "Available";
-        if (id === 14 || id === 15) status = "Booked";
-        if (id === 28) status = "Locked";
+        if (id === 18 || id === 19 || id === 42) status = "Booked";
+        if (id === 55) status = "Locked";
 
         generated.push({
           seat_id: id,
           hall_id: 1,
           row_label: row,
           seat_number: i,
-          seat_type: row === "D" || row === "E" ? "VIP" : "Regular",
+          seat_type: row === "G" || row === "H" ? "VIP" : "Regular",
           status: status,
         });
       }
@@ -53,7 +51,6 @@ const SeatLayout = () => {
 
   const fetchShowtimeAndSeats = async () => {
     try {
-      // Fetch Showtime Info
       const stRes = await fetch(`${API_BASE_URL}/showtimes/${showtimeId}`);
       if (stRes.ok) {
         const stData = await stRes.json();
@@ -61,29 +58,28 @@ const SeatLayout = () => {
       } else {
         setShowtime({
           showtime_id: showtimeId,
-          base_price: 14.50,
-          movie: { title: "Avatar: The Way of Water" },
-          hall: { hall_name: "Screen 1 - IMAX", theater: { name: "QuickShow Grand Cinema" } }
+          base_price: 1500.00,
+          movie: { title: "Dune: Part Two" },
+          hall: { hall_name: "Screen 1 - Dolby Atmos", theater: { name: "Scope Cinemas - Colombo City Centre" } }
         });
       }
 
-      // Fetch Real-time Seat Layout
       const seatsRes = await fetch(`${API_BASE_URL}/showtimes/${showtimeId}/seats`);
       if (seatsRes.ok) {
         const seatsData = await seatsRes.json();
-        setSeats(seatsData.length > 0 ? seatsData : generateFallbackSeats());
+        setSeats(seatsData.length > 0 ? seatsData : generateSriLankanSeatMatrix());
       } else {
-        setSeats(generateFallbackSeats());
+        setSeats(generateSriLankanSeatMatrix());
       }
     } catch (err) {
-      console.warn("Backend API unavailable, using fallback layout data.", err);
+      console.warn("Backend API unavailable, using fallback Sri Lanka seat matrix.", err);
       setShowtime({
         showtime_id: showtimeId,
-        base_price: 14.50,
-        movie: { title: "Avatar: The Way of Water" },
-        hall: { hall_name: "Screen 1 - IMAX", theater: { name: "QuickShow Grand Cinema" } }
+        base_price: 1500.00,
+        movie: { title: "Dune: Part Two" },
+        hall: { hall_name: "Screen 1 - Dolby Atmos", theater: { name: "Scope Cinemas - Colombo City Centre" } }
       });
-      setSeats(generateFallbackSeats());
+      setSeats(generateSriLankanSeatMatrix());
     } finally {
       setLoading(false);
     }
@@ -103,14 +99,14 @@ const SeatLayout = () => {
   };
 
   const getSeatPrice = (seat) => {
-    const base = showtime?.base_price ? parseFloat(showtime.base_price) : 14.50;
-    return seat.seat_type === "VIP" ? base + 5.0 : base;
+    const base = showtime?.base_price ? parseFloat(showtime.base_price) : 1500.00;
+    return seat.seat_type === "VIP" ? base + 800.0 : base;
   };
 
   const calculateTotal = () => {
     return selectedSeatIds.reduce((total, id) => {
       const seat = seats.find((s) => s.seat_id === id);
-      return total + (seat ? getSeatPrice(seat) : 14.50);
+      return total + (seat ? getSeatPrice(seat) : 1500.00);
     }, 0);
   };
 
@@ -123,7 +119,6 @@ const SeatLayout = () => {
     setIsProcessing(true);
 
     try {
-      // 1. Send Booking Request to Backend
       const token = localStorage.getItem("token") || "";
       const bookingRes = await fetch(`${API_BASE_URL}/bookings`, {
         method: "POST",
@@ -144,7 +139,6 @@ const SeatLayout = () => {
 
       const bookingData = await bookingRes.json();
 
-      // 2. Simulate Payment Confirmation
       const paymentRes = await fetch(`${API_BASE_URL}/payments`, {
         method: "POST",
         headers: {
@@ -153,7 +147,7 @@ const SeatLayout = () => {
         },
         body: JSON.stringify({
           booking_id: bookingData.booking_id,
-          payment_method: "Credit Card / Instant UPI",
+          payment_method: "Visa / Mastercard / Instant Pay",
         }),
       });
 
@@ -168,14 +162,13 @@ const SeatLayout = () => {
           }),
           total: calculateTotal(),
         });
-        toast.success("Ticket Confirmed! Confirmation sent via Email & SMS.", { icon: "🎟️" });
+        toast.success("Ticket Confirmed! Confirmation dispatched via Email & SMS.", { icon: "🎟️" });
       } else {
         throw new Error("Payment processing failed.");
       }
     } catch (err) {
-      console.warn("Booking via API fallback simulation triggered:", err.message);
-      // Fallback local simulation for preview
-      const fallbackTxn = "TXN-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+      console.warn("API fallback simulation triggered:", err.message);
+      const fallbackTxn = "TXN-LK" + Math.random().toString(36).substring(2, 8).toUpperCase();
       setBookingConfirmation({
         bookingId: Math.floor(Math.random() * 9000) + 1000,
         txnRef: fallbackTxn,
@@ -185,13 +178,12 @@ const SeatLayout = () => {
         }),
         total: calculateTotal(),
       });
-      toast.success("Ticket Confirmed! Entrance Passcode Generated.", { icon: "🎟️" });
+      toast.success("Ticket Confirmed! Digital Entrance Passcode Generated.", { icon: "🎟️" });
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Group seats by row
   const rowsGrouped = seats.reduce((acc, seat) => {
     if (!acc[seat.row_label]) acc[seat.row_label] = [];
     acc[seat.row_label].push(seat);
@@ -206,7 +198,7 @@ const SeatLayout = () => {
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm font-medium transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back
+          <ArrowLeft className="w-4 h-4" /> Back to Showtimes
         </button>
 
         <div className="text-center">
@@ -214,7 +206,7 @@ const SeatLayout = () => {
             {showtime?.movie?.title || "Movie Showtimes"}
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            {showtime?.hall?.theater?.name || "Cinema Theater"} &bull; {showtime?.hall?.hall_name || "Screen 1"}
+            {showtime?.hall?.theater?.name || "Scope Cinemas"} &bull; {showtime?.hall?.hall_name || "Screen 1"}
           </p>
         </div>
 
@@ -226,7 +218,7 @@ const SeatLayout = () => {
           <div className="w-10 h-10 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : bookingConfirmation ? (
-        /* Confirmation Modal / Screen */
+        /* Confirmation Modal */
         <div className="max-w-lg mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center shadow-2xl">
           <div className="w-16 h-16 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-10 h-10" />
@@ -234,12 +226,12 @@ const SeatLayout = () => {
 
           <h2 className="text-3xl font-extrabold text-white mb-2">Booking Confirmed!</h2>
           <p className="text-slate-400 text-sm mb-6">
-            Your ticket pass code has been generated and dispatched via Email & SMS.
+            Your ticket pass code has been generated and sent via SMS & Email.
           </p>
 
           <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 text-left mb-6 space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-400">Booking Reference</span>
+              <span className="text-slate-400">Entry Passcode</span>
               <span className="font-mono font-bold text-rose-400">{bookingConfirmation.txnRef}</span>
             </div>
             <div className="flex justify-between text-sm">
@@ -248,7 +240,7 @@ const SeatLayout = () => {
             </div>
             <div className="flex justify-between text-sm pt-2 border-t border-slate-800">
               <span className="text-slate-400">Total Amount Paid</span>
-              <span className="font-extrabold text-emerald-400">${bookingConfirmation.total.toFixed(2)}</span>
+              <span className="font-extrabold text-emerald-400">LKR {bookingConfirmation.total.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
 
@@ -257,7 +249,7 @@ const SeatLayout = () => {
               onClick={() => navigate("/mybookings")}
               className="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-sm transition-all"
             >
-              View My Bookings
+              My Digital Tickets
             </button>
             <button
               onClick={() => navigate("/movies")}
@@ -268,28 +260,26 @@ const SeatLayout = () => {
           </div>
         </div>
       ) : (
-        /* Interactive Seat Selection Flow */
+        /* Interactive Seat Matrix (Rows A-H x 12 Seats) */
         <div className="max-w-4xl mx-auto">
-          {/* Cinema Screen Curved Visual */}
+          {/* Cinema Screen Curve */}
           <div className="mb-12 text-center">
             <div className="w-3/4 mx-auto h-3 bg-gradient-to-r from-rose-500/10 via-rose-500/80 to-rose-500/10 rounded-full shadow-[0_10px_30px_rgba(225,29,72,0.5)] mb-3"></div>
             <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
-              CINEMA SCREEN THIS WAY
+              DOLBY ATMOS CINEMA SCREEN THIS WAY
             </span>
           </div>
 
-          {/* Seat Grid */}
+          {/* Seat Grid A-H */}
           <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-6 md:p-10 mb-8 overflow-x-auto">
-            <div className="min-w-[480px] flex flex-col items-center gap-4">
+            <div className="min-w-[540px] flex flex-col items-center gap-3.5">
               {Object.keys(rowsGrouped).map((rowLabel) => (
                 <div key={rowLabel} className="flex items-center gap-3">
-                  {/* Row Label */}
                   <span className="w-6 text-center font-bold text-slate-400 text-sm">
                     {rowLabel}
                   </span>
 
-                  {/* Seats in Row */}
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
                     {rowsGrouped[rowLabel].map((seat) => {
                       const isSelected = selectedSeatIds.includes(seat.seat_id);
                       const isBooked = seat.status === "Booked";
@@ -301,7 +291,7 @@ const SeatLayout = () => {
                           key={seat.seat_id}
                           disabled={isBooked || isLocked}
                           onClick={() => toggleSeatSelection(seat)}
-                          className={`w-9 h-9 rounded-t-xl text-xs font-bold transition-all duration-200 flex items-center justify-center ${
+                          className={`w-8 h-8 rounded-t-lg text-xs font-bold transition-all duration-200 flex items-center justify-center ${
                             isBooked
                               ? "bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700/40 opacity-40"
                               : isLocked
@@ -312,7 +302,7 @@ const SeatLayout = () => {
                               ? "bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30"
                               : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:border-slate-500"
                           }`}
-                          title={`Seat ${seat.row_label}${seat.seat_number} (${seat.seat_type}) - $${getSeatPrice(seat).toFixed(2)}`}
+                          title={`Seat ${seat.row_label}${seat.seat_number} (${seat.seat_type}) - LKR ${getSeatPrice(seat).toLocaleString()}`}
                         >
                           {seat.seat_number}
                         </button>
@@ -339,11 +329,11 @@ const SeatLayout = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-t-md bg-amber-500/20 border border-amber-500/40"></div>
-                <span>VIP Recliner</span>
+                <span>VIP Recliner (G & H)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-t-md bg-slate-800 opacity-40"></div>
-                <span>Booked</span>
+                <span>Sold / Booked</span>
               </div>
             </div>
           </div>
@@ -368,8 +358,10 @@ const SeatLayout = () => {
 
             <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
               <div>
-                <div className="text-xs uppercase font-semibold text-slate-400 mb-1">Total Price</div>
-                <div className="text-2xl font-black text-rose-500">${calculateTotal().toFixed(2)}</div>
+                <div className="text-xs uppercase font-semibold text-slate-400 mb-1">Total Amount</div>
+                <div className="text-2xl font-black text-rose-500">
+                  LKR {calculateTotal().toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </div>
               </div>
 
               <button
@@ -384,11 +376,11 @@ const SeatLayout = () => {
                 {isProcessing ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Locking Seats...
+                    Processing...
                   </>
                 ) : (
                   <>
-                    <CreditCard className="w-4 h-4" /> Reserve & Pay
+                    <CreditCard className="w-4 h-4" /> Reserve & Checkout
                   </>
                 )}
               </button>

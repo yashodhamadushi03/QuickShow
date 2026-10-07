@@ -9,52 +9,74 @@ from app.models.showtime import Showtime
 
 
 def seed_database():
-    print("🚀 Initializing QuickShow Database Seeding...")
+    print("🇱🇰 Initializing QuickShow Database Seeding with Sri Lankan Cinemas & Blockbusters...")
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
     try:
-        # 1. Create Default Users
-        admin_email = "admin@quickshow.com"
-        customer_email = "user@quickshow.com"
+        # 1. Default Accounts
+        admin_email = "admin@quickshow.lk"
+        customer_email = "user@quickshow.lk"
 
         admin = db.query(User).filter(User.email == admin_email).first()
         if not admin:
             admin = User(
-                name="Cinema Administrator",
+                name="Scope Admin Sri Lanka",
                 email=admin_email,
                 password_hash=get_password_hash("admin123"),
-                phone="+15550192834",
+                phone="+94771234567",
                 role=UserRole.ADMIN
             )
             db.add(admin)
-            print("  ✓ Created Admin User: admin@quickshow.com (password: admin123)")
+            print("  ✓ Created Sri Lankan Admin User: admin@quickshow.lk")
 
         customer = db.query(User).filter(User.email == customer_email).first()
         if not customer:
             customer = User(
-                name="Jane Customer",
+                name="Kasun Perera",
                 email=customer_email,
                 password_hash=get_password_hash("user123"),
-                phone="+15550183742",
+                phone="+94719876543",
                 role=UserRole.CUSTOMER
             )
             db.add(customer)
-            print("  ✓ Created Customer User: user@quickshow.com (password: user123)")
+            print("  ✓ Created Customer User: user@quickshow.lk")
 
         db.flush()
 
-        # 2. Seed Movies
+        # 2. Seed Movies (Sinhala, Tamil & English Blockbusters)
         movies_data = [
             {
-                "title": "Avatar: The Way of Water",
-                "description": "Jake Sully lives with his newfound family formed on the extrasolar moon Pandora.",
-                "genre": "Sci-Fi / Action",
-                "duration_min": 192,
+                "title": "Dune: Part Two",
+                "description": "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.",
+                "genre": "Sci-Fi / Adventure",
+                "duration_min": 166,
                 "language": "English",
-                "poster_url": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800",
+                "poster_url": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800",
                 "rating": "PG-13",
-                "release_date": date(2022, 12, 16),
+                "release_date": date(2024, 3, 1),
+                "status": MovieStatus.NOW_SHOWING
+            },
+            {
+                "title": "Kandak Sema",
+                "description": "A poignant Sri Lankan cinema drama depicting love, resilience, and personal triumph across generations.",
+                "genre": "Drama / Romance",
+                "duration_min": 135,
+                "language": "Sinhala",
+                "poster_url": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800",
+                "rating": "U/A",
+                "release_date": date(2024, 5, 10),
+                "status": MovieStatus.NOW_SHOWING
+            },
+            {
+                "title": "The Greatest Of All Time (GOAT)",
+                "description": "An action-packed sci-fi thriller featuring dual roles and high-octane suspense across international missions.",
+                "genre": "Action / Sci-Fi",
+                "duration_min": 178,
+                "language": "Tamil",
+                "poster_url": "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800",
+                "rating": "U/A",
+                "release_date": date(2024, 9, 5),
                 "status": MovieStatus.NOW_SHOWING
             },
             {
@@ -69,47 +91,25 @@ def seed_database():
                 "status": MovieStatus.NOW_SHOWING
             },
             {
-                "title": "Dune: Part Two",
-                "description": "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.",
-                "genre": "Sci-Fi / Adventure",
-                "duration_min": 166,
-                "language": "English",
-                "poster_url": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800",
-                "rating": "PG-13",
-                "release_date": date(2024, 3, 1),
-                "status": MovieStatus.NOW_SHOWING
-            },
-            {
-                "title": "Deadpool & Wolverine",
-                "description": "Wolverine is recovering from his injuries when he crosses paths with the loudmouth Deadpool.",
-                "genre": "Action / Comedy",
-                "duration_min": 127,
-                "language": "English",
-                "poster_url": "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800",
-                "rating": "R",
-                "release_date": date(2024, 7, 26),
+                "title": "Devara: Part 1",
+                "description": "An epic action saga set against coastal lands, depicting coastal power struggles and legendary courage.",
+                "genre": "Action / Drama",
+                "duration_min": 170,
+                "language": "Tamil",
+                "poster_url": "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=800",
+                "rating": "U/A",
+                "release_date": date(2024, 9, 27),
                 "status": MovieStatus.COMING_SOON
             },
             {
                 "title": "Joker: Folie à Deux",
-                "description": "Struggling with his dual identity, Arthur Fleck not only stumbles upon true love, but also finds the music that's always been inside him.",
-                "genre": "Crime / Musical / Drama",
+                "description": "Arthur Fleck struggles with his dual identity while discovering love and music within Arkham State Hospital.",
+                "genre": "Crime / Drama / Musical",
                 "duration_min": 138,
                 "language": "English",
                 "poster_url": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800",
                 "rating": "R",
                 "release_date": date(2024, 10, 4),
-                "status": MovieStatus.COMING_SOON
-            },
-            {
-                "title": "Gladiator II",
-                "description": "Years after witnessing the death of the revered hero Maximus, Lucius enters the Colosseum after his home is conquered by tyrant emperors.",
-                "genre": "Action / History",
-                "duration_min": 150,
-                "language": "English",
-                "poster_url": "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=800",
-                "rating": "R",
-                "release_date": date(2024, 11, 22),
                 "status": MovieStatus.COMING_SOON
             }
         ]
@@ -125,21 +125,44 @@ def seed_database():
                 movie_objs.append(existing_m)
         
         db.flush()
-        print(f"  ✓ Seeded {len(movie_objs)} Movies (Now Showing & Coming Soon)")
+        print(f"  ✓ Seeded {len(movie_objs)} Movies (English, Sinhala & Tamil)")
 
-        # 3. Seed Theaters & Halls
+        # 3. Seed Authentic Sri Lankan Cinema Theaters
         theaters_data = [
             {
-                "name": "QuickShow Grand Cinema",
-                "city": "New York",
-                "address": "450 7th Ave, Manhattan, NY 10123",
-                "halls": ["Screen 1 - IMAX", "Screen 2 - Dolby Atmos", "Screen 3 - VIP Luxe"]
+                "name": "Scope Cinemas Multiplex - Colombo City Centre",
+                "city": "Colombo 02",
+                "address": "137 Sir James Pieris Mawatha, Colombo 00200",
+                "phone": "+94 11 208 3000",
+                "halls": ["Screen 1 - Dolby Atmos", "Screen 2 - Laser 4K", "Screen 3 - Gold Class Lounge"]
             },
             {
-                "name": "StarPlex Cinema Complex",
-                "city": "Los Angeles",
-                "address": "6801 Hollywood Blvd, Los Angeles, CA 90028",
-                "halls": ["Hall A - Premium", "Hall B - Ultra HD"]
+                "name": "Scope Cinemas Multiplex - Havelock City Mall",
+                "city": "Colombo 05",
+                "address": "324 Havelock Rd, Colombo 00500",
+                "phone": "+94 11 208 3005",
+                "halls": ["Screen 1 - IMAX 3D", "Screen 2 - Dolby Surround"]
+            },
+            {
+                "name": "Liberty by Scope Cinemas",
+                "city": "Colombo 03",
+                "address": "35 R. A. De Mel Mawatha, Colpetty, Colombo 00300",
+                "phone": "+94 11 232 5250",
+                "halls": ["Cinema 1 - Main Auditorium", "Cinema 2 - VIP Suites"]
+            },
+            {
+                "name": "Savoy 3D Dolby Atmos",
+                "city": "Colombo 06",
+                "address": "12 Galle Rd, Wellawatte, Colombo 00600",
+                "phone": "+94 11 236 2200",
+                "halls": ["Savoy 3D Hall 1", "Savoy Premier Lounge"]
+            },
+            {
+                "name": "Savoy Metro",
+                "city": "Maharagama",
+                "address": "High Level Rd, Maharagama 10280",
+                "phone": "+94 11 285 0200",
+                "halls": ["Metro Screen 1", "Metro Screen 2"]
             }
         ]
 
@@ -156,23 +179,23 @@ def seed_database():
             for h_name in t_data["halls"]:
                 existing_h = db.query(Hall).filter(Hall.theater_id == t.theater_id, Hall.hall_name == h_name).first()
                 if not existing_h:
-                    h = Hall(theater_id=t.theater_id, hall_name=h_name, total_capacity=50)
+                    h = Hall(theater_id=t.theater_id, hall_name=h_name, total_capacity=96)
                     db.add(h)
                     db.flush()
                     halls_created.append(h)
 
-                    # Generate Seat Grid (Rows A-E, Seats 1-10)
-                    rows = ["A", "B", "C", "D", "E"]
+                    # Generate Seat Grid (Rows A to H, Seats 1 to 12 = 96 Seats per hall!)
+                    rows = ["A", "B", "C", "D", "E", "F", "G", "H"]
                     for row in rows:
-                        for num in range(1, 11):
-                            seat_type = "VIP" if row in ["D", "E"] else "Regular"
+                        for num in range(1, 13):
+                            seat_type = "VIP" if row in ["G", "H"] else "Regular"
                             seat = Seat(hall_id=h.hall_id, row_label=row, seat_number=num, seat_type=seat_type)
                             db.add(seat)
                 else:
                     halls_created.append(existing_h)
 
         db.flush()
-        print(f"  ✓ Seeded Theaters & Screening Halls with Seats Grid (Rows A-E x 10)")
+        print(f"  ✓ Seeded 5 Sri Lankan Cinema Theaters & Halls with Seat Matrix (Rows A-H x 12)")
 
         # 4. Seed Showtimes for Now Showing Movies
         now_showing_movies = [m for m in movie_objs if m.status == MovieStatus.NOW_SHOWING]
@@ -180,8 +203,8 @@ def seed_database():
 
         showtime_count = 0
         for m in now_showing_movies:
-            for h in halls_created[:2]:  # Seed for first 2 halls
-                for hours_offset in [2, 6, 26, 30]:
+            for h in halls_created[:4]:  # Seed across halls
+                for hours_offset in [3, 7, 27, 31]:
                     start_time = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=hours_offset)
                     end_time = start_time + timedelta(minutes=m.duration_min)
                     
@@ -197,14 +220,14 @@ def seed_database():
                             hall_id=h.hall_id,
                             start_time=start_time,
                             end_time=end_time,
-                            base_price=Decimal("14.50") if "IMAX" not in h.hall_name else Decimal("18.50")
+                            base_price=Decimal("1500.00") if "Gold" not in h.hall_name else Decimal("2800.00")
                         )
                         db.add(st)
                         showtime_count += 1
 
         db.commit()
-        print(f"  ✓ Seeded {showtime_count} Showtimes across cinema halls")
-        print("\n🎉 QuickShow Database Seeding Completed Successfully!\n")
+        print(f"  ✓ Seeded {showtime_count} Showtimes across Sri Lankan halls")
+        print("\n🇱🇰 QuickShow Sri Lanka Database Seeding Completed Successfully!\n")
 
     except Exception as e:
         db.rollback()

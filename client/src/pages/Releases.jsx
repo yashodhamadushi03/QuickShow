@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Bell, Film, Play, Sparkles, Star } from "lucide-react";
+import { Calendar, Bell, Film, Play, Sparkles } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const API_BASE_URL = "http://localhost:8000/api";
@@ -12,15 +12,15 @@ const Releases = () => {
   const fallbackReleases = [
     {
       movie_id: 101,
-      title: "Deadpool & Wolverine",
-      genre: "Action / Comedy",
-      language: "English",
-      duration_min: 127,
-      rating: "R",
-      release_date: "2024-07-26",
+      title: "Devara: Part 1",
+      genre: "Action / Drama",
+      language: "Tamil / Telugu",
+      duration_min: 170,
+      rating: "U/A",
+      release_date: "2024-09-27",
       status: "Coming Soon",
-      poster_url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800",
-      description: "Wolverine is recovering from his injuries when he crosses paths with the loudmouth Deadpool to defeat a common enemy."
+      poster_url: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=800",
+      description: "An epic action saga set against coastal lands, depicting coastal power struggles and legendary courage."
     },
     {
       movie_id: 102,
@@ -32,7 +32,7 @@ const Releases = () => {
       release_date: "2024-10-04",
       status: "Coming Soon",
       poster_url: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800",
-      description: "Struggling with his dual identity, Arthur Fleck not only stumbles upon true love, but also finds the music that's always been inside him."
+      description: "Struggling with his dual identity, Arthur Fleck stumbles upon true love and music inside Arkham State Hospital."
     },
     {
       movie_id: 103,
@@ -43,7 +43,7 @@ const Releases = () => {
       rating: "R",
       release_date: "2024-11-22",
       status: "Coming Soon",
-      poster_url: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=800",
+      poster_url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800",
       description: "Lucius enters the Colosseum years after witnessing the fall of Maximus to fight against emperor tyranny in Rome."
     },
     {
@@ -86,7 +86,7 @@ const Releases = () => {
     setReminders((prev) => {
       const updated = !prev[movieId];
       if (updated) {
-        toast.success(`Reminder set! We'll notify you when tickets open for ${title}.`, {
+        toast.success(`Reminder set! We'll notify you when Scope & Savoy tickets open for ${title}.`, {
           icon: "🎟️",
           style: { background: "#1e293b", color: "#fff", border: "1px solid #e11d48" }
         });
@@ -102,13 +102,13 @@ const Releases = () => {
       {/* Hero Header */}
       <div className="max-w-7xl mx-auto mb-12 text-center md:text-left border-b border-slate-800 pb-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 text-rose-400 text-sm font-medium mb-4 border border-rose-500/20">
-          <Calendar className="w-4 h-4" /> Upcoming Blockbusters
+          <Calendar className="w-4 h-4" /> Upcoming Releases in Sri Lanka
         </div>
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-3">
-          Coming Soon & Releases
+          Coming Soon & Movie Premieres
         </h1>
         <p className="text-slate-400 text-lg max-w-2xl">
-          Get exclusive sneak peeks, release dates, and set pre-booking alerts for upcoming movie premieres.
+          Set pre-booking alerts for upcoming English, Sinhala, and Tamil blockbusters releasing across Scope Cinemas & Savoy Theaters.
         </p>
       </div>
 
@@ -133,7 +133,7 @@ const Releases = () => {
                     className="w-full h-64 sm:h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-3 left-3 px-2.5 py-1 bg-rose-600/90 text-white text-xs font-bold rounded-md shadow-md uppercase tracking-wider">
-                    {movie.rating || "TBA"}
+                    {movie.rating || "U/A"}
                   </div>
                 </div>
 
@@ -175,12 +175,12 @@ const Releases = () => {
                       }`}
                     >
                       <Bell className="w-4 h-4" />
-                      {reminders[movie.movie_id] ? "Alert Set ✓" : "Notify Me"}
+                      {reminders[movie.movie_id] ? "Alert Set ✓" : "Pre-Book Alert"}
                     </button>
 
                     <button
                       onClick={() =>
-                        toast("Official trailer coming soon to QuickShow!", {
+                        toast("Official trailer coming soon to QuickShow Sri Lanka!", {
                           icon: "🎬",
                           style: { background: "#1e293b", color: "#fff" }
                         })

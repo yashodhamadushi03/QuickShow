@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MapPin, Film, Sparkles, Clock, Search, ShieldCheck } from "lucide-react";
+import { MapPin, Film, Sparkles, Phone, ShieldCheck, Search, Navigation } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const API_BASE_URL = "http://localhost:8000/api";
@@ -13,33 +13,58 @@ const Theaters = () => {
   const fallbackTheaters = [
     {
       theater_id: 1,
-      name: "QuickShow Grand Cinema",
-      city: "New York",
-      address: "450 7th Ave, Manhattan, NY 10123",
+      name: "Scope Cinemas Multiplex - Colombo City Centre",
+      city: "Colombo 02",
+      address: "137 Sir James Pieris Mawatha, Colombo 00200",
+      phone: "+94 11 208 3000",
       halls: [
-        { hall_id: 101, hall_name: "Screen 1 - IMAX Laser", total_capacity: 120 },
-        { hall_id: 102, hall_name: "Screen 2 - Dolby Atmos", total_capacity: 85 },
-        { hall_id: 103, hall_name: "Screen 3 - VIP Luxe Recliners", total_capacity: 50 }
+        { hall_id: 101, hall_name: "Screen 1 - Dolby Atmos", total_capacity: 96 },
+        { hall_id: 102, hall_name: "Screen 2 - Laser 4K", total_capacity: 96 },
+        { hall_id: 103, hall_name: "Screen 3 - Gold Class Luxury Lounge", total_capacity: 48 }
       ]
     },
     {
       theater_id: 2,
-      name: "StarPlex Cinema Complex",
-      city: "Los Angeles",
-      address: "6801 Hollywood Blvd, Los Angeles, CA 90028",
+      name: "Scope Cinemas Multiplex - Havelock City Mall",
+      city: "Colombo 05",
+      address: "324 Havelock Rd, Colombo 00500",
+      phone: "+94 11 208 3005",
       halls: [
-        { hall_id: 201, hall_name: "Hall A - IMAX 3D", total_capacity: 150 },
-        { hall_id: 202, hall_name: "Hall B - Ultra HD 4K", total_capacity: 90 }
+        { hall_id: 201, hall_name: "Screen 1 - IMAX 3D Laser", total_capacity: 120 },
+        { hall_id: 202, hall_name: "Screen 2 - Dolby Surround", total_capacity: 96 }
       ]
     },
     {
       theater_id: 3,
-      name: "CinePremier Horizon",
-      city: "Chicago",
-      address: "120 N Michigan Ave, Chicago, IL 60601",
+      name: "Liberty by Scope Cinemas",
+      city: "Colombo 03",
+      address: "35 R. A. De Mel Mawatha, Colpetty, Colombo 00300",
+      phone: "+94 11 232 5250",
       halls: [
-        { hall_id: 301, hall_name: "Auditorium 1 - Premium 70mm", total_capacity: 110 },
-        { hall_id: 302, hall_name: "Auditorium 2 - VIP Lounge", total_capacity: 40 }
+        { hall_id: 301, hall_name: "Cinema 1 - Main Auditorium", total_capacity: 150 },
+        { hall_id: 302, hall_name: "Cinema 2 - VIP Recliner Suite", total_capacity: 60 }
+      ]
+    },
+    {
+      theater_id: 4,
+      name: "Savoy 3D Dolby Atmos",
+      city: "Colombo 06",
+      address: "12 Galle Rd, Wellawatte, Colombo 00600",
+      phone: "+94 11 236 2200",
+      halls: [
+        { hall_id: 401, hall_name: "Savoy 3D Main Screen", total_capacity: 180 },
+        { hall_id: 402, hall_name: "Savoy Premier Lounge", total_capacity: 80 }
+      ]
+    },
+    {
+      theater_id: 5,
+      name: "Savoy Metro",
+      city: "Maharagama",
+      address: "High Level Rd, Maharagama 10280",
+      phone: "+94 11 285 0200",
+      halls: [
+        { hall_id: 501, hall_name: "Metro Screen 1", total_capacity: 96 },
+        { hall_id: 502, hall_name: "Metro Screen 2", total_capacity: 96 }
       ]
     }
   ];
@@ -58,7 +83,7 @@ const Theaters = () => {
         setTheaters(fallbackTheaters);
       }
     } catch (err) {
-      console.warn("Backend API unavailable, using fallback theater data.", err);
+      console.warn("Backend API unavailable, using fallback Sri Lankan theater data.", err);
       setTheaters(fallbackTheaters);
     } finally {
       setLoading(false);
@@ -81,13 +106,13 @@ const Theaters = () => {
       {/* Header Banner */}
       <div className="max-w-7xl mx-auto mb-12 text-center md:text-left border-b border-slate-800 pb-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 text-rose-400 text-sm font-medium mb-4 border border-rose-500/20">
-          <Sparkles className="w-4 h-4" /> Cinema Locations & Experiences
+          <Sparkles className="w-4 h-4" /> Sri Lankan Cinema Locations
         </div>
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-3">
-          Explore Cinema Theaters
+          Explore Cinema Theaters in Sri Lanka
         </h1>
         <p className="text-slate-400 text-lg max-w-2xl">
-          Discover state-of-the-art screening halls, IMAX Laser venues, and VIP recliner auditoriums near you.
+          Book tickets at Scope Cinemas Colombo City Centre, Havelock City Mall, Liberty Colpetty, Savoy Wellawatte, and Savoy Metro.
         </p>
 
         {/* Filter Controls */}
@@ -114,7 +139,7 @@ const Theaters = () => {
             <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
             <input
               type="text"
-              placeholder="Search theater or address..."
+              placeholder="Search theater, city or address..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
@@ -132,7 +157,7 @@ const Theaters = () => {
         ) : filteredTheaters.length === 0 ? (
           <div className="text-center py-16 bg-slate-900/50 rounded-2xl border border-slate-800">
             <MapPin className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400 text-lg">No theaters match your search criteria.</p>
+            <p className="text-slate-400 text-lg">No Sri Lankan theaters match your search criteria.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -143,7 +168,7 @@ const Theaters = () => {
               >
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-4">
-                    <h3 className="text-2xl font-bold text-white group-hover:text-rose-400 transition-colors">
+                    <h3 className="text-xl font-bold text-white group-hover:text-rose-400 transition-colors">
                       {theater.name}
                     </h3>
                     <span className="px-3 py-1 bg-rose-500/10 text-rose-400 text-xs font-semibold rounded-full border border-rose-500/20 shrink-0">
@@ -151,9 +176,19 @@ const Theaters = () => {
                     </span>
                   </div>
 
-                  <div className="flex items-start gap-2.5 text-slate-400 text-sm mb-6">
-                    <MapPin className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-                    <span>{theater.address}</span>
+                  <div className="space-y-2 text-slate-400 text-sm mb-6">
+                    <div className="flex items-start gap-2.5">
+                      <MapPin className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                      <span>{theater.address}</span>
+                    </div>
+                    {theater.phone && (
+                      <div className="flex items-center gap-2.5 text-xs text-slate-400">
+                        <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                        <a href={`tel:${theater.phone}`} className="hover:text-rose-400 transition-colors font-mono">
+                          {theater.phone}
+                        </a>
+                      </div>
+                    )}
                   </div>
 
                   {/* Screening Halls */}
@@ -170,12 +205,12 @@ const Theaters = () => {
                           >
                             <span className="font-medium text-slate-200">{hall.hall_name}</span>
                             <span className="text-slate-500 font-mono">
-                              {hall.total_capacity ? `${hall.total_capacity} Seats` : "Multi-seat"}
+                              {hall.total_capacity ? `${hall.total_capacity} Seats` : "Multi-tier"}
                             </span>
                           </div>
                         ))
                       ) : (
-                        <p className="text-xs text-slate-500 italic">Halls list updating...</p>
+                        <p className="text-xs text-slate-500 italic">Screening halls updating...</p>
                       )}
                     </div>
                   </div>
@@ -183,14 +218,14 @@ const Theaters = () => {
 
                 {/* Footer Action */}
                 <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-400">
-                    <ShieldCheck className="w-4 h-4" /> 4K Laser Projection
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
+                    <ShieldCheck className="w-4 h-4" /> Dolby Atmos & 4K Laser
                   </div>
                   <Link
                     to="/movies"
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-400 transition-colors"
                   >
-                    View Movies & Showtimes &rarr;
+                    View Showtimes &rarr;
                   </Link>
                 </div>
               </div>
