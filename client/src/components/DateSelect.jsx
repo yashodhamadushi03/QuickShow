@@ -1,21 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BlurCircle from "./BlurCircle";
 import { ChevronLeftIcon } from "lucide-react";
 import toast from "react-hot-toast";
 
 const DateSelect = ({ dateTime, id }) => {
-  const [selected, setSelected] = useState(null);
+  const dates = dateTime ? Object.keys(dateTime) : [];
+  const [selected, setSelected] = useState(dates[0] || null);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!selected && dates.length > 0) {
+      setSelected(dates[0]);
+    }
+  }, [dateTime]);
+
   const onBookHandler = () => {
-    if (!selected) {
-      return toast.error("Please select a showtime date first!", {
-        style: { background: "#1e293b", color: "#fff", border: "1px solid #e11d48" }
-      });
+    const targetDate = selected || dates[0];
+    if (!targetDate) {
+      return toast.error("No showtimes available for this movie right now.");
     }
 
-    navigate(`/movies/${id}/${selected}`);
+    navigate(`/movies/${id}/${targetDate}`);
     window.scrollTo(0, 0);
   };
 
