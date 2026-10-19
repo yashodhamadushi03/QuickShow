@@ -100,7 +100,7 @@ const Chatbot = () => {
                 <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
                   QuickShow Assistant <Sparkles className="w-3.5 h-3.5 text-rose-400" />
                 </h3>
-                <span className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
+                <span className="text-xs text-emerald-400 font-medium flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span> Online Sri Lanka
                 </span>
               </div>
@@ -114,7 +114,7 @@ const Chatbot = () => {
           </div>
 
           {/* Messages Body */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
+          <div className="flex-1 p-4 overflow-y-auto space-y-3.5 text-sm">
             {messages.map((msg, idx) => (
               <div
                 key={idx}
@@ -123,7 +123,7 @@ const Chatbot = () => {
                 }`}
               >
                 <div
-                  className={`max-w-[85%] p-3 rounded-2xl whitespace-pre-line leading-relaxed ${
+                  className={`max-w-[85%] p-3.5 rounded-2xl whitespace-pre-line leading-relaxed text-sm ${
                     msg.sender === "user"
                       ? "bg-rose-600 text-white rounded-br-none"
                       : "bg-slate-950 border border-slate-800 text-slate-200 rounded-bl-none"
@@ -131,19 +131,19 @@ const Chatbot = () => {
                 >
                   {msg.text}
                 </div>
-                <span className="text-[9px] text-slate-500 mt-1 px-1">{msg.time}</span>
+                <span className="text-xs text-slate-400 mt-1 px-1 font-mono">{msg.time}</span>
               </div>
             ))}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Quick Prompts Chips */}
-          <div className="px-3 py-2 bg-slate-950/60 border-t border-slate-800/60 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-[11px]">
+          <div className="px-3 py-2 bg-slate-950/60 border-t border-slate-800/60 flex items-center gap-2 overflow-x-auto no-scrollbar text-xs">
             {quickPrompts.map((prompt, i) => (
               <button
                 key={i}
                 onClick={() => handleSendMessage(prompt)}
-                className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-full whitespace-nowrap shrink-0 transition-colors"
+                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-full whitespace-nowrap shrink-0 transition-colors text-xs font-medium"
               >
                 {prompt}
               </button>
@@ -163,7 +163,7 @@ const Chatbot = () => {
               placeholder="Ask about movies, theaters, or tickets..."
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
             />
             <button
               type="submit"

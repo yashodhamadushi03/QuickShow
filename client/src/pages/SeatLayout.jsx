@@ -361,14 +361,14 @@ const SeatLayout = () => {
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight">
             {showtime?.movie?.title || "Movie Showtimes"}
           </h1>
-          <p className="text-[11px] sm:text-xs text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-300 mt-1">
             {showtime?.hall?.theater?.name || "Scope Cinemas"} &bull; {showtime?.hall?.hall_name || "Screen 1"}
           </p>
         </div>
 
         <button
           onClick={() => setShowAiModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-full text-xs font-extrabold shadow-lg shadow-rose-600/30 transition-all hover:scale-105 cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-full text-xs sm:text-sm font-bold shadow-lg shadow-rose-600/30 transition-all hover:scale-105 cursor-pointer"
           title="AI Smart Seat Optimizer Assistant"
         >
           <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
@@ -388,20 +388,20 @@ const SeatLayout = () => {
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">Booking Confirmed!</h2>
-          <p className="text-emerald-400 font-medium text-xs sm:text-sm mb-6">
+          <p className="text-emerald-400 font-medium text-sm mb-6">
             🎟️ Digital Ticket Pass dispatched to: <strong>{bookingConfirmation.email}</strong>
           </p>
 
           <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-left mb-6 space-y-3">
-            <div className="flex justify-between text-xs sm:text-sm">
+            <div className="flex justify-between text-sm sm:text-base">
               <span className="text-slate-400">Entry Passcode</span>
               <span className="font-mono font-bold text-rose-400">{bookingConfirmation.txnRef}</span>
             </div>
-            <div className="flex justify-between text-xs sm:text-sm">
+            <div className="flex justify-between text-sm sm:text-base">
               <span className="text-slate-400">Seats Reserved</span>
               <span className="font-bold text-white">{bookingConfirmation.seats.join(", ")}</span>
             </div>
-            <div className="flex justify-between text-xs sm:text-sm pt-2 border-t border-slate-800">
+            <div className="flex justify-between text-sm sm:text-base pt-2 border-t border-slate-800">
               <span className="text-slate-400">Total Amount Paid</span>
               <span className="font-extrabold text-emerald-400">LKR {bookingConfirmation.total.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
             </div>
@@ -413,7 +413,7 @@ const SeatLayout = () => {
               onClick={() =>
                 toast.success("Apple & Google Wallet pass payload generated!", { icon: "💳" })
               }
-              className="w-full py-2.5 px-4 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-2.5 px-4 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
             >
               <Wallet className="w-4 h-4 text-rose-400" /> Save to Apple / Google Wallet
             </button>
@@ -422,7 +422,7 @@ const SeatLayout = () => {
                 navigator.clipboard.writeText(window.location.href);
                 toast.success("Group Split Payment share link copied to clipboard!", { icon: "🔗" });
               }}
-              className="w-full py-2.5 px-4 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-2.5 px-4 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
             >
               <Share2 className="w-4 h-4 text-rose-400" /> Share Group Split Payment Link
             </button>
@@ -431,13 +431,13 @@ const SeatLayout = () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => navigate("/mybookings")}
-              className="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs sm:text-sm transition-all"
+              className="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-sm transition-all"
             >
               My Digital Tickets
             </button>
             <button
               onClick={() => navigate("/movies")}
-              className="py-3 px-5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl text-xs sm:text-sm transition-all"
+              className="py-3 px-5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl text-sm transition-all"
             >
               Browse Movies
             </button>
@@ -454,21 +454,21 @@ const SeatLayout = () => {
                   <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                  <h3 className="text-base font-extrabold text-white flex items-center gap-2">
                     AI Smart Seat Optimizer Assistant
-                    <span className="px-2 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-full text-[10px] uppercase font-mono">
+                    <span className="px-2.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-full text-xs uppercase font-mono font-semibold">
                       v2.4 Active
                     </span>
                   </h3>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-xs sm:text-sm text-slate-300">
                     Select your party size and experience preset for acoustic & visual optimization.
                   </p>
                 </div>
               </div>
 
               {/* Party Size Selector */}
-              <div className="flex items-center gap-1.5 self-start md:self-auto bg-slate-950 p-1 rounded-xl border border-slate-800">
-                <span className="text-[10px] font-bold text-slate-500 uppercase px-2">Party:</span>
+              <div className="flex items-center gap-1.5 self-start md:self-auto bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+                <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase px-2">Party:</span>
                 {[1, 2, 3, 4].map((num) => (
                   <button
                     key={num}
@@ -477,7 +477,7 @@ const SeatLayout = () => {
                       setPartySize(num);
                       recommendBestSeats(num, aiPreference);
                     }}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                    className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
                       partySize === num
                         ? "bg-rose-600 text-white shadow-md shadow-rose-600/40"
                         : "text-slate-400 hover:text-white"
@@ -497,7 +497,7 @@ const SeatLayout = () => {
                   setAiPreference("acoustic");
                   recommendBestSeats(partySize, "acoustic");
                 }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all ${
                   aiPreference === "acoustic"
                     ? "bg-rose-600 text-white shadow-md"
                     : "bg-slate-950 border border-slate-800 text-slate-300 hover:border-rose-500/50"
@@ -511,7 +511,7 @@ const SeatLayout = () => {
                   setAiPreference("vip");
                   recommendBestSeats(partySize, "vip");
                 }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all ${
                   aiPreference === "vip"
                     ? "bg-amber-500 text-slate-950 font-black shadow-md"
                     : "bg-slate-950 border border-slate-800 text-amber-300 hover:border-amber-500/50"
@@ -525,7 +525,7 @@ const SeatLayout = () => {
                   setAiPreference("view");
                   recommendBestSeats(partySize, "view");
                 }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all ${
                   aiPreference === "view"
                     ? "bg-rose-600 text-white shadow-md"
                     : "bg-slate-950 border border-slate-800 text-slate-300 hover:border-rose-500/50"
@@ -539,7 +539,7 @@ const SeatLayout = () => {
                   setAiPreference("aisle");
                   recommendBestSeats(partySize, "aisle");
                 }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all ${
                   aiPreference === "aisle"
                     ? "bg-rose-600 text-white shadow-md"
                     : "bg-slate-950 border border-slate-800 text-slate-300 hover:border-rose-500/50"
@@ -551,16 +551,16 @@ const SeatLayout = () => {
 
             {/* AI Recommendation Insights Card */}
             {aiRecommendationInfo && (
-              <div className="mt-3 bg-slate-950 border border-rose-500/40 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+              <div className="mt-3 bg-slate-950 border border-rose-500/40 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
                 <div className="flex items-center gap-2.5">
-                  <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md text-xs font-extrabold font-mono">
+                  <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md text-xs sm:text-sm font-extrabold font-mono">
                     {aiRecommendationInfo.score}% AI Match
                   </span>
                   <div>
-                    <span className="text-xs font-bold text-white">
+                    <span className="text-sm font-bold text-white">
                       Selected Seats: <strong className="text-rose-400">{aiRecommendationInfo.seats.join(", ")}</strong>
                     </span>
-                    <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                    <p className="text-xs sm:text-sm text-slate-300 mt-0.5 leading-snug">
                       {aiRecommendationInfo.explanation}
                     </p>
                   </div>
@@ -569,7 +569,7 @@ const SeatLayout = () => {
                 <button
                   type="button"
                   onClick={() => setShowAiModal(true)}
-                  className="text-xs text-rose-400 hover:text-white font-bold underline whitespace-nowrap"
+                  className="text-xs sm:text-sm text-rose-400 hover:text-white font-bold underline whitespace-nowrap"
                 >
                   View AI Concierge Details &rarr;
                 </button>
@@ -580,7 +580,7 @@ const SeatLayout = () => {
           {/* Cinema Screen Curve */}
           <div className="mb-8 sm:mb-10 text-center">
             <div className="w-3/4 mx-auto h-2.5 sm:h-3 bg-gradient-to-r from-rose-500/10 via-rose-500/80 to-rose-500/10 rounded-full shadow-[0_10px_30px_rgba(225,29,72,0.5)] mb-3"></div>
-            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-500">
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400">
               DOLBY ATMOS CINEMA SCREEN THIS WAY
             </span>
           </div>
@@ -590,7 +590,7 @@ const SeatLayout = () => {
             <div className="min-w-[460px] sm:min-w-[540px] flex flex-col items-center gap-2.5 sm:gap-3.5">
               {Object.keys(rowsGrouped).map((rowLabel) => (
                 <div key={rowLabel} className="flex items-center gap-2 sm:gap-3">
-                  <span className="w-5 sm:w-6 text-center font-bold text-slate-400 text-xs sm:text-sm">
+                  <span className="w-6 sm:w-7 text-center font-bold text-slate-300 text-sm">
                     {rowLabel}
                   </span>
 
@@ -606,7 +606,7 @@ const SeatLayout = () => {
                           key={seat.seat_id}
                           disabled={isBooked || isLocked}
                           onClick={() => toggleSeatSelection(seat)}
-                          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-t-md sm:rounded-t-lg text-[10px] sm:text-xs font-bold transition-all duration-200 flex items-center justify-center ${
+                          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-t-md sm:rounded-t-lg text-xs font-bold transition-all duration-200 flex items-center justify-center ${
                             isBooked
                               ? "bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700/40 opacity-40"
                               : isLocked
@@ -625,7 +625,7 @@ const SeatLayout = () => {
                     })}
                   </div>
 
-                  <span className="w-5 sm:w-6 text-center font-bold text-slate-400 text-xs sm:text-sm">
+                  <span className="w-6 sm:w-7 text-center font-bold text-slate-300 text-sm">
                     {rowLabel}
                   </span>
                 </div>
@@ -633,7 +633,7 @@ const SeatLayout = () => {
             </div>
 
             {/* Legend */}
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-8 pt-6 border-t border-slate-800 text-[11px] sm:text-xs text-slate-400">
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-8 pt-6 border-t border-slate-800 text-xs sm:text-sm text-slate-300">
               <div className="flex items-center gap-1.5">
                 <div className="w-3.5 h-3.5 rounded-t bg-slate-800 border border-slate-700"></div>
                 <span>Available</span>
@@ -655,7 +655,7 @@ const SeatLayout = () => {
 
           {/* Customer Email Input for Ticket Dispatch */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-6">
-            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+            <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
               <Mail className="w-4 h-4 text-rose-500" /> Customer Email for Digital Ticket Delivery
             </label>
             <input
@@ -666,7 +666,7 @@ const SeatLayout = () => {
               onChange={(e) => setCustomerEmail(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
             />
-            <p className="text-[11px] text-slate-500 mt-1.5">
+            <p className="text-xs sm:text-sm text-slate-400 mt-1.5">
               Your HTML entrance pass and entry QR passcode will be delivered to this email.
             </p>
           </div>
@@ -674,7 +674,7 @@ const SeatLayout = () => {
           {/* Checkout Bar */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 shadow-xl">
             <div className="text-center sm:text-left w-full sm:w-auto">
-              <div className="text-[11px] sm:text-xs uppercase font-semibold text-slate-400 mb-0.5">
+              <div className="text-xs sm:text-sm uppercase font-bold text-slate-400 mb-0.5">
                 Selected Seats ({selectedSeatIds.length})
               </div>
               <div className="text-base sm:text-lg font-bold text-white">
@@ -691,8 +691,8 @@ const SeatLayout = () => {
 
             <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-between sm:justify-end">
               <div>
-                <div className="text-[11px] sm:text-xs uppercase font-semibold text-slate-400 mb-0.5">Total Amount</div>
-                <div className="text-xl sm:text-2xl font-black text-rose-500">
+                <div className="text-xs sm:text-sm uppercase font-bold text-slate-400 mb-0.5">Total Amount</div>
+                <div className="text-2xl sm:text-3xl font-black text-rose-500">
                   LKR {calculateTotal().toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </div>
               </div>
@@ -700,7 +700,7 @@ const SeatLayout = () => {
               <button
                 disabled={selectedSeatIds.length === 0 || isProcessing || !customerEmail}
                 onClick={handleBooking}
-                className={`py-3 px-6 sm:px-8 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center gap-2 shrink-0 ${
+                className={`py-3.5 px-6 sm:px-8 rounded-xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center gap-2 shrink-0 ${
                   selectedSeatIds.length === 0 || isProcessing || !customerEmail
                     ? "bg-slate-800 text-slate-500 cursor-not-allowed"
                     : "bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 hover:scale-[1.02]"
@@ -735,7 +735,7 @@ const SeatLayout = () => {
                   <h3 className="text-lg font-extrabold text-white flex items-center gap-2">
                     AI Cinema Seat Concierge
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-sm text-slate-300">
                     Acoustic physics & field-of-view viewing angle calculator.
                   </p>
                 </div>
@@ -752,7 +752,7 @@ const SeatLayout = () => {
 
             {/* Step 1: Party Size */}
             <div className="mb-6">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+              <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-300 mb-3">
                 1. Select Number of Tickets / Party Size
               </label>
               <div className="grid grid-cols-4 gap-3">
@@ -761,14 +761,14 @@ const SeatLayout = () => {
                     key={num}
                     type="button"
                     onClick={() => setPartySize(num)}
-                    className={`py-3 rounded-2xl font-extrabold text-xs flex flex-col items-center justify-center gap-1 transition-all ${
+                    className={`py-3 rounded-2xl font-extrabold text-sm flex flex-col items-center justify-center gap-1 transition-all ${
                       partySize === num
                         ? "bg-rose-600 text-white shadow-lg shadow-rose-600/40 border border-rose-500 scale-105"
                         : "bg-slate-950 border border-slate-800 text-slate-300 hover:border-slate-700"
                     }`}
                   >
-                    <span className="text-base">{num}</span>
-                    <span className="text-[10px] opacity-80">{num === 1 ? "Solo Fan" : num === 2 ? "Couple" : "Group"}</span>
+                    <span className="text-base sm:text-lg">{num}</span>
+                    <span className="text-xs opacity-90">{num === 1 ? "Solo Fan" : num === 2 ? "Couple" : "Group"}</span>
                   </button>
                 ))}
               </div>
@@ -776,7 +776,7 @@ const SeatLayout = () => {
 
             {/* Step 2: Experience Preference */}
             <div className="mb-6">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+              <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-300 mb-3">
                 2. Select Cinema Experience Preference
               </label>
               <div className="space-y-2.5">
@@ -790,10 +790,10 @@ const SeatLayout = () => {
                   }`}
                 >
                   <div>
-                    <div className="font-bold text-xs text-white">🎧 Dolby Atmos Acoustic Sweet-Spot</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">Rows D, E, F Center — 3D Surround sound center</div>
+                    <div className="font-bold text-sm text-white">🎧 Dolby Atmos Acoustic Sweet-Spot</div>
+                    <div className="text-xs sm:text-sm text-slate-300 mt-0.5">Rows D, E, F Center — 3D Surround sound center</div>
                   </div>
-                  <span className="text-xs font-mono font-bold text-emerald-400">98% Match</span>
+                  <span className="text-xs sm:text-sm font-mono font-bold text-emerald-400">98% Match</span>
                 </button>
 
                 <button
@@ -806,10 +806,10 @@ const SeatLayout = () => {
                   }`}
                 >
                   <div>
-                    <div className="font-bold text-xs text-amber-300">👑 VIP Recliner Luxury Suite</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">Rows G & H — Plush recliners with legroom</div>
+                    <div className="font-bold text-sm text-amber-300">👑 VIP Recliner Luxury Suite</div>
+                    <div className="text-xs sm:text-sm text-slate-300 mt-0.5">Rows G & H — Plush recliners with legroom</div>
                   </div>
-                  <span className="text-xs font-mono font-bold text-amber-400">96% Match</span>
+                  <span className="text-xs sm:text-sm font-mono font-bold text-amber-400">96% Match</span>
                 </button>
 
                 <button
@@ -822,10 +822,10 @@ const SeatLayout = () => {
                   }`}
                 >
                   <div>
-                    <div className="font-bold text-xs text-white">👁️ 100% Full FOV Visual Field</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">Direct center alignment with total screen coverage</div>
+                    <div className="font-bold text-sm text-white">👁️ 100% Full FOV Visual Field</div>
+                    <div className="text-xs sm:text-sm text-slate-300 mt-0.5">Direct center alignment with total screen coverage</div>
                   </div>
-                  <span className="text-xs font-mono font-bold text-emerald-400">95% Match</span>
+                  <span className="text-xs sm:text-sm font-mono font-bold text-emerald-400">95% Match</span>
                 </button>
 
                 <button
@@ -838,10 +838,10 @@ const SeatLayout = () => {
                   }`}
                 >
                   <div>
-                    <div className="font-bold text-xs text-white">🚪 Side Aisle Access</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">Easy entrance and exit access</div>
+                    <div className="font-bold text-sm text-white">🚪 Side Aisle Access</div>
+                    <div className="text-xs sm:text-sm text-slate-300 mt-0.5">Easy entrance and exit access</div>
                   </div>
-                  <span className="text-xs font-mono font-bold text-sky-400">91% Match</span>
+                  <span className="text-xs sm:text-sm font-mono font-bold text-sky-400">91% Match</span>
                 </button>
               </div>
             </div>
@@ -854,7 +854,7 @@ const SeatLayout = () => {
                   recommendBestSeats(partySize, aiPreference);
                   setShowAiModal(false);
                 }}
-                className="flex-1 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-2xl text-xs sm:text-sm shadow-lg shadow-rose-600/30 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="flex-1 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-2xl text-sm shadow-lg shadow-rose-600/30 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-4 h-4 text-amber-300" /> Calculate & Select Best Seats
               </button>

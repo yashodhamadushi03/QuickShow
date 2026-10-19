@@ -83,12 +83,12 @@ const AuthModal = ({ isOpen, onClose }) => {
 
         {/* Dual Role Selector Tabs */}
         <div className="mb-6">
-          <p className="text-xs font-bold text-rose-500 uppercase tracking-wider mb-2">Select Portal Login</p>
+          <p className="text-xs sm:text-sm font-bold text-rose-500 uppercase tracking-wider mb-2">Select Portal Login</p>
           <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800">
             <button
               type="button"
               onClick={() => setActiveRole("customer")}
-              className={`py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              className={`py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
                 activeRole === "customer"
                   ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
                   : "text-slate-400 hover:text-white"
@@ -99,7 +99,7 @@ const AuthModal = ({ isOpen, onClose }) => {
             <button
               type="button"
               onClick={() => setActiveRole("admin")}
-              className={`py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              className={`py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
                 activeRole === "admin"
                   ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
                   : "text-slate-400 hover:text-white"
@@ -118,7 +118,7 @@ const AuthModal = ({ isOpen, onClose }) => {
             </div>
 
             <h3 className="text-xl font-bold text-white mb-2">Cinema Fan Sign In</h3>
-            <p className="text-xs text-slate-400 mb-6">
+            <p className="text-sm text-slate-300 mb-6">
               Sign in to reserve seats, view your digital HTML ticket passes, and save your favourite Sri Lankan cinemas.
             </p>
 
@@ -142,13 +142,13 @@ const AuthModal = ({ isOpen, onClose }) => {
                 <Lock className="w-7 h-7" />
               </div>
               <h3 className="text-lg font-extrabold text-white">Administrator Security Portal</h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-sm text-slate-300">
                 Access real-time customer activity logs, live bookings, and LKR revenue heatmaps.
               </p>
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+              <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider mb-1.5">
                 Admin Email
               </label>
               <input
@@ -157,12 +157,12 @@ const AuthModal = ({ isOpen, onClose }) => {
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
                 placeholder="admin@quickshow.lk"
-                className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none transition-colors"
+                className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+              <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider mb-1.5">
                 Password
               </label>
               <input
@@ -171,14 +171,14 @@ const AuthModal = ({ isOpen, onClose }) => {
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none transition-colors"
+                className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors"
               />
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+              className="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
             >
               {isLoading ? (
                 <>
@@ -193,7 +193,7 @@ const AuthModal = ({ isOpen, onClose }) => {
             </button>
 
             <div className="pt-2 text-center border-t border-slate-800">
-              <p className="text-[10px] text-slate-500 font-mono">
+              <p className="text-xs text-slate-400 font-mono">
                 Default: <strong>admin@quickshow.lk</strong> / <strong>admin123</strong>
               </p>
             </div>

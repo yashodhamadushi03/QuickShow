@@ -140,26 +140,26 @@ const Releases = () => {
                 {/* Details */}
                 <div className="sm:w-3/5 p-6 flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center gap-2 text-rose-400 text-xs font-bold mb-2 uppercase tracking-wide">
-                      <Film className="w-3.5 h-3.5" /> {movie.genre}
+                    <div className="flex items-center gap-2 text-rose-400 text-xs sm:text-sm font-bold mb-2 uppercase tracking-wide">
+                      <Film className="w-4 h-4" /> {movie.genre}
                     </div>
 
                     <h2 className="text-2xl font-bold text-white mb-3 group-hover:text-rose-400 transition-colors">
                       {movie.title}
                     </h2>
 
-                    <p className="text-slate-400 text-sm line-clamp-3 mb-4 leading-relaxed">
+                    <p className="text-slate-300 text-sm line-clamp-3 mb-4 leading-relaxed">
                       {movie.description}
                     </p>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-slate-800 mb-4">
+                    <div className="grid grid-cols-2 gap-3 text-sm text-slate-300 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 mb-4">
                       <div>
-                        <span className="text-slate-500 block uppercase font-medium text-[10px]">Release Date</span>
-                        <span className="font-semibold text-rose-300">{movie.release_date || "Coming Soon"}</span>
+                        <span className="text-slate-400 block uppercase font-semibold text-xs tracking-wider mb-0.5">Release Date</span>
+                        <span className="font-bold text-rose-300 text-sm">{movie.release_date || "Coming Soon"}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 block uppercase font-medium text-[10px]">Language</span>
-                        <span className="font-semibold text-slate-200">{movie.language}</span>
+                        <span className="text-slate-400 block uppercase font-semibold text-xs tracking-wider mb-0.5">Language</span>
+                        <span className="font-bold text-slate-200 text-sm">{movie.language}</span>
                       </div>
                     </div>
                   </div>
@@ -168,7 +168,7 @@ const Releases = () => {
                   <div className="flex items-center gap-3 pt-2">
                     <button
                       onClick={() => toggleReminder(movie.movie_id, movie.title)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all duration-200 ${
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 ${
                         reminders[movie.movie_id]
                           ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
                           : "bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/30"

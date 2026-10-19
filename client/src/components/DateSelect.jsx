@@ -31,8 +31,8 @@ const DateSelect = ({ dateTime, id }) => {
         <BlurCircle top="-100px" left="-100px" />
         <BlurCircle top="100px" right="0px" />
         <div>
-          <p className="text-lg font-bold text-white mb-1">Select Date & Showtime</p>
-          <p className="text-xs text-slate-400 mb-5">Choose an available slot to view the seat layout grid.</p>
+          <h3 className="text-xl font-bold text-white mb-1">Select Date & Showtime</h3>
+          <p className="text-sm text-slate-300 mb-5">Choose an available slot to view the seat layout grid.</p>
           
           <div className="flex items-center gap-4 text-sm">
             <span className="flex flex-wrap gap-3">
@@ -51,7 +51,7 @@ const DateSelect = ({ dateTime, id }) => {
                   <span className="text-xs font-semibold uppercase text-rose-300">
                     {new Date(date).toLocaleDateString("en-US", { month: "short" })}
                   </span>
-                  <span className="text-[11px] font-mono opacity-80 mt-1">
+                  <span className="text-xs font-mono font-medium text-slate-300 opacity-90 mt-1">
                     {new Date(date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                   </span>
                 </button>
@@ -63,7 +63,7 @@ const DateSelect = ({ dateTime, id }) => {
         <button
           type="button"
           onClick={onBookHandler}
-          className="bg-rose-600 hover:bg-rose-500 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-rose-600/30 transition-all cursor-pointer whitespace-nowrap"
+          className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm sm:text-base px-8 py-3.5 rounded-xl shadow-lg shadow-rose-600/30 transition-all cursor-pointer whitespace-nowrap"
         >
           Select Seats & Book &rarr;
         </button>

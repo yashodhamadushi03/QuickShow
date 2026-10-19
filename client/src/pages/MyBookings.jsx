@@ -117,30 +117,30 @@ const MyBookings = () => {
                   <div className="p-6 flex-1 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold text-rose-400 uppercase tracking-wide">
+                        <span className="text-xs sm:text-sm font-bold text-rose-400 uppercase tracking-wide">
                           {movie?.genre || "Movie"}
                         </span>
-                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5" /> {booking.status}
                         </span>
                       </div>
 
                       <h2 className="text-2xl font-bold text-white mb-4">{movie?.title}</h2>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-300 mb-4">
-                        <div className="flex items-center gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-sm text-slate-300 mb-4">
+                        <div className="flex items-center gap-2.5">
                           <MapPin className="w-4 h-4 text-rose-500 shrink-0" />
                           <span>{theater?.name} ({hall?.hall_name})</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5">
                           <Calendar className="w-4 h-4 text-rose-500 shrink-0" />
                           <span>{booking.showtime?.start_time ? new Date(booking.showtime.start_time).toLocaleString() : "Upcoming Showtime"}</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5">
                           <Ticket className="w-4 h-4 text-rose-500 shrink-0" />
                           <span>Seats: <strong className="text-white">{seatsList || "D5, D6"}</strong></span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5">
                           <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                           <span>Total Paid: <strong className="text-emerald-400">LKR {parseFloat(booking.total_amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong></span>
                         </div>
@@ -149,8 +149,8 @@ const MyBookings = () => {
 
                     {/* Entrance Code */}
                     <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-                      <div className="text-xs text-slate-500">Entrance Passcode</div>
-                      <div className="font-mono text-sm font-bold text-rose-400 bg-slate-950 px-4 py-1.5 rounded-lg border border-slate-800">
+                      <div className="text-sm font-medium text-slate-400">Entrance Passcode</div>
+                      <div className="font-mono text-base font-bold text-rose-400 bg-slate-950 px-4 py-1.5 rounded-lg border border-slate-800">
                         {booking.payment?.transaction_reference || `TXN-QSHOW${booking.booking_id}`}
                       </div>
                     </div>

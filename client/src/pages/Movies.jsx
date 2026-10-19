@@ -175,14 +175,14 @@ const Movies = () => {
         <div className="mt-8 flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
           {/* Language Tabs */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-2 flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5" /> Language:
+            <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider mr-2 flex items-center gap-1.5">
+              <Filter className="w-4 h-4 text-rose-500" /> Language:
             </span>
             {languages.map((lang) => (
               <button
                 key={lang}
                 onClick={() => setSelectedLanguage(lang)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                   selectedLanguage === lang
                     ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
                     : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800"
@@ -195,15 +195,15 @@ const Movies = () => {
 
           {/* Genre Tabs */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-2">Genre:</span>
+            <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider mr-2">Genre:</span>
             {genres.map((genre) => (
               <button
                 key={genre}
                 onClick={() => setSelectedGenre(genre)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                   selectedGenre === genre
                     ? "bg-slate-800 text-rose-400 border border-rose-500/40"
-                    : "bg-slate-900/50 border border-slate-800/80 text-slate-500 hover:text-slate-300"
+                    : "bg-slate-900/50 border border-slate-800/80 text-slate-400 hover:text-slate-200"
                 }`}
               >
                 {genre}
@@ -255,10 +255,10 @@ const Movies = () => {
 
                   {/* Rating & Language Badge */}
                   <div className="absolute top-3 left-3 flex gap-2">
-                    <span className="px-2.5 py-1 bg-rose-600/90 text-white text-[11px] font-extrabold rounded-md uppercase shadow">
+                    <span className="px-2.5 py-1 bg-rose-600/90 text-white text-xs font-bold rounded-md uppercase shadow">
                       {movie.rating || "U/A"}
                     </span>
-                    <span className="px-2.5 py-1 bg-slate-950/90 text-slate-200 text-[11px] font-bold rounded-md border border-slate-800 uppercase shadow">
+                    <span className="px-2.5 py-1 bg-slate-950/90 text-slate-200 text-xs font-bold rounded-md border border-slate-800 uppercase shadow">
                       {movie.language}
                     </span>
                   </div>
@@ -267,25 +267,25 @@ const Movies = () => {
                 {/* Info Content */}
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    <div className="text-xs font-bold text-rose-400 mb-1 uppercase tracking-wide">
+                    <div className="text-xs sm:text-sm font-bold text-rose-400 mb-1.5 uppercase tracking-wide">
                       {movie.genre}
                     </div>
                     <h3 className="text-xl font-bold text-white mb-2 line-clamp-1 group-hover:text-rose-400 transition-colors">
                       {movie.title}
                     </h3>
-                    <p className="text-slate-400 text-xs line-clamp-2 mb-4 leading-relaxed">
+                    <p className="text-slate-300 text-sm line-clamp-2 mb-4 leading-relaxed">
                       {movie.description}
                     </p>
                   </div>
 
                   {/* Card Footer */}
                   <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-                    <div className="text-xs text-slate-400 font-mono">
+                    <div className="text-sm text-slate-300 font-mono">
                       {movie.duration_min} mins
                     </div>
                     <Link
                       to={`/movies/${movie.movie_id}`}
-                      className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-600/20 transition-all hover:scale-105"
+                      className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm rounded-xl shadow-md shadow-rose-600/20 transition-all hover:scale-105"
                     >
                       Book Tickets &rarr;
                     </Link>

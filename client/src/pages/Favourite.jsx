@@ -10,7 +10,7 @@ const Favourite = () => {
 
       <BlurCircle top='150px' left='0px'/>
       <BlurCircle bottom='50px' right='50px'/>
-      <h1 className='text-lg font-medium my-4'>Your Favourite Movies</h1>
+      <h1 className='text-3xl md:text-4xl font-extrabold my-6 text-white'>Your Favourite Movies</h1>
       <div className='flex flex-wrap max-sm:justify-center gap-8'>
         {dummyShowsData.map((movie) => (
           <MovieCard movie={movie} key={movie.id} />

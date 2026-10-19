@@ -82,20 +82,20 @@ const MovieDetails = () => {
         />
         <div className="relative flex flex-col gap-3 justify-center">
           <BlurCircle top="-100px" left="-100px" />
-          <p className="text-rose-500 font-bold tracking-wider text-xs uppercase">
+          <p className="text-rose-500 font-bold tracking-wider text-xs sm:text-sm uppercase">
             {show.movie.genres?.[0]?.name || "ENGLISH"} CINEMA
           </p>
           <h1 className="text-3xl md:text-5xl font-extrabold max-w-xl text-balance text-white">
             {show.movie.title}
           </h1>
-          <div className="flex items-center gap-2 text-slate-300 text-sm">
+          <div className="flex items-center gap-2 text-slate-200 text-sm sm:text-base">
             <StarIcon className="w-5 h-5 text-rose-500 fill-rose-500" />
             <span className="font-bold text-white">{show.movie.vote_average?.toFixed(1) || "8.5"}</span> User Ratings
           </div>
-          <p className="text-slate-400 mt-2 text-sm leading-relaxed max-w-xl">
+          <p className="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed max-w-xl">
             {show.movie.overview}
           </p>
-          <p className="text-slate-400 text-xs font-mono">
+          <p className="text-slate-400 text-sm font-mono">
             {timeFormat(show.movie.runtime)} &bull; {show.movie.genres?.map((g) => g.name).join(", ")} &bull; {show.movie.release_date?.split("-")[0] || "2024"}
           </p>
 
@@ -137,7 +137,7 @@ const MovieDetails = () => {
                 alt={cast.name}
                 className="rounded-full h-16 w-16 aspect-square object-cover border border-slate-700 shadow-md"
               />
-              <p className="font-semibold text-slate-300 text-xs mt-2 line-clamp-1">{cast.name}</p>
+              <p className="font-semibold text-slate-200 text-xs sm:text-sm mt-2 line-clamp-1">{cast.name}</p>
             </div>
           ))}
         </div>

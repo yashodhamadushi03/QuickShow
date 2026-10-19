@@ -178,10 +178,10 @@ const Theaters = () => {
               <button
                 key={city}
                 onClick={() => setSelectedCity(city)}
-                className={`px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 ${
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
                   selectedCity === city
                     ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
-                    : "bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800"
+                    : "bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800"
                 }`}
               >
                 {city}
@@ -226,19 +226,19 @@ const Theaters = () => {
                     <h3 className="text-xl font-bold text-white group-hover:text-rose-400 transition-colors">
                       {theater.name}
                     </h3>
-                    <span className="px-3 py-1 bg-rose-500/10 text-rose-400 text-xs font-semibold rounded-full border border-rose-500/20 shrink-0">
+                    <span className="px-3 py-1 bg-rose-500/10 text-rose-400 text-xs sm:text-sm font-semibold rounded-full border border-rose-500/20 shrink-0">
                       {theater.city}
                     </span>
                   </div>
 
-                  <div className="space-y-2 text-slate-400 text-sm mb-6">
+                  <div className="space-y-2 text-slate-300 text-sm mb-6">
                     <div className="flex items-start gap-2.5">
                       <MapPin className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
                       <span>{theater.address}</span>
                     </div>
                     {theater.phone && (
-                      <div className="flex items-center gap-2.5 text-xs text-slate-400">
-                        <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                      <div className="flex items-center gap-2.5 text-sm text-slate-300">
+                        <Phone className="w-4 h-4 text-slate-400 shrink-0" />
                         <a href={`tel:${theater.phone}`} className="hover:text-rose-400 transition-colors font-mono">
                           {theater.phone}
                         </a>
@@ -248,24 +248,24 @@ const Theaters = () => {
 
                   {/* Screening Halls */}
                   <div className="space-y-3 mb-6">
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                      <Film className="w-3.5 h-3.5 text-slate-400" /> Auditoriums ({theater.halls?.length || 0})
+                    <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                      <Film className="w-4 h-4 text-slate-400" /> Auditoriums ({theater.halls?.length || 0})
                     </div>
                     <div className="flex flex-col gap-2">
                       {theater.halls && theater.halls.length > 0 ? (
                         theater.halls.map((hall) => (
                           <div
                             key={hall.hall_id}
-                            className="flex items-center justify-between bg-slate-950/60 px-3.5 py-2.5 rounded-xl border border-slate-800/60 text-xs text-slate-300"
+                            className="flex items-center justify-between bg-slate-950/60 px-3.5 py-2.5 rounded-xl border border-slate-800/60 text-sm text-slate-300"
                           >
                             <span className="font-medium text-slate-200">{hall.hall_name}</span>
-                            <span className="text-slate-500 font-mono">
+                            <span className="text-slate-400 font-mono text-xs sm:text-sm">
                               {hall.total_capacity ? `${hall.total_capacity} Seats` : "Multi-tier"}
                             </span>
                           </div>
                         ))
                       ) : (
-                        <p className="text-xs text-slate-500 italic">Auditoriums updating...</p>
+                        <p className="text-sm text-slate-400 italic">Auditoriums updating...</p>
                       )}
                     </div>
                   </div>
@@ -273,12 +273,12 @@ const Theaters = () => {
 
                 {/* Footer Action */}
                 <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
+                  <div className="flex items-center gap-1.5 text-xs sm:text-sm text-emerald-400 font-medium">
                     <ShieldCheck className="w-4 h-4" /> Dolby Atmos & 4K Laser
                   </div>
                   <Link
                     to="/movies"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-400 transition-colors"
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-rose-500 hover:text-rose-400 transition-colors"
                   >
                     View Showtimes &rarr;
                   </Link>

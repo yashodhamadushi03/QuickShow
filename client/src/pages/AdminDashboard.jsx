@@ -237,13 +237,13 @@ const AdminDashboard = () => {
           </div>
 
           <h2 className="text-2xl font-extrabold text-white text-center mb-1">Admin Security Portal</h2>
-          <p className="text-slate-400 text-xs text-center mb-6">
+          <p className="text-slate-300 text-sm text-center mb-6">
             Sign in with Cinema Administrator credentials to access live monitoring and analytics.
           </p>
 
           <form onSubmit={handleAdminLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Admin Email</label>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2">Admin Email</label>
               <input
                 type="email"
                 required
@@ -255,7 +255,7 @@ const AdminDashboard = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Password</label>
+              <label className="block text-xs sm:text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2">Password</label>
               <input
                 type="password"
                 required
@@ -285,7 +285,7 @@ const AdminDashboard = () => {
           </form>
 
           <div className="mt-6 pt-4 border-t border-slate-800 text-center">
-            <p className="text-[11px] text-slate-500 font-mono">
+            <p className="text-xs text-slate-400 font-mono">
               Default Admin: <strong>admin@quickshow.lk</strong> / <strong>admin123</strong>
             </p>
           </div>
@@ -299,13 +299,13 @@ const AdminDashboard = () => {
       {/* Admin Top Banner */}
       <div className="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-xs font-bold mb-2 border border-rose-500/20">
-            <ShieldCheck className="w-3.5 h-3.5" /> Cinema Operations & RBAC Control
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 text-rose-400 text-xs sm:text-sm font-semibold mb-2 border border-rose-500/20">
+            <ShieldCheck className="w-4 h-4" /> Cinema Operations & RBAC Control
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             Customer Activity & Real-Time Analytics Dashboard
           </h1>
-          <p className="text-slate-400 text-xs mt-1">
+          <p className="text-slate-300 text-sm mt-1">
             Live revenue feeds, hall occupancy fill rates, and customer reservation logs across Sri Lanka branches.
           </p>
         </div>
@@ -321,7 +321,7 @@ const AdminDashboard = () => {
 
           <button
             onClick={handleLogout}
-            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-rose-400 rounded-xl text-xs font-bold flex items-center gap-2 transition-colors"
+            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-rose-400 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors"
           >
             <LogOut className="w-4 h-4" /> Sign Out
           </button>
@@ -332,54 +332,54 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Revenue</span>
+            <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">Total Revenue</span>
             <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-black text-emerald-400">
+          <div className="text-2xl sm:text-3xl font-black text-emerald-400">
             LKR {displayAnalytics.total_revenue_lkr?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
           </div>
-          <div className="text-[11px] text-slate-500 mt-1">Islandwide ticket & F&B sales</div>
+          <div className="text-xs sm:text-sm text-slate-400 mt-1.5">Islandwide ticket & F&B sales</div>
         </div>
 
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Tickets Sold</span>
+            <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">Total Tickets Sold</span>
             <div className="p-2 bg-rose-500/10 text-rose-400 rounded-lg">
               <Ticket className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-black text-white">
-            {displayAnalytics.total_tickets_sold} <span className="text-xs font-normal text-slate-400">Seats</span>
+          <div className="text-2xl sm:text-3xl font-black text-white">
+            {displayAnalytics.total_tickets_sold} <span className="text-sm font-normal text-slate-400">Seats</span>
           </div>
-          <div className="text-[11px] text-emerald-400 mt-1">Confirmed reservations</div>
+          <div className="text-xs sm:text-sm text-emerald-400 font-medium mt-1.5">Confirmed reservations</div>
         </div>
 
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Hall Fill Rate</span>
+            <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">Hall Fill Rate</span>
             <div className="p-2 bg-sky-500/10 text-sky-400 rounded-lg">
               <BarChart3 className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-black text-sky-400">
+          <div className="text-2xl sm:text-3xl font-black text-sky-400">
             {displayAnalytics.average_fill_rate_percent}%
           </div>
-          <div className="text-[11px] text-slate-500 mt-1">Peak evening showtime average</div>
+          <div className="text-xs sm:text-sm text-slate-400 mt-1.5">Peak evening showtime average</div>
         </div>
 
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Showtimes</span>
+            <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">Active Showtimes</span>
             <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
               <Film className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-black text-amber-400">
-            {displayAnalytics.active_showtimes_count} <span className="text-xs font-normal text-slate-400">Slots</span>
+          <div className="text-2xl sm:text-3xl font-black text-amber-400">
+            {displayAnalytics.active_showtimes_count} <span className="text-sm font-normal text-slate-400">Slots</span>
           </div>
-          <div className="text-[11px] text-slate-500 mt-1">10 Sri Lankan branches</div>
+          <div className="text-xs sm:text-sm text-slate-400 mt-1.5">10 Sri Lankan branches</div>
         </div>
       </div>
 
@@ -387,7 +387,7 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto mb-6 flex flex-wrap items-center gap-2 border-b border-slate-800 pb-4">
         <button
           onClick={() => setActiveTab("analytics")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
             activeTab === "analytics"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
@@ -397,7 +397,7 @@ const AdminDashboard = () => {
         </button>
         <button
           onClick={() => setActiveTab("bookings")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
             activeTab === "bookings"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
@@ -407,7 +407,7 @@ const AdminDashboard = () => {
         </button>
         <button
           onClick={() => setActiveTab("customers")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
             activeTab === "customers"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
@@ -417,7 +417,7 @@ const AdminDashboard = () => {
         </button>
         <button
           onClick={() => setActiveTab("occupancy")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
             activeTab === "occupancy"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
@@ -433,7 +433,7 @@ const AdminDashboard = () => {
         {activeTab === "analytics" && (
           <div className="space-y-6">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-rose-500" /> Revenue & Occupancy by Sri Lanka Multiplex Branch
               </h3>
 
@@ -441,8 +441,8 @@ const AdminDashboard = () => {
                 {displayAnalytics.revenue_by_branch.map((branch, i) => (
                   <div key={i} className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                      <span className="font-semibold text-sm text-white">{branch.branch}</span>
-                      <span className="font-extrabold text-emerald-400 text-sm">
+                      <span className="font-semibold text-sm sm:text-base text-white">{branch.branch}</span>
+                      <span className="font-extrabold text-emerald-400 text-sm sm:text-base">
                         LKR {branch.revenue_lkr.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                       </span>
                     </div>
@@ -453,7 +453,7 @@ const AdminDashboard = () => {
                         style={{ width: `${branch.occupancy_percent}%` }}
                       ></div>
                     </div>
-                    <div className="flex justify-between text-[11px] text-slate-500 mt-1.5 font-mono">
+                    <div className="flex justify-between text-xs sm:text-sm text-slate-400 mt-2 font-mono">
                       <span>Occupancy Fill Rate: {branch.occupancy_percent}%</span>
                       <span>Target Capacity Met</span>
                     </div>
@@ -468,32 +468,32 @@ const AdminDashboard = () => {
         {activeTab === "bookings" && (
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 overflow-x-auto">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
                 <Ticket className="w-5 h-5 text-rose-500" /> Live Customer Reservations Feed
               </h3>
 
               <div className="relative w-full sm:w-72">
-                <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+                <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
                 <input
                   type="text"
                   placeholder="Filter by customer, movie or passcode..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
                 />
               </div>
             </div>
 
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
-                  <th className="py-3 px-4">Ref / Passcode</th>
-                  <th className="py-3 px-4">Customer</th>
-                  <th className="py-3 px-4">Movie</th>
-                  <th className="py-3 px-4">Theater & Hall</th>
-                  <th className="py-3 px-4">Seats</th>
-                  <th className="py-3 px-4">Amount (LKR)</th>
-                  <th className="py-3 px-4">Status</th>
+                <tr className="border-b border-slate-800 text-slate-300 font-semibold uppercase tracking-wider text-xs sm:text-sm">
+                  <th className="py-3.5 px-4">Ref / Passcode</th>
+                  <th className="py-3.5 px-4">Customer</th>
+                  <th className="py-3.5 px-4">Movie</th>
+                  <th className="py-3.5 px-4">Theater & Hall</th>
+                  <th className="py-3.5 px-4">Seats</th>
+                  <th className="py-3.5 px-4">Amount (LKR)</th>
+                  <th className="py-3.5 px-4">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
@@ -506,25 +506,25 @@ const AdminDashboard = () => {
                   )
                   .map((booking, idx) => (
                     <tr key={idx} className="hover:bg-slate-950/50 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-rose-400">{booking.passcode}</td>
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-white">{booking.customer_name}</div>
-                        <div className="text-[10px] text-slate-500">{booking.customer_email}</div>
+                      <td className="py-3.5 px-4 font-mono font-bold text-rose-400 text-sm">{booking.passcode}</td>
+                      <td className="py-3.5 px-4">
+                        <div className="font-semibold text-white text-sm">{booking.customer_name}</div>
+                        <div className="text-xs sm:text-sm text-slate-400">{booking.customer_email}</div>
                       </td>
-                      <td className="py-3 px-4 font-bold text-slate-200">{booking.movie_title}</td>
-                      <td className="py-3 px-4 text-slate-300">
+                      <td className="py-3.5 px-4 font-bold text-slate-200 text-sm">{booking.movie_title}</td>
+                      <td className="py-3.5 px-4 text-slate-300 text-sm">
                         {booking.theater_name}
-                        <div className="text-[10px] text-slate-500">{booking.hall_name}</div>
+                        <div className="text-xs sm:text-sm text-slate-400">{booking.hall_name}</div>
                       </td>
-                      <td className="py-3 px-4 font-bold text-rose-300">
+                      <td className="py-3.5 px-4 font-bold text-rose-300 text-sm">
                         {Array.isArray(booking.seats) ? booking.seats.join(", ") : booking.seats}
                       </td>
-                      <td className="py-3 px-4 font-mono font-bold text-emerald-400">
+                      <td className="py-3.5 px-4 font-mono font-bold text-emerald-400 text-sm">
                         LKR {booking.total_lkr?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="py-3 px-4">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Confirmed
+                      <td className="py-3.5 px-4">
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Confirmed
                         </span>
                       </td>
                     </tr>
@@ -539,7 +539,7 @@ const AdminDashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Customer Profiles */}
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <Users className="w-5 h-5 text-rose-500" /> Customer Profiles & Total LKR Spend
               </h3>
 
@@ -551,15 +551,15 @@ const AdminDashboard = () => {
                 ]).map((c) => (
                   <div key={c.user_id} className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
                     <div>
-                      <div className="font-bold text-white text-sm">{c.name}</div>
-                      <div className="text-xs text-slate-400">{c.email}</div>
-                      <div className="text-[10px] text-slate-500 font-mono mt-1">{c.phone} &bull; Role: {c.role}</div>
+                      <div className="font-bold text-white text-base">{c.name}</div>
+                      <div className="text-sm text-slate-300">{c.email}</div>
+                      <div className="text-xs sm:text-sm text-slate-400 font-mono mt-1">{c.phone} &bull; Role: {c.role}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-mono font-extrabold text-emerald-400 text-sm">
+                      <div className="font-mono font-extrabold text-emerald-400 text-base">
                         LKR {c.total_spent_lkr?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                       </div>
-                      <div className="text-[11px] text-slate-400">{c.total_bookings} Bookings</div>
+                      <div className="text-xs sm:text-sm text-slate-300">{c.total_bookings} Bookings</div>
                     </div>
                   </div>
                 ))}
@@ -568,7 +568,7 @@ const AdminDashboard = () => {
 
             {/* Live Activity Logs */}
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <Activity className="w-5 h-5 text-rose-500" /> Customer Engagement Activity Logs
               </h3>
 
@@ -579,13 +579,13 @@ const AdminDashboard = () => {
                       <Activity className="w-4 h-4" />
                     </div>
                     <div className="flex-1">
-                      <div className="flex justify-between text-xs">
+                      <div className="flex justify-between items-center text-sm">
                         <span className="font-bold text-white">{act.user_name}</span>
-                        <span className="text-[10px] text-slate-500 font-mono">{act.timestamp}</span>
+                        <span className="text-xs sm:text-sm text-slate-400 font-mono">{act.timestamp}</span>
                       </div>
-                      <p className="text-xs text-slate-300 mt-1">{act.details}</p>
+                      <p className="text-sm text-slate-300 mt-1">{act.details}</p>
                       {act.amount_lkr > 0 && (
-                        <span className="text-[11px] font-mono font-bold text-emerald-400 mt-1 inline-block">
+                        <span className="text-xs sm:text-sm font-mono font-bold text-emerald-400 mt-1 inline-block">
                           + LKR {act.amount_lkr?.toLocaleString()}
                         </span>
                       )}
@@ -601,7 +601,7 @@ const AdminDashboard = () => {
         {activeTab === "occupancy" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <Activity className="w-5 h-5 text-rose-500" /> Real-Time Hall Seat Fill Rates
               </h3>
 
@@ -612,11 +612,11 @@ const AdminDashboard = () => {
                   { hall_name: "Savoy 3D Main Screen", theater: "Savoy Dolby Atmos Wellawatte", capacity: 180, booked_seats: 140, fill_rate_percent: 77.7 }
                 ]).map((h, idx) => (
                   <div key={idx} className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
-                    <div className="flex justify-between text-xs mb-1">
+                    <div className="flex justify-between text-sm sm:text-base mb-1">
                       <span className="font-bold text-white">{h.hall_name}</span>
                       <span className="font-mono text-rose-400 font-bold">{h.fill_rate_percent}% Filled</span>
                     </div>
-                    <div className="text-[11px] text-slate-400 mb-2">{h.theater}</div>
+                    <div className="text-xs sm:text-sm text-slate-300 mb-2">{h.theater}</div>
                     <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
                       <div className="bg-rose-600 h-full rounded-full" style={{ width: `${h.fill_rate_percent}%` }}></div>
                     </div>
@@ -626,7 +626,7 @@ const AdminDashboard = () => {
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-rose-500" /> Sold-Out Showtime Waitlists
               </h3>
 
@@ -637,15 +637,15 @@ const AdminDashboard = () => {
                 ]).map((w, idx) => (
                   <div key={idx} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
                     <div>
-                      <div className="font-bold text-white text-xs">{w.movie_title}</div>
-                      <div className="text-[11px] text-slate-400">{w.theater}</div>
-                      <div className="text-[10px] text-slate-500 mt-1 font-mono">{w.showtime}</div>
+                      <div className="font-bold text-white text-sm sm:text-base">{w.movie_title}</div>
+                      <div className="text-xs sm:text-sm text-slate-300">{w.theater}</div>
+                      <div className="text-xs sm:text-sm text-slate-400 mt-1 font-mono">{w.showtime}</div>
                     </div>
                     <div className="text-right">
-                      <span className="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-xs font-bold inline-block mb-1">
+                      <span className="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-xs sm:text-sm font-bold inline-block mb-1">
                         {w.waitlist_users_count} Waiting
                       </span>
-                      <div className="text-[10px] text-emerald-400 font-mono">Auto Re-allocation Active</div>
+                      <div className="text-xs sm:text-sm text-emerald-400 font-mono">Auto Re-allocation Active</div>
                     </div>
                   </div>
                 ))}

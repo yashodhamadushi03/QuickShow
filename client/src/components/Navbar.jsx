@@ -50,12 +50,12 @@ const Navbar = () => {
       {/* LOGO */}
       <Link to="/" className="flex items-center gap-2 group">
         <h1 className="text-2xl sm:text-3xl font-black text-rose-500 tracking-tight group-hover:scale-105 transition-transform">
-          QuickShow<span className="text-white text-xs font-normal ml-1 hidden sm:inline-block">LK</span>
+          QuickShow<span className="text-white text-sm font-semibold ml-1 hidden sm:inline-block">LK</span>
         </h1>
       </Link>
 
       {/* LIVE TIME CLOCK BADGE */}
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/90 border border-rose-500/30 rounded-full text-rose-400 font-mono shadow-md text-xs sm:text-sm">
+      <div className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-900/90 border border-rose-500/30 rounded-full text-rose-400 font-mono shadow-md text-xs sm:text-sm">
         <Clock className="w-3.5 h-3.5 text-rose-500 animate-pulse shrink-0" />
         <span className="hidden sm:inline font-sans text-slate-300 mr-1">{formattedDate}</span>
         <span className="font-bold tracking-wider">{formattedTime}</span>
@@ -67,7 +67,7 @@ const Navbar = () => {
         max-md:fixed max-md:top-0 max-md:left-0
         max-md:flex-col max-md:justify-center
         max-md:bg-slate-950/98 max-md:w-full max-md:h-screen
-        transition-all duration-300 text-sm font-semibold
+        transition-all duration-300 text-sm md:text-base font-semibold
         ${isOpen ? "max-md:flex max-md:z-50" : "max-md:hidden md:flex"}`}
       >
         <X
@@ -113,7 +113,7 @@ const Navbar = () => {
         <Link
           to="/admin"
           onClick={() => setIsOpen(false)}
-          className="hover:text-rose-400 text-rose-400 font-bold transition-colors py-1 flex items-center gap-1"
+          className="hover:text-rose-400 text-rose-400 font-bold transition-colors py-1 flex items-center gap-1.5"
         >
           <ShieldCheck className="w-4 h-4 text-amber-300" /> Admin Dashboard
         </Link>
@@ -133,7 +133,7 @@ const Navbar = () => {
         {!user ? (
           <button
             onClick={() => setShowAuthModal(true)}
-            className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm px-4 sm:px-5 py-2 rounded-full shadow-lg shadow-rose-600/30 transition-all hover:scale-105 flex items-center gap-1.5 cursor-pointer"
+            className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm px-4 sm:px-5 py-2 rounded-full shadow-lg shadow-rose-600/30 transition-all hover:scale-105 flex items-center gap-1.5 cursor-pointer"
           >
             <User className="w-4 h-4" /> Sign In / Admin
           </button>
@@ -186,7 +186,7 @@ const Navbar = () => {
               />
               <button
                 type="submit"
-                className="absolute right-2 top-2 bottom-2 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg transition-colors"
+                className="absolute right-2 top-2 bottom-2 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm rounded-lg transition-colors"
               >
                 Search
               </button>

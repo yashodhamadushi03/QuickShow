@@ -13,9 +13,9 @@ console.log(currentTrailer?.videoUrl);
 
   return (
     <div className="px-6 md:px-16 lg:px-24 xl:px-44 py-20 overflow-hidden">
-      <p className="text-gray-300 font-medium text-lg max-w-240 mx-auto">
-        Trailers
-      </p>
+      <h2 className="text-white font-extrabold text-2xl md:text-3xl max-w-240 mx-auto">
+        Official Movie Trailers
+      </h2>
 
       <div className="relative mt-6">
         <BlurCircle top="-100px" right="-100px" />

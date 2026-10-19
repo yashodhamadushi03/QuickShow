@@ -17,25 +17,25 @@ const Footer = () => {
                 </div>
                 <div className="flex-1 flex items-start md:justify-end gap-20 md:gap-40">
                     <div>
-                        <h2 className="font-semibold mb-5">Company</h2>
-                        <ul className="text-sm space-y-2">
-                            <li><a href="#">Home</a></li>
-                            <li><a href="#">About us</a></li>
-                            <li><a href="#">Contact us</a></li>
-                            <li><a href="#">Privacy policy</a></li>
+                        <h2 className="font-bold text-base text-white mb-5">Company</h2>
+                        <ul className="text-sm space-y-2.5 text-slate-300">
+                            <li><a href="#" className="hover:text-white transition-colors">Home</a></li>
+                            <li><a href="#" className="hover:text-white transition-colors">About us</a></li>
+                            <li><a href="#" className="hover:text-white transition-colors">Contact us</a></li>
+                            <li><a href="#" className="hover:text-white transition-colors">Privacy policy</a></li>
                         </ul>
                     </div>
                     <div>
-                        <h2 className="font-semibold mb-5">Get in touch</h2>
-                        <div className="text-sm space-y-2">
-                            <p>+1-234-567-890</p>
-                            <p>contact@example.com</p>
+                        <h2 className="font-bold text-base text-white mb-5">Get in touch</h2>
+                        <div className="text-sm space-y-2.5 text-slate-300">
+                            <p>+94 11 208 3000</p>
+                            <p>contact@quickshow.lk</p>
                         </div>
                     </div>
                 </div>
             </div>
-            <p className="pt-4 text-center text-sm pb-5">
-                Copyright {new Date().getFullYear()} © GreatStack. All Right Reserved.
+            <p className="pt-4 text-center text-sm text-slate-400 pb-5">
+                Copyright {new Date().getFullYear()} © QuickShow LK. All Rights Reserved.
             </p>
         </footer>
     );
