@@ -55,19 +55,19 @@ const Navbar = () => {
       </Link>
 
       {/* LIVE TIME CLOCK BADGE */}
-      <div className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-900/90 border border-rose-500/30 rounded-full text-rose-400 font-mono shadow-md text-xs sm:text-sm">
-        <Clock className="w-3.5 h-3.5 text-rose-500 animate-pulse shrink-0" />
-        <span className="hidden sm:inline font-sans text-slate-300 mr-1">{formattedDate}</span>
-        <span className="font-bold tracking-wider">{formattedTime}</span>
+      <div className="flex items-center gap-2 px-4 py-2 bg-slate-900/90 border border-rose-500/30 rounded-full text-rose-400 font-mono shadow-md text-sm sm:text-base">
+        <Clock className="w-4 h-4 text-rose-500 animate-pulse shrink-0" />
+        <span className="hidden sm:inline font-sans text-slate-300 mr-1 font-semibold">{formattedDate}</span>
+        <span className="font-extrabold tracking-wider">{formattedTime}</span>
       </div>
 
       {/* NAVIGATION MENU */}
       <div
-        className={`flex gap-6 md:gap-8 items-center
+        className={`flex gap-6 md:gap-9 items-center
         max-md:fixed max-md:top-0 max-md:left-0
         max-md:flex-col max-md:justify-center
         max-md:bg-slate-950/98 max-md:w-full max-md:h-screen
-        transition-all duration-300 text-sm md:text-base font-semibold
+        transition-all duration-300 text-base md:text-lg font-bold
         ${isOpen ? "max-md:flex max-md:z-50" : "max-md:hidden md:flex"}`}
       >
         <X
@@ -78,44 +78,44 @@ const Navbar = () => {
         <Link
           to="/"
           onClick={() => setIsOpen(false)}
-          className="hover:text-rose-400 transition-colors py-1"
+          className="hover:text-rose-400 text-slate-200 transition-colors py-1"
         >
           Home
         </Link>
         <Link
           to="/movies"
           onClick={() => setIsOpen(false)}
-          className="hover:text-rose-400 transition-colors py-1"
+          className="hover:text-rose-400 text-slate-200 transition-colors py-1"
         >
           Movies
         </Link>
         <Link
           to="/theaters"
           onClick={() => setIsOpen(false)}
-          className="hover:text-rose-400 transition-colors py-1"
+          className="hover:text-rose-400 text-slate-200 transition-colors py-1"
         >
           Theaters
         </Link>
         <Link
           to="/releases"
           onClick={() => setIsOpen(false)}
-          className="hover:text-rose-400 transition-colors py-1"
+          className="hover:text-rose-400 text-slate-200 transition-colors py-1"
         >
           Releases
         </Link>
         <Link
           to="/favourite"
           onClick={() => setIsOpen(false)}
-          className="hover:text-rose-400 transition-colors py-1"
+          className="hover:text-rose-400 text-slate-200 transition-colors py-1"
         >
           Favourites
         </Link>
         <Link
           to="/admin"
           onClick={() => setIsOpen(false)}
-          className="hover:text-rose-400 text-rose-400 font-bold transition-colors py-1 flex items-center gap-1.5"
+          className="hover:text-rose-300 text-rose-400 font-extrabold transition-colors py-1 flex items-center gap-1.5"
         >
-          <ShieldCheck className="w-4 h-4 text-amber-300" /> Admin Dashboard
+          <ShieldCheck className="w-5 h-5 text-amber-300" /> Admin Dashboard
         </Link>
       </div>
 
@@ -124,16 +124,16 @@ const Navbar = () => {
         {/* Interactive Search Trigger Icon */}
         <button
           onClick={() => setShowSearchModal(!showSearchModal)}
-          className="p-2 text-slate-400 hover:text-white bg-slate-900/60 hover:bg-slate-800 border border-slate-800 rounded-full transition-colors"
+          className="p-2.5 text-slate-400 hover:text-white bg-slate-900/60 hover:bg-slate-800 border border-slate-800 rounded-full transition-colors cursor-pointer"
           title="Search Movies"
         >
-          <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+          <Search className="w-5 h-5" />
         </button>
 
         {!user ? (
           <button
             onClick={() => setShowAuthModal(true)}
-            className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm px-4 sm:px-5 py-2 rounded-full shadow-lg shadow-rose-600/30 transition-all hover:scale-105 flex items-center gap-1.5 cursor-pointer"
+            className="bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-sm sm:text-base px-5 sm:px-6 py-2.5 rounded-full shadow-lg shadow-rose-600/30 transition-all hover:scale-105 flex items-center gap-2 cursor-pointer"
           >
             <User className="w-4 h-4" /> Sign In / Admin
           </button>

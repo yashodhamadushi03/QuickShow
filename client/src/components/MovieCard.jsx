@@ -25,8 +25,8 @@ const MovieCard = ({movie}) => {
             />
           </div>
 
-          <p className='font-bold text-base md:text-lg mt-3 truncate text-white'>{movie.title}</p>
-          <p className='text-xs sm:text-sm text-slate-300 mt-1.5 leading-relaxed line-clamp-1'>
+          <p className='font-black text-base md:text-lg mt-3 truncate text-white'>{movie.title}</p>
+          <p className='text-sm text-slate-300 mt-1.5 leading-relaxed line-clamp-1 font-medium'>
             {movie.release_date ? new Date(movie.release_date).getFullYear() : "2024"} &bull; {movie.genres?.slice(0,2).map
             (genre => genre.name || genre).join(" | ") || movie.genre || "Cinema"} &bull; {movie.runtime ? timeFormat(movie.runtime) : (movie.duration_min ? `${movie.duration_min}m` : "2h 15m")}
           </p>
@@ -34,10 +34,10 @@ const MovieCard = ({movie}) => {
           <div className='flex items-center justify-between mt-4 pb-1'>
 
             <button onClick={() => { navigate(`/movies/${movie.id || movie.movie_id}`); scrollTo(0,0); }}
-            className='px-4 py-2 text-xs sm:text-sm bg-rose-600 hover:bg-rose-500
-            transition-all rounded-full font-bold cursor-pointer text-white shadow-md shadow-rose-600/30'>Buy Tickets</button>
+            className='px-5 py-2 text-sm bg-rose-600 hover:bg-rose-500
+            transition-all rounded-full font-extrabold cursor-pointer text-white shadow-md shadow-rose-600/30 hover:scale-105'>Buy Tickets</button>
 
-            <p className='flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-200 mt-1 pr-1'>
+            <p className='flex items-center gap-1.5 text-sm font-black text-white mt-1 pr-1'>
                 <StarIcon className='w-4 h-4 text-rose-500 fill-rose-500'/>
                 {movie.vote_average ? Number(movie.vote_average).toFixed(1) : (movie.rating || "8.5")}
             </p>

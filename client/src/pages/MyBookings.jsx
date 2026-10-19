@@ -67,9 +67,9 @@ const MyBookings = () => {
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 text-rose-400 text-sm font-medium mb-3 border border-rose-500/20">
           <Ticket className="w-4 h-4" /> My Digital Tickets
         </div>
-        <h1 className="text-4xl font-extrabold text-white">My Movie Bookings</h1>
-        <p className="text-slate-400 text-sm mt-1">
-          Present your ticket entrance pass code at the cinema hall.
+        <h1 className="text-4xl md:text-5xl font-black text-white">My Movie Bookings</h1>
+        <p className="text-slate-200 text-base md:text-lg mt-1">
+          Present your digital ticket pass code at the cinema hall entrance.
         </p>
       </div>
 
@@ -81,10 +81,10 @@ const MyBookings = () => {
         ) : bookings.length === 0 ? (
           <div className="text-center py-16 bg-slate-900/60 rounded-2xl border border-slate-800">
             <Ticket className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400 text-lg">You haven't made any ticket reservations yet.</p>
+            <p className="text-slate-300 text-xl font-bold">You haven't made any ticket reservations yet.</p>
             <Link
               to="/movies"
-              className="inline-block mt-4 px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-sm transition-all"
+              className="inline-block mt-4 px-8 py-3 bg-rose-600 hover:bg-rose-500 text-white font-extrabold rounded-xl text-base transition-all"
             >
               Browse Movies
             </Link>
@@ -106,7 +106,7 @@ const MyBookings = () => {
                   className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl overflow-hidden shadow-xl flex flex-col md:flex-row"
                 >
                   {/* Poster */}
-                  <div className="md:w-48 bg-slate-950 shrink-0">
+                  <div className="md:w-52 bg-slate-950 shrink-0">
                     <img
                       src={movie?.poster_url || FALLBACK_POSTER}
                       alt={movie?.title || "Movie"}
@@ -114,48 +114,48 @@ const MyBookings = () => {
                         e.currentTarget.onerror = null;
                         e.currentTarget.src = FALLBACK_POSTER;
                       }}
-                      className="w-full h-48 md:h-full object-cover"
+                      className="w-full h-52 md:h-full object-cover"
                     />
                   </div>
 
                   {/* Info */}
-                  <div className="p-6 flex-1 flex flex-col justify-between">
+                  <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs sm:text-sm font-bold text-rose-400 uppercase tracking-wide">
+                        <span className="text-sm font-extrabold text-rose-400 uppercase tracking-wide">
                           {movie?.genre || "Movie"}
                         </span>
-                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> {booking.status}
+                        <span className="px-3 py-1 rounded-full text-xs sm:text-sm font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4" /> {booking.status}
                         </span>
                       </div>
 
-                      <h2 className="text-2xl font-bold text-white mb-4">{movie?.title}</h2>
+                      <h2 className="text-2xl sm:text-3xl font-black text-white mb-4">{movie?.title}</h2>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-sm text-slate-300 mb-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-base text-slate-200 mb-4">
                         <div className="flex items-center gap-2.5">
-                          <MapPin className="w-4 h-4 text-rose-500 shrink-0" />
+                          <MapPin className="w-5 h-5 text-rose-500 shrink-0" />
                           <span>{theater?.name} ({hall?.hall_name})</span>
                         </div>
                         <div className="flex items-center gap-2.5">
-                          <Calendar className="w-4 h-4 text-rose-500 shrink-0" />
+                          <Calendar className="w-5 h-5 text-rose-500 shrink-0" />
                           <span>{booking.showtime?.start_time ? new Date(booking.showtime.start_time).toLocaleString() : "Upcoming Showtime"}</span>
                         </div>
                         <div className="flex items-center gap-2.5">
-                          <Ticket className="w-4 h-4 text-rose-500 shrink-0" />
-                          <span>Seats: <strong className="text-white">{seatsList || "D5, D6"}</strong></span>
+                          <Ticket className="w-5 h-5 text-rose-500 shrink-0" />
+                          <span>Seats: <strong className="text-white font-extrabold">{seatsList || "D5, D6"}</strong></span>
                         </div>
                         <div className="flex items-center gap-2.5">
-                          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <span>Total Paid: <strong className="text-emerald-400">LKR {parseFloat(booking.total_amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong></span>
+                          <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                          <span>Total Paid: <strong className="text-emerald-400 font-extrabold">LKR {parseFloat(booking.total_amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong></span>
                         </div>
                       </div>
                     </div>
 
                     {/* Entrance Code */}
                     <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-                      <div className="text-sm font-medium text-slate-400">Entrance Passcode</div>
-                      <div className="font-mono text-base font-bold text-rose-400 bg-slate-950 px-4 py-1.5 rounded-lg border border-slate-800">
+                      <div className="text-base font-bold text-slate-300">Entrance Passcode</div>
+                      <div className="font-mono text-lg font-black text-rose-400 bg-slate-950 px-5 py-2 rounded-xl border border-slate-800">
                         {booking.payment?.transaction_reference || `TXN-QSHOW${booking.booking_id}`}
                       </div>
                     </div>

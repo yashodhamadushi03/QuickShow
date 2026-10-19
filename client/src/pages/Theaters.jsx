@@ -163,10 +163,10 @@ const Theaters = () => {
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 text-rose-400 text-sm font-medium mb-4 border border-rose-500/20">
           <Sparkles className="w-4 h-4" /> Islandwide Sri Lankan Cinema Network
         </div>
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-3">
+        <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-3">
           Explore Cinema Theaters Across Sri Lanka
         </h1>
-        <p className="text-slate-400 text-lg max-w-3xl">
+        <p className="text-slate-200 text-lg sm:text-xl max-w-3xl leading-relaxed">
           Book movie showtimes across Scope Cinemas, Savoy, PVR, Regal, Imperial, and Sky Lite in Colombo, Jaffna, Gampaha, Kurunegala, Matara, and Nuwara Eliya.
         </p>
 
@@ -178,7 +178,7 @@ const Theaters = () => {
               <button
                 key={city}
                 onClick={() => setSelectedCity(city)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+                className={`px-5 py-2.5 rounded-full text-base font-bold transition-all duration-200 ${
                   selectedCity === city
                     ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
                     : "bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800"
@@ -191,13 +191,13 @@ const Theaters = () => {
 
           {/* Search Box */}
           <div className="relative w-full md:w-80">
-            <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
+            <Search className="absolute left-3.5 top-3.5 w-5 h-5 text-slate-400" />
             <input
               type="text"
               placeholder="Search theater, city or address..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+              className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-base text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
             />
           </div>
         </div>
@@ -212,7 +212,7 @@ const Theaters = () => {
         ) : filteredTheaters.length === 0 ? (
           <div className="text-center py-16 bg-slate-900/50 rounded-2xl border border-slate-800">
             <MapPin className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400 text-lg">No cinema locations match your search criteria.</p>
+            <p className="text-slate-300 text-xl font-bold">No cinema locations match your search criteria.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -223,23 +223,23 @@ const Theaters = () => {
               >
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-4">
-                    <h3 className="text-xl font-bold text-white group-hover:text-rose-400 transition-colors">
+                    <h3 className="text-2xl font-black text-white group-hover:text-rose-400 transition-colors">
                       {theater.name}
                     </h3>
-                    <span className="px-3 py-1 bg-rose-500/10 text-rose-400 text-xs sm:text-sm font-semibold rounded-full border border-rose-500/20 shrink-0">
+                    <span className="px-3 py-1 bg-rose-500/10 text-rose-400 text-sm font-extrabold rounded-full border border-rose-500/20 shrink-0">
                       {theater.city}
                     </span>
                   </div>
 
-                  <div className="space-y-2 text-slate-300 text-sm mb-6">
+                  <div className="space-y-2 text-slate-200 text-base mb-6">
                     <div className="flex items-start gap-2.5">
-                      <MapPin className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                      <MapPin className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
                       <span>{theater.address}</span>
                     </div>
                     {theater.phone && (
-                      <div className="flex items-center gap-2.5 text-sm text-slate-300">
-                        <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-                        <a href={`tel:${theater.phone}`} className="hover:text-rose-400 transition-colors font-mono">
+                      <div className="flex items-center gap-2.5 text-base text-slate-200">
+                        <Phone className="w-5 h-5 text-slate-400 shrink-0" />
+                        <a href={`tel:${theater.phone}`} className="hover:text-rose-400 transition-colors font-mono font-medium">
                           {theater.phone}
                         </a>
                       </div>
@@ -248,24 +248,24 @@ const Theaters = () => {
 
                   {/* Screening Halls */}
                   <div className="space-y-3 mb-6">
-                    <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <Film className="w-4 h-4 text-slate-400" /> Auditoriums ({theater.halls?.length || 0})
+                    <div className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                      <Film className="w-5 h-5 text-slate-400" /> Auditoriums ({theater.halls?.length || 0})
                     </div>
                     <div className="flex flex-col gap-2">
                       {theater.halls && theater.halls.length > 0 ? (
                         theater.halls.map((hall) => (
                           <div
                             key={hall.hall_id}
-                            className="flex items-center justify-between bg-slate-950/60 px-3.5 py-2.5 rounded-xl border border-slate-800/60 text-sm text-slate-300"
+                            className="flex items-center justify-between bg-slate-950/60 px-4 py-3 rounded-xl border border-slate-800/60 text-base text-slate-200"
                           >
-                            <span className="font-medium text-slate-200">{hall.hall_name}</span>
-                            <span className="text-slate-400 font-mono text-xs sm:text-sm">
+                            <span className="font-semibold text-white">{hall.hall_name}</span>
+                            <span className="text-slate-300 font-mono text-sm font-bold">
                               {hall.total_capacity ? `${hall.total_capacity} Seats` : "Multi-tier"}
                             </span>
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm text-slate-400 italic">Auditoriums updating...</p>
+                        <p className="text-base text-slate-400 italic">Auditoriums updating...</p>
                       )}
                     </div>
                   </div>
@@ -273,12 +273,12 @@ const Theaters = () => {
 
                 {/* Footer Action */}
                 <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs sm:text-sm text-emerald-400 font-medium">
-                    <ShieldCheck className="w-4 h-4" /> Dolby Atmos & 4K Laser
+                  <div className="flex items-center gap-1.5 text-sm sm:text-base text-emerald-400 font-bold">
+                    <ShieldCheck className="w-5 h-5" /> Dolby Atmos & 4K Laser
                   </div>
                   <Link
                     to="/movies"
-                    className="inline-flex items-center gap-1.5 text-sm font-bold text-rose-500 hover:text-rose-400 transition-colors"
+                    className="inline-flex items-center gap-1.5 text-base font-extrabold text-rose-500 hover:text-rose-400 transition-colors hover:scale-105"
                   >
                     View Showtimes &rarr;
                   </Link>

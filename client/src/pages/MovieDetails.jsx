@@ -74,7 +74,7 @@ const MovieDetails = () => {
 
   return show ? (
     <div className="px-6 md:px-16 lg:px-40 pt-28 md:pt-36 pb-20">
-      <div className="flex flex-col md:flex-row gap-8 max-w-6xl mx-auto">
+      <div className="flex flex-col md:flex-row gap-10 max-w-6xl mx-auto">
         <img
           src={show.movie.poster_path || show.movie.poster_url || FALLBACK_POSTER}
           alt={show.movie.title}
@@ -82,60 +82,60 @@ const MovieDetails = () => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = FALLBACK_POSTER;
           }}
-          className="max-md:mx-auto rounded-xl h-104 max-w-70 object-cover shadow-2xl border border-slate-800"
+          className="max-md:mx-auto rounded-2xl h-112 max-w-80 object-cover shadow-2xl border border-slate-800"
         />
-        <div className="relative flex flex-col gap-3 justify-center">
+        <div className="relative flex flex-col gap-4 justify-center">
           <BlurCircle top="-100px" left="-100px" />
-          <p className="text-rose-500 font-bold tracking-wider text-xs sm:text-sm uppercase">
+          <p className="text-rose-500 font-black tracking-widest text-sm sm:text-base uppercase">
             {show.movie.genres?.[0]?.name || "ENGLISH"} CINEMA
           </p>
-          <h1 className="text-3xl md:text-5xl font-extrabold max-w-xl text-balance text-white">
+          <h1 className="text-4xl md:text-6xl font-black max-w-2xl text-balance text-white leading-tight">
             {show.movie.title}
           </h1>
-          <div className="flex items-center gap-2 text-slate-200 text-sm sm:text-base">
-            <StarIcon className="w-5 h-5 text-rose-500 fill-rose-500" />
-            <span className="font-bold text-white">{show.movie.vote_average?.toFixed(1) || "8.5"}</span> User Ratings
+          <div className="flex items-center gap-2.5 text-slate-200 text-base sm:text-lg">
+            <StarIcon className="w-6 h-6 text-rose-500 fill-rose-500" />
+            <span className="font-extrabold text-white">{show.movie.vote_average?.toFixed(1) || "8.5"}</span> User Ratings
           </div>
-          <p className="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed max-w-xl">
+          <p className="text-slate-200 mt-1 text-base sm:text-lg leading-relaxed max-w-2xl">
             {show.movie.overview}
           </p>
-          <p className="text-slate-400 text-sm font-mono">
+          <p className="text-slate-300 text-base font-mono font-medium">
             {timeFormat(show.movie.runtime)} &bull; {show.movie.genres?.map((g) => g.name).join(", ")} &bull; {show.movie.release_date?.split("-")[0] || "2024"}
           </p>
 
           {/* Action buttons: Watch Trailer, Buy Tickets, Heart */}
-          <div className="flex items-center gap-3 mt-4">
+          <div className="flex items-center gap-4 mt-4">
             <button
               type="button"
               onClick={() => window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(show.movie.title + " trailer"), "_blank")}
-              className="flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-white text-sm font-semibold transition-colors cursor-pointer border border-slate-700"
+              className="flex items-center gap-2 px-7 py-3.5 bg-slate-800 hover:bg-slate-700 rounded-2xl text-white text-base font-bold transition-colors cursor-pointer border border-slate-700 hover:scale-105"
             >
-              <PlayCircle size={18} className="text-rose-500" />
+              <PlayCircle size={20} className="text-rose-500" />
               Watch Trailer
             </button>
             <button
               type="button"
               onClick={handleScrollToBooking}
-              className="px-8 py-3 bg-rose-600 hover:bg-rose-500 rounded-xl text-white font-bold text-sm shadow-lg shadow-rose-600/30 transition-all cursor-pointer hover:scale-105"
+              className="px-9 py-3.5 bg-rose-600 hover:bg-rose-500 rounded-2xl text-white font-extrabold text-base sm:text-lg shadow-xl shadow-rose-600/30 transition-all cursor-pointer hover:scale-105 active:scale-95"
             >
               Buy Tickets
             </button>
             <button
               type="button"
               onClick={() => toast.success("Added to Favourites!")}
-              className="w-11 h-11 flex items-center justify-center bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full transition-colors cursor-pointer"
+              className="w-12 h-12 flex items-center justify-center bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full transition-colors cursor-pointer hover:scale-105"
             >
-              <Heart size={18} className="text-rose-500" />
+              <Heart size={20} className="text-rose-500" />
             </button>
           </div>
         </div>
       </div>
 
-      <p className="text-xl font-extrabold text-white mt-16 mb-4">Cast & Crew</p>
+      <p className="text-2xl sm:text-3xl font-black text-white mt-20 mb-6">Cast & Crew</p>
       <div className="overflow-x-auto no-scrollbar pb-4">
-        <div className="flex items-center gap-4 w-max">
+        <div className="flex items-center gap-5 w-max">
           {show.movie.casts?.slice(0, 12).map((cast, index) => (
-            <div key={index} className="flex flex-col items-center text-center w-24">
+            <div key={index} className="flex flex-col items-center text-center w-28">
               <img
                 src={cast.profile_path || FALLBACK_AVATAR}
                 alt={cast.name}
@@ -143,18 +143,18 @@ const MovieDetails = () => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = FALLBACK_AVATAR;
                 }}
-                className="rounded-full h-16 w-16 aspect-square object-cover border border-slate-700 shadow-md"
+                className="rounded-full h-20 w-20 aspect-square object-cover border-2 border-slate-700 shadow-lg"
               />
-              <p className="font-semibold text-slate-200 text-xs sm:text-sm mt-2 line-clamp-1">{cast.name}</p>
+              <p className="font-bold text-slate-200 text-sm sm:text-base mt-2.5 line-clamp-1">{cast.name}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Date & Showtime Selector */}
-      <DateSelect dateTime={show.dateTime} id={id} />
+      <DateSelect dateTime={show.dateTime} id={id} movie={show.movie} />
 
-      <p className="text-xl font-extrabold text-white mt-16 mb-6">
+      <p className="text-2xl sm:text-3xl font-black text-white mt-20 mb-6">
         You May Also Like
       </p>
 
@@ -164,10 +164,10 @@ const MovieDetails = () => {
         ))}
       </div>
 
-      <div className="flex justify-center mt-12">
+      <div className="flex justify-center mt-14">
         <button
           onClick={() => navigate("/movies")}
-          className="px-10 py-3 text-sm bg-rose-600 hover:bg-rose-500 transition rounded-xl font-bold text-white shadow-lg shadow-rose-600/20 cursor-pointer"
+          className="px-12 py-4 text-base sm:text-lg bg-rose-600 hover:bg-rose-500 transition rounded-2xl font-black text-white shadow-xl shadow-rose-600/30 cursor-pointer hover:scale-105 active:scale-95"
         >
           Show More Movies
         </button>

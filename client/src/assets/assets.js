@@ -58,11 +58,11 @@ export const FALLBACK_BACKDROP = "https://images.unsplash.com/photo-151870926880
 export const FALLBACK_AVATAR = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200";
 
 export const SL_SHOWTIME_SLOTS = [
-    { slotName: "Morning Show", time: "10:00 AM", hour: 10, minute: 0 },
-    { slotName: "Matinee Show", time: "01:00 PM", hour: 13, minute: 0 },
-    { slotName: "First Show", time: "04:00 PM", hour: 16, minute: 0 },
-    { slotName: "Second Show", time: "07:15 PM", hour: 19, minute: 15 },
-    { slotName: "Night Show", time: "10:15 PM", hour: 22, minute: 15 },
+    { slotId: "morning", slotName: "Morning Show", time: "10:00 AM", time24: "10:00", hour: 10, minute: 0, hall: "Screen 1 - Dolby Atmos 4K", experience: "Dolby Atmos 4K", price: 1500 },
+    { slotId: "matinee", slotName: "Matinee Show", time: "01:00 PM", time24: "13:00", hour: 13, minute: 0, hall: "Screen 2 - Laser Ultra 4K", experience: "Laser Ultra 4K", price: 1500 },
+    { slotId: "first", slotName: "First Show", time: "04:00 PM", time24: "16:00", hour: 16, minute: 0, hall: "Screen 1 - Dolby Atmos 4K", experience: "Dolby Atmos 4K", price: 1600 },
+    { slotId: "second", slotName: "Second Show", time: "07:15 PM", time24: "19:15", hour: 19, minute: 15, hall: "Screen 3 - IMAX 3D Laser", experience: "IMAX 3D Laser", price: 1800 },
+    { slotId: "night", slotName: "Night Show", time: "10:15 PM", time24: "22:15", hour: 22, minute: 15, hall: "Screen 1 - VIP Recliner Suite", experience: "VIP Luxury", price: 2000 },
 ];
 
 export const dummyShowsData = [
@@ -142,52 +142,39 @@ export const dummyShowsData = [
         "vote_count": 26900,
         "runtime": 178,
     }
-]
+];
 
 // Dynamic Date Generator relative to real-world current date
 const getDynamicDateString = (offsetDays) => {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
-  return d.toISOString().split('T')[0];
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
-const d0 = getDynamicDateString(0);
-const d1 = getDynamicDateString(1);
-const d2 = getDynamicDateString(2);
-const d3 = getDynamicDateString(3);
-
-// Standard Sri Lankan Cinema Showtime Slots:
-// Morning Show: 10:00 AM | Matinee Show: 1:00 PM | First Show: 4:00 PM | Second Show: 7:15 PM | Night Show: 10:15 PM
-export const dummyDateTimeData = {
-    [d0]: [
-        { "time": `${d0}T10:00:00.000Z`, "showId": "show_1", "slotName": "Morning Show (10:00 AM)" },
-        { "time": `${d0}T13:00:00.000Z`, "showId": "show_2", "slotName": "Matinee Show (01:00 PM)" },
-        { "time": `${d0}T16:00:00.000Z`, "showId": "show_3", "slotName": "First Show (04:00 PM)" },
-        { "time": `${d0}T19:15:00.000Z`, "showId": "show_4", "slotName": "Second Show (07:15 PM)" },
-        { "time": `${d0}T22:15:00.000Z`, "showId": "show_5", "slotName": "Night Show (10:15 PM)" }
-    ],
-    [d1]: [
-        { "time": `${d1}T10:00:00.000Z`, "showId": "show_6", "slotName": "Morning Show (10:00 AM)" },
-        { "time": `${d1}T13:00:00.000Z`, "showId": "show_7", "slotName": "Matinee Show (01:00 PM)" },
-        { "time": `${d1}T16:00:00.000Z`, "showId": "show_8", "slotName": "First Show (04:00 PM)" },
-        { "time": `${d1}T19:15:00.000Z`, "showId": "show_9", "slotName": "Second Show (07:15 PM)" },
-        { "time": `${d1}T22:15:00.000Z`, "showId": "show_10", "slotName": "Night Show (10:15 PM)" }
-    ],
-    [d2]: [
-        { "time": `${d2}T10:00:00.000Z`, "showId": "show_11", "slotName": "Morning Show (10:00 AM)" },
-        { "time": `${d2}T13:00:00.000Z`, "showId": "show_12", "slotName": "Matinee Show (01:00 PM)" },
-        { "time": `${d2}T16:00:00.000Z`, "showId": "show_13", "slotName": "First Show (04:00 PM)" },
-        { "time": `${d2}T19:15:00.000Z`, "showId": "show_14", "slotName": "Second Show (07:15 PM)" },
-        { "time": `${d2}T22:15:00.000Z`, "showId": "show_15", "slotName": "Night Show (10:15 PM)" }
-    ],
-    [d3]: [
-        { "time": `${d3}T10:00:00.000Z`, "showId": "show_16", "slotName": "Morning Show (10:00 AM)" },
-        { "time": `${d3}T13:00:00.000Z`, "showId": "show_17", "slotName": "Matinee Show (01:00 PM)" },
-        { "time": `${d3}T16:00:00.000Z`, "showId": "show_18", "slotName": "First Show (04:00 PM)" },
-        { "time": `${d3}T19:15:00.000Z`, "showId": "show_19", "slotName": "Second Show (07:15 PM)" },
-        { "time": `${d3}T22:15:00.000Z`, "showId": "show_20", "slotName": "Night Show (10:15 PM)" }
-    ]
-}
+// Generate 7 consecutive days of complete Sri Lankan 5-slot cinema schedules
+export const dummyDateTimeData = (() => {
+  const data = {};
+  for (let offset = 0; offset < 7; offset++) {
+    const dateStr = getDynamicDateString(offset);
+    data[dateStr] = SL_SHOWTIME_SLOTS.map((slot, idx) => ({
+      showId: offset * 5 + (idx + 1),
+      slotId: slot.slotId,
+      slotName: slot.slotName,
+      time: slot.time,
+      displayTime: slot.time,
+      date: dateStr,
+      hall: slot.hall,
+      experience: slot.experience,
+      price: slot.price,
+      isoTime: `${dateStr}T${slot.time24}:00`,
+      theater: "Scope Cinemas - Colombo City Centre"
+    }));
+  }
+  return data;
+})();
 
 export const dummyDashboardData = {
     "totalBookings": 14,

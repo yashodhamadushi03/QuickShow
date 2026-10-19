@@ -5,11 +5,11 @@
   --color-primary: #F84565;
   --color-primary-dull: #D63854;
 
-  /* Standardized Typography Scale */
-  --text-micro: 0.75rem;    /* 12px (text-xs) - Minimum readable badge/tag size */
-  --text-subtext: 0.875rem; /* 14px (text-sm) - Clean helper texts, metadata, tables */
-  --text-body: 1rem;        /* 16px (text-base) - Standard reading text */
-  --text-metric: 1.5rem;    /* 24px (text-2xl) - Metric figures */
+  /* Standardized Typography Scale - Enhanced Legibility */
+  --text-micro: 0.875rem;   /* 14px - Crisp, legible badge/tag size */
+  --text-subtext: 1rem;     /* 16px - Clean helper texts, metadata, tables */
+  --text-body: 1.125rem;    /* 18px - Standard reading text */
+  --text-metric: 1.875rem;  /* 30px - Metric figures */
 }
 
 * {
@@ -18,23 +18,27 @@
   scrollbar-color: #787777 #1e1e1e;
 }
 
+html {
+  font-size: 16.5px; /* Scale up base typography cleanly across all rem classes */
+}
+
 body {
   color: white;
   background-color: #09090B;
-  font-size: 0.9375rem; /* 15px comfortable base size */
-  line-height: 1.5;
+  font-size: 1.0625rem; /* ~17.5px comfortable, highly readable base text */
+  line-height: 1.6;
 }
 
 /* Standardized Table Typography Defaults */
 table th {
-  font-size: 0.8125rem; /* 13px */
+  font-size: 0.9375rem; /* ~15.5px */
   letter-spacing: 0.05em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 table td {
-  font-size: 0.875rem; /* 14px */
-  line-height: 1.4;
+  font-size: 1rem; /* 16.5px */
+  line-height: 1.5;
 }
 
 .no-scrollbar {

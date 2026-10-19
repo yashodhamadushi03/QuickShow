@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ShieldCheck, Ticket, CheckCircle2, ArrowLeft, CreditCard, Mail, Sparkles, Share2, Wallet } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useUser } from "@clerk/clerk-react";
@@ -7,11 +7,24 @@ import { useUser } from "@clerk/clerk-react";
 const API_BASE_URL = "http://localhost:8000/api";
 
 const SeatLayout = () => {
-  const { id: showtimeIdParam } = useParams();
+  const { id: showtimeIdParam, date: dateParam } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user: clerkUser } = useUser();
 
-  const showtimeId = parseInt(showtimeIdParam) || 1;
+  const passedState = location.state || {};
+  const selectedDate = passedState.selectedDate || dateParam;
+  const selectedSlot = passedState.selectedSlot;
+  const passedMovie = passedState.movie;
+
+  const showtimeId = parseInt(passedState.showtimeId) || parseInt(showtimeIdParam) || 1;
+
+  const formatHeaderDate = (dStr) => {
+    if (!dStr) return "Today";
+    const parts = String(dStr).split("-");
+    const d = parts.length === 3 ? new Date(parts[0], parts[1] - 1, parts[2]) : new Date(dStr);
+    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  };
 
   const [seats, setSeats] = useState([]);
   const [selectedSeatIds, setSelectedSeatIds] = useState([]);
@@ -384,26 +397,33 @@ const SeatLayout = () => {
       <div className="max-w-5xl mx-auto mb-6 md:mb-8 flex items-center justify-between">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-xs sm:text-sm font-medium transition-colors"
+          className="inline-flex items-center gap-2 text-slate-300 hover:text-white text-sm sm:text-base font-bold transition-colors py-2 px-3 rounded-xl hover:bg-slate-900"
         >
-          <ArrowLeft className="w-4 h-4" /> Back
+          <ArrowLeft className="w-5 h-5" /> Back
         </button>
 
         <div className="text-center px-2">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight">
-            {showtime?.movie?.title || "Movie Showtimes"}
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight">
+            {showtime?.movie?.title || passedMovie?.title || "Movie Showtimes"}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-300 mt-1">
-            {showtime?.hall?.theater?.name || "Scope Cinemas"} &bull; {showtime?.hall?.hall_name || "Screen 1"}
+          <p className="text-sm sm:text-base text-slate-300 mt-1 font-medium">
+            {showtime?.hall?.theater?.name || selectedSlot?.theater || "Scope Cinemas - Colombo City Centre"} &bull; {showtime?.hall?.hall_name || selectedSlot?.hall || "Screen 1 - Dolby Atmos 4K"}
           </p>
+          <div className="inline-flex flex-wrap items-center justify-center gap-2.5 mt-2.5 px-4 py-1.5 bg-slate-900 border border-rose-500/30 rounded-full text-xs sm:text-sm font-bold text-rose-300 shadow-md">
+            <span>📅 {formatHeaderDate(selectedDate)}</span>
+            <span className="text-slate-600">&bull;</span>
+            <span>🕒 {selectedSlot?.slotName || "Standard Show"} ({selectedSlot?.displayTime || selectedSlot?.time || "7:15 PM"})</span>
+            <span className="text-slate-600">&bull;</span>
+            <span className="text-emerald-400 font-extrabold">{selectedSlot?.experience || "Dolby Atmos 4K"}</span>
+          </div>
         </div>
 
         <button
           onClick={() => setShowAiModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-full text-xs sm:text-sm font-bold shadow-lg shadow-rose-600/30 transition-all hover:scale-105 cursor-pointer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-full text-sm sm:text-base font-extrabold shadow-lg shadow-rose-600/30 transition-all hover:scale-105 cursor-pointer"
           title="AI Smart Seat Optimizer Assistant"
         >
-          <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+          <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
           <span>✨ AI Seat Assistant</span>
         </button>
       </div>
