@@ -245,90 +245,20 @@ const AdminDashboard = () => {
     }
   };
 
-  // Sample Fallbacks if backend server returns empty
+  // Pure real database analytics and live feeds (no mock data)
   const displayAnalytics = analytics || {
-    total_revenue_lkr: 485000.0,
-    total_tickets_sold: 284,
-    average_fill_rate_percent: 86.4,
-    active_showtimes_count: 18,
-    revenue_by_branch: [
-      { branch: "Scope Cinemas - Colombo City Centre", revenue_lkr: 185000.0, occupancy_percent: 92.0 },
-      { branch: "Scope Cinemas - Havelock City Mall (IMAX)", revenue_lkr: 142000.0, occupancy_percent: 88.5 },
-      { branch: "Savoy 3D Dolby Atmos - Wellawatte", revenue_lkr: 78000.0, occupancy_percent: 79.0 },
-      { branch: "PVR Cinemas - One Galle Face", revenue_lkr: 95000.0, occupancy_percent: 85.0 },
-      { branch: "Regal Cinema - Cargills Square Jaffna", revenue_lkr: 45000.0, occupancy_percent: 74.0 }
-    ],
-    booking_status_counts: { confirmed: 240, pending: 18, cancelled: 6 }
+    total_revenue_lkr: 0.0,
+    total_tickets_sold: 0,
+    average_fill_rate_percent: 0.0,
+    active_showtimes_count: scheduledShowtimes.length,
+    total_theaters_count: adminTheaters.length || 13,
+    revenue_by_branch: [],
+    booking_status_counts: { confirmed: 0, pending: 0, cancelled: 0 }
   };
 
-  const displayBookings = liveBookings.length > 0 ? liveBookings : [
-    {
-      booking_id: 1001,
-      customer_name: "Kasun Perera",
-      customer_email: "kasun@quickshow.lk",
-      movie_title: "Avatar: The Way of Water",
-      theater_name: "Scope Cinemas - Colombo City Centre",
-      hall_name: "Screen 1 - Dolby Atmos",
-      seats: ["D5", "D6"],
-      total_lkr: 3000.0,
-      status: "confirmed",
-      passcode: "TXN-LK8F92A1",
-      created_at: "2026-10-08 14:30:00"
-    },
-    {
-      booking_id: 1002,
-      customer_name: "Nipuni Silva",
-      customer_email: "nipuni@quickshow.lk",
-      movie_title: "Kandak Sema",
-      theater_name: "Savoy 3D Dolby Atmos - Wellawatte",
-      hall_name: "Savoy Screen 1",
-      seats: ["F8", "F9"],
-      total_lkr: 3000.0,
-      status: "confirmed",
-      passcode: "TXN-LK3C14B8",
-      created_at: "2026-10-08 15:10:00"
-    },
-    {
-      booking_id: 1003,
-      customer_name: "Santhush Wickrama",
-      customer_email: "santhush@quickshow.lk",
-      movie_title: "GOAT (Tamil 4K)",
-      theater_name: "Scope Cinemas - Havelock City Mall (IMAX)",
-      hall_name: "Screen 1 - IMAX",
-      seats: ["G11", "G12"],
-      total_lkr: 4600.0,
-      status: "confirmed",
-      passcode: "TXN-LK99A102",
-      created_at: "2026-10-08 16:05:00"
-    }
-  ];
+  const displayBookings = liveBookings;
+  const displayActivities = activities;
 
-  const displayActivities = activities.length > 0 ? activities : [
-    {
-      activity_id: "ACT-1001",
-      type: "TICKET_RESERVATION",
-      user_name: "Kasun Perera",
-      details: "Reserved seats D5, D6 for 'Avatar' at Scope Cinemas CCC",
-      timestamp: "10 mins ago",
-      amount_lkr: 3000.0
-    },
-    {
-      activity_id: "ACT-1002",
-      type: "FNB_PREORDER",
-      user_name: "Nimmi Fernando",
-      details: "Pre-ordered Jumbo Popcorn + 2 Drinks for Savoy 3D",
-      timestamp: "25 mins ago",
-      amount_lkr: 2200.0
-    },
-    {
-      activity_id: "ACT-1003",
-      type: "AI_SEAT_OPTIMIZER",
-      user_name: "Sahan Gunawardena",
-      details: "Triggered AI Smart Seat Optimizer for Havelock IMAX",
-      timestamp: "40 mins ago",
-      amount_lkr: 0.0
-    }
-  ];
 
   // If not authenticated, render Admin Login Security Shield Modal
   if (!isAuthenticated) {
@@ -480,9 +410,9 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-amber-400">
-            {displayAnalytics.active_showtimes_count} <span className="text-sm font-normal text-slate-400">Slots</span>
+            {displayAnalytics.active_showtimes_count || scheduledShowtimes.length} <span className="text-sm font-normal text-slate-400">Slots</span>
           </div>
-          <div className="text-xs sm:text-sm text-slate-400 mt-1.5">10 Sri Lankan branches</div>
+          <div className="text-xs sm:text-sm text-slate-400 mt-1.5">{displayAnalytics.total_theaters_count || adminTheaters.length || 13} Sri Lankan branches</div>
         </div>
       </div>
 
@@ -516,7 +446,7 @@ const AdminDashboard = () => {
               : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
           }`}
         >
-          <Users className="w-4 h-4" /> Customer Profiles & Activity Logs
+          <Users className="w-4 h-4" /> Customer Profiles & Activity Logs ({customers.length})
         </button>
         <button
           onClick={() => setActiveTab("occupancy")}
@@ -526,7 +456,7 @@ const AdminDashboard = () => {
               : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
           }`}
         >
-          <Activity className="w-4 h-4" /> Occupancy & Waitlist Monitor
+          <Activity className="w-4 h-4" /> Occupancy & Waitlist Monitor ({occupancy.length})
         </button>
         <button
           onClick={() => setActiveTab("showtimes")}
@@ -536,7 +466,7 @@ const AdminDashboard = () => {
               : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
           }`}
         >
-          <Calendar className="w-4 h-4" /> Sri Lankan Showtime Engine ({scheduledShowtimes.length > 0 ? scheduledShowtimes.length : 475})
+          <Calendar className="w-4 h-4" /> Sri Lankan Showtime Engine ({scheduledShowtimes.length})
         </button>
       </div>
 
@@ -551,27 +481,38 @@ const AdminDashboard = () => {
               </h3>
 
               <div className="space-y-4">
-                {displayAnalytics.revenue_by_branch.map((branch, i) => (
-                  <div key={i} className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                      <span className="font-semibold text-sm sm:text-base text-white">{branch.branch}</span>
-                      <span className="font-extrabold text-emerald-400 text-sm sm:text-base">
-                        LKR {branch.revenue_lkr.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
+                {displayAnalytics.revenue_by_branch && displayAnalytics.revenue_by_branch.length > 0 ? (
+                  displayAnalytics.revenue_by_branch.map((branch, i) => (
+                    <div key={i} className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                        <span className="font-semibold text-sm sm:text-base text-white">
+                          {branch.branch} {branch.city ? `(${branch.city})` : ""}
+                        </span>
+                        <span className="font-extrabold text-emerald-400 text-sm sm:text-base">
+                          LKR {(branch.revenue_lkr || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
 
-                    <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden">
-                      <div
-                        className="bg-gradient-to-r from-rose-500 to-emerald-400 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${branch.occupancy_percent}%` }}
-                      ></div>
+                      <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-rose-500 to-emerald-400 h-full rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, Math.max(branch.occupancy_percent || 0, branch.revenue_lkr > 0 ? 5 : 0))}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between text-xs sm:text-sm text-slate-400 mt-2 font-mono">
+                        <span>Occupancy Fill Rate: {branch.occupancy_percent || 0}% ({branch.tickets_sold || 0} tickets sold)</span>
+                        <span className={branch.revenue_lkr > 0 ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                          {branch.revenue_lkr > 0 ? "Active Box Office" : "Awaiting Bookings"}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-xs sm:text-sm text-slate-400 mt-2 font-mono">
-                      <span>Occupancy Fill Rate: {branch.occupancy_percent}%</span>
-                      <span>Target Capacity Met</span>
-                    </div>
+                  ))
+                ) : (
+                  <div className="py-12 text-center text-slate-400">
+                    <MapPin className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                    <p className="text-base font-semibold text-white">No Branch Data Available</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
@@ -637,11 +578,20 @@ const AdminDashboard = () => {
                       </td>
                       <td className="py-3.5 px-4">
                         <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Confirmed
+                          <CheckCircle2 className="w-3.5 h-3.5" /> {booking.status || "Confirmed"}
                         </span>
                       </td>
                     </tr>
                   ))}
+                {displayBookings.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="py-12 text-center text-slate-400">
+                      <Ticket className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                      <p className="text-base font-semibold text-white">No Live Customer Bookings Found</p>
+                      <p className="text-xs sm:text-sm text-slate-400 mt-1">Confirmed reservations made on QuickShow will stream here in real time.</p>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -657,25 +607,29 @@ const AdminDashboard = () => {
               </h3>
 
               <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                {(customers.length > 0 ? customers : [
-                  { user_id: 1, name: "Kasun Perera", email: "user@quickshow.lk", phone: "+94 77 123 4567", role: "customer", total_bookings: 3, total_spent_lkr: 9000.0 },
-                  { user_id: 2, name: "Nimmi Fernando", email: "nimmi@quickshow.lk", phone: "+94 71 987 6543", role: "customer", total_bookings: 2, total_spent_lkr: 6000.0 },
-                  { user_id: 3, name: "Scope Admin", email: "admin@quickshow.lk", phone: "+94 11 208 3000", role: "admin", total_bookings: 5, total_spent_lkr: 15000.0 }
-                ]).map((c) => (
-                  <div key={c.user_id} className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-white text-base">{c.name}</div>
-                      <div className="text-sm text-slate-300">{c.email}</div>
-                      <div className="text-xs sm:text-sm text-slate-400 font-mono mt-1">{c.phone} &bull; Role: {c.role}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-mono font-extrabold text-emerald-400 text-base">
-                        LKR {c.total_spent_lkr?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                {customers && customers.length > 0 ? (
+                  customers.map((c) => (
+                    <div key={c.user_id} className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-white text-base">{c.name}</div>
+                        <div className="text-sm text-slate-300">{c.email}</div>
+                        <div className="text-xs sm:text-sm text-slate-400 font-mono mt-1">{c.phone} &bull; Role: {c.role}</div>
                       </div>
-                      <div className="text-xs sm:text-sm text-slate-300">{c.total_bookings} Bookings</div>
+                      <div className="text-right">
+                        <div className="font-mono font-extrabold text-emerald-400 text-base">
+                          LKR {c.total_spent_lkr?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        </div>
+                        <div className="text-xs sm:text-sm text-slate-300">{c.total_bookings} Bookings</div>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="py-12 text-center text-slate-400">
+                    <Users className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                    <p className="text-base font-semibold text-white">No Customer Profiles</p>
+                    <p className="text-xs sm:text-sm text-slate-400 mt-1">Registered users will appear here automatically.</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -686,25 +640,33 @@ const AdminDashboard = () => {
               </h3>
 
               <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                {displayActivities.map((act, i) => (
-                  <div key={i} className="bg-slate-950 border border-slate-800/80 rounded-2xl p-3.5 flex items-start gap-3">
-                    <div className="p-2 bg-rose-500/10 text-rose-400 rounded-xl mt-0.5">
-                      <Activity className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="font-bold text-white">{act.user_name}</span>
-                        <span className="text-xs sm:text-sm text-slate-400 font-mono">{act.timestamp}</span>
+                {displayActivities && displayActivities.length > 0 ? (
+                  displayActivities.map((act, i) => (
+                    <div key={i} className="bg-slate-950 border border-slate-800/80 rounded-2xl p-3.5 flex items-start gap-3">
+                      <div className="p-2 bg-rose-500/10 text-rose-400 rounded-xl mt-0.5">
+                        <Activity className="w-4 h-4" />
                       </div>
-                      <p className="text-sm text-slate-300 mt-1">{act.details}</p>
-                      {act.amount_lkr > 0 && (
-                        <span className="text-xs sm:text-sm font-mono font-bold text-emerald-400 mt-1 inline-block">
-                          + LKR {act.amount_lkr?.toLocaleString()}
-                        </span>
-                      )}
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="font-bold text-white">{act.user_name}</span>
+                          <span className="text-xs sm:text-sm text-slate-400 font-mono">{act.timestamp}</span>
+                        </div>
+                        <p className="text-sm text-slate-300 mt-1">{act.details}</p>
+                        {act.amount_lkr > 0 && (
+                          <span className="text-xs sm:text-sm font-mono font-bold text-emerald-400 mt-1 inline-block">
+                            + LKR {act.amount_lkr?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="py-12 text-center text-slate-400">
+                    <Activity className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                    <p className="text-base font-semibold text-white">No Recent Activity Logs</p>
+                    <p className="text-xs sm:text-sm text-slate-400 mt-1">Live customer activities will be logged here as users book tickets.</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
@@ -718,23 +680,26 @@ const AdminDashboard = () => {
                 <Activity className="w-5 h-5 text-rose-500" /> Real-Time Hall Seat Fill Rates
               </h3>
 
-              <div className="space-y-4">
-                {(occupancy.length > 0 ? occupancy : [
-                  { hall_name: "Screen 1 - Dolby Atmos", theater: "Scope Cinemas CCC", capacity: 96, booked_seats: 84, fill_rate_percent: 87.5 },
-                  { hall_name: "Screen 1 - IMAX 3D Laser", theater: "Scope Cinemas Havelock City", capacity: 120, booked_seats: 112, fill_rate_percent: 93.3 },
-                  { hall_name: "Savoy 3D Main Screen", theater: "Savoy Dolby Atmos Wellawatte", capacity: 180, booked_seats: 140, fill_rate_percent: 77.7 }
-                ]).map((h, idx) => (
-                  <div key={idx} className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
-                    <div className="flex justify-between text-sm sm:text-base mb-1">
-                      <span className="font-bold text-white">{h.hall_name}</span>
-                      <span className="font-mono text-rose-400 font-bold">{h.fill_rate_percent}% Filled</span>
+              <div className="space-y-4 max-h-[460px] overflow-y-auto pr-1">
+                {occupancy && occupancy.length > 0 ? (
+                  occupancy.map((h, idx) => (
+                    <div key={idx} className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                      <div className="flex justify-between text-sm sm:text-base mb-1">
+                        <span className="font-bold text-white">{h.hall_name}</span>
+                        <span className="font-mono text-rose-400 font-bold">{h.fill_rate_percent}% Filled ({h.booked_seats || 0}/{h.capacity})</span>
+                      </div>
+                      <div className="text-xs sm:text-sm text-slate-300 mb-2">{h.theater}</div>
+                      <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                        <div className="bg-rose-600 h-full rounded-full transition-all duration-300" style={{ width: `${Math.min(100, h.fill_rate_percent)}%` }}></div>
+                      </div>
                     </div>
-                    <div className="text-xs sm:text-sm text-slate-300 mb-2">{h.theater}</div>
-                    <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
-                      <div className="bg-rose-600 h-full rounded-full" style={{ width: `${h.fill_rate_percent}%` }}></div>
-                    </div>
+                  ))
+                ) : (
+                  <div className="py-12 text-center text-slate-400">
+                    <Activity className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                    <p className="text-base font-semibold text-white">No Hall Occupancy Data</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -743,25 +708,30 @@ const AdminDashboard = () => {
                 <AlertCircle className="w-5 h-5 text-rose-500" /> Sold-Out Showtime Waitlists
               </h3>
 
-              <div className="space-y-4">
-                {(waitlist.length > 0 ? waitlist : [
-                  { movie_title: "Dune: Part Two (IMAX)", theater: "Scope Cinemas - Havelock City Mall", showtime: "7:30 PM Tonight", waitlist_users_count: 8, status: "FULL_OCCUPANCY" },
-                  { movie_title: "GOAT (Tamil 4K)", theater: "Savoy 3D Dolby Atmos - Wellawatte", showtime: "6:30 PM Tonight", waitlist_users_count: 5, status: "FULL_OCCUPANCY" }
-                ]).map((w, idx) => (
-                  <div key={idx} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-white text-sm sm:text-base">{w.movie_title}</div>
-                      <div className="text-xs sm:text-sm text-slate-300">{w.theater}</div>
-                      <div className="text-xs sm:text-sm text-slate-400 mt-1 font-mono">{w.showtime}</div>
+              <div className="space-y-4 max-h-[460px] overflow-y-auto pr-1">
+                {waitlist && waitlist.length > 0 ? (
+                  waitlist.map((w, idx) => (
+                    <div key={idx} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-white text-sm sm:text-base">{w.movie_title}</div>
+                        <div className="text-xs sm:text-sm text-slate-300">{w.theater}</div>
+                        <div className="text-xs sm:text-sm text-slate-400 mt-1 font-mono">{w.showtime}</div>
+                      </div>
+                      <div className="text-right">
+                        <span className="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-xs sm:text-sm font-bold inline-block mb-1">
+                          {w.waitlist_users_count} Waiting
+                        </span>
+                        <div className="text-xs sm:text-sm text-emerald-400 font-mono">Auto Re-allocation Active</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-xs sm:text-sm font-bold inline-block mb-1">
-                        {w.waitlist_users_count} Waiting
-                      </span>
-                      <div className="text-xs sm:text-sm text-emerald-400 font-mono">Auto Re-allocation Active</div>
-                    </div>
+                  ))
+                ) : (
+                  <div className="py-12 text-center text-slate-400">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-500/60 mx-auto mb-3" />
+                    <p className="text-base font-semibold text-white">All Showtimes Have Available Seating</p>
+                    <p className="text-xs sm:text-sm text-slate-400 mt-1">No sold-out waitlists at this time.</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>

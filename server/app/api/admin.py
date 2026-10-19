@@ -247,19 +247,21 @@ def get_customer_profiles(
     db: Session = Depends(get_db)
 ):
     """Admin: Fetch registered customer profiles with booking history & aggregate LKR spend."""
+    from app.models.booking import Booking, BookingStatus
     users = db.query(User).all()
     customer_data = []
     
     for u in users:
-        total_bookings = len(u.bookings)
-        total_spent_lkr = sum([float(b.total_amount) for b in u.bookings]) if u.bookings else 0.0
+        confirmed_b = [b for b in u.bookings if b.status == BookingStatus.CONFIRMED or str(b.status).lower() == 'confirmed']
+        total_bookings = len(confirmed_b)
+        total_spent_lkr = sum([float(b.total_amount) for b in confirmed_b])
         customer_data.append({
             "user_id": u.user_id,
             "name": u.name,
             "email": u.email,
             "phone": u.phone or "+94 77 123 4567",
-            "role": u.role.value,
-            "created_at": u.created_at.strftime("%Y-%m-%d %H:%M"),
+            "role": u.role.value if hasattr(u.role, 'value') else str(u.role),
+            "created_at": u.created_at.strftime("%Y-%m-%d %H:%M") if u.created_at else "Recently",
             "total_bookings": total_bookings,
             "total_spent_lkr": total_spent_lkr
         })
@@ -272,45 +274,25 @@ def get_customer_activities(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Admin: Live feed of customer engagement activities (Bookings, F&B Orders, Logins)."""
+    """Admin: Live feed of real customer engagement activities from database."""
     from app.models.booking import Booking
-    recent_bookings = db.query(Booking).order_by(Booking.created_at.desc()).limit(10).all()
+    recent_bookings = db.query(Booking).order_by(Booking.created_at.desc()).limit(20).all()
     
     activities = []
     for b in recent_bookings:
-        movie_t = b.showtime.movie.title if b.showtime and b.showtime.movie else "Avatar: The Way of Water"
-        theater_n = b.showtime.hall.theater.name if b.showtime and b.showtime.hall and b.showtime.hall.theater else "Scope Cinemas CCC"
-        user_name = b.user.name if b.user else "Kasun Perera"
+        movie_t = b.showtime.movie.title if b.showtime and b.showtime.movie else "Movie"
+        theater_n = b.showtime.hall.theater.name if b.showtime and b.showtime.hall and b.showtime.hall.theater else "Scope Cinemas"
+        user_name = b.user.name if b.user else (b.customer_email.split('@')[0] if b.customer_email else "Guest Customer")
+        seat_count = len(b.booking_seats) if b.booking_seats else 1
         
         activities.append({
             "activity_id": f"ACT-{b.booking_id}",
             "type": "TICKET_RESERVATION",
             "user_name": user_name,
-            "details": f"Reserved seats for '{movie_t}' at {theater_n}",
-            "timestamp": b.created_at.strftime("%b %d, %Y at %I:%M %p"),
+            "details": f"Reserved {seat_count} seat(s) for '{movie_t}' at {theater_n}",
+            "timestamp": b.created_at.strftime("%b %d, %Y at %I:%M %p") if b.created_at else "Recently",
             "amount_lkr": float(b.total_amount)
         })
-    
-    # Append simulated activity logs if DB has low count
-    if len(activities) < 3:
-        activities.extend([
-            {
-                "activity_id": "ACT-9901",
-                "type": "FNB_PREORDER",
-                "user_name": "Nimmi Fernando",
-                "details": "Pre-ordered Combo Pack (2 Large Popcorn + 2 Coke) for Savoy 3D",
-                "timestamp": "Today at 07:15 PM",
-                "amount_lkr": 2200.00
-            },
-            {
-                "activity_id": "ACT-9902",
-                "type": "AI_SEAT_OPTIMIZER",
-                "user_name": "Sahan Gunawardena",
-                "details": "Used AI Smart Seat Optimizer for Scope Cinemas Havelock City (IMAX)",
-                "timestamp": "Today at 06:45 PM",
-                "amount_lkr": 0.0
-            }
-        ])
         
     return activities
 
@@ -320,32 +302,79 @@ def get_realtime_analytics(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Admin: Aggregated revenue, seat fill rates, and branch performance heatmaps in LKR."""
-    from app.models.booking import Booking, BookingStatus
+    """Admin: Aggregated real-time revenue, seat fill rates, and branch performance in LKR from database."""
+    from app.models.booking import Booking, BookingSeat, BookingStatus
+    from app.models.theater import Theater, Hall, Seat
+    from app.models.showtime import Showtime
     
-    total_bookings = db.query(Booking).count()
-    confirmed_bookings = db.query(Booking).filter(Booking.status == BookingStatus.CONFIRMED).count()
+    # 1. Real Bookings & Revenue
+    confirmed_bookings = db.query(Booking).filter(Booking.status == BookingStatus.CONFIRMED).all()
+    total_revenue_lkr = sum([float(b.total_amount) for b in confirmed_bookings])
     
-    # Calculate revenue
-    all_bookings = db.query(Booking).all()
-    total_revenue_lkr = sum([float(b.total_amount) for b in all_bookings]) if all_bookings else 450000.00
+    # 2. Real Tickets Sold
+    total_tickets_sold = (
+        db.query(BookingSeat)
+        .join(Booking, BookingSeat.booking_id == Booking.booking_id)
+        .filter(Booking.status == BookingStatus.CONFIRMED)
+        .count()
+    )
     
+    # 3. Real Active Showtimes Count
+    active_showtimes_count = db.query(Showtime).count()
+    total_theaters_count = db.query(Theater).count()
+    
+    # 4. Real Revenue & Occupancy by Branch
+    revenue_by_branch = []
+    total_capacity_all = 0
+    total_booked_all = 0
+
+    all_theaters = db.query(Theater).order_by(Theater.name).all()
+    for theater in all_theaters:
+        # Confirmed bookings in this theater
+        th_bookings = (
+            db.query(Booking)
+            .join(Showtime, Booking.showtime_id == Showtime.showtime_id)
+            .join(Hall, Showtime.hall_id == Hall.hall_id)
+            .filter(Hall.theater_id == theater.theater_id, Booking.status == BookingStatus.CONFIRMED)
+            .all()
+        )
+        branch_rev = sum([float(b.total_amount) for b in th_bookings])
+        branch_tickets = sum([len(b.booking_seats) for b in th_bookings])
+        
+        # Hall capacity in this theater
+        hall_capacity_sum = sum([h.total_capacity or 96 for h in theater.halls]) or 96
+        total_capacity_all += hall_capacity_sum
+        total_booked_all += branch_tickets
+        
+        occupancy_pct = round((branch_tickets / hall_capacity_sum * 100), 1) if hall_capacity_sum > 0 else 0.0
+
+        revenue_by_branch.append({
+            "branch": theater.name,
+            "city": theater.city,
+            "revenue_lkr": branch_rev,
+            "tickets_sold": branch_tickets,
+            "occupancy_percent": occupancy_pct
+        })
+    
+    # Sort branches so top-performing branches are shown first
+    revenue_by_branch.sort(key=lambda x: (x["revenue_lkr"], x["tickets_sold"]), reverse=True)
+    
+    # Average fill rate calculation
+    average_fill_rate_percent = round((total_booked_all / total_capacity_all * 100), 1) if total_capacity_all > 0 else 0.0
+    if total_booked_all > 0 and average_fill_rate_percent == 0.0:
+        average_fill_rate_percent = 1.0
+
     return {
-        "total_revenue_lkr": total_revenue_lkr if total_revenue_lkr > 0 else 450000.00,
-        "total_tickets_sold": total_bookings * 2 if total_bookings > 0 else 240,
-        "average_fill_rate_percent": 84.5,
-        "active_showtimes_count": 18,
-        "revenue_by_branch": [
-            {"branch": "Scope Cinemas - Colombo City Centre", "revenue_lkr": 185000.00, "occupancy_percent": 92.0},
-            {"branch": "Scope Cinemas - Havelock City Mall (IMAX)", "revenue_lkr": 142000.00, "occupancy_percent": 88.5},
-            {"branch": "Savoy 3D Dolby Atmos - Wellawatte", "revenue_lkr": 78000.00, "occupancy_percent": 79.0},
-            {"branch": "PVR Cinemas - One Galle Face", "revenue_lkr": 95000.00, "occupancy_percent": 85.0},
-            {"branch": "Regal Cinema - Cargills Square Jaffna", "revenue_lkr": 45000.00, "occupancy_percent": 74.0}
-        ],
+        "total_revenue_lkr": total_revenue_lkr,
+        "total_tickets_sold": total_tickets_sold,
+        "average_fill_rate_percent": average_fill_rate_percent,
+        "active_showtimes_count": active_showtimes_count,
+        "total_theaters_count": total_theaters_count,
+        "revenue_by_branch": revenue_by_branch,
         "booking_status_counts": {
-            "confirmed": confirmed_bookings if confirmed_bookings > 0 else 180,
-            "pending": 12,
-            "cancelled": 5
+            "confirmed": len(confirmed_bookings),
+            "pending": db.query(Booking).filter(Booking.status == BookingStatus.PENDING).count(),
+            "cancelled": db.query(Booking).filter(Booking.status == BookingStatus.CANCELLED).count()
         }
     }
 
@@ -355,7 +384,7 @@ def get_live_customer_bookings(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Admin: Real-time monitor of live customer bookings across Sri Lanka branches."""
+    """Admin: Real-time monitor of live customer bookings from database."""
     from app.models.booking import Booking
     bookings = db.query(Booking).order_by(Booking.created_at.desc()).all()
     
@@ -371,47 +400,17 @@ def get_live_customer_bookings(
         
         output.append({
             "booking_id": b.booking_id,
-            "customer_name": user.name if user else "Kasun Perera",
-            "customer_email": user.email if user else "customer@quickshow.lk",
-            "movie_title": movie.title if movie else "Avatar: The Way of Water",
-            "theater_name": theater.name if theater else "Scope Cinemas - CCC",
-            "hall_name": hall.hall_name if hall else "Screen 1",
-            "seats": seats if seats else ["D5", "D6"],
+            "customer_name": user.name if user else (b.customer_email.split('@')[0] if b.customer_email else "Customer"),
+            "customer_email": user.email if user else (b.customer_email or "customer@quickshow.lk"),
+            "movie_title": movie.title if movie else "Cinema Movie",
+            "theater_name": theater.name if theater else "Scope Cinemas",
+            "hall_name": hall.hall_name if hall else "Main Screen",
+            "seats": seats if seats else ["Reserved"],
             "total_lkr": float(b.total_amount),
             "status": b.status.value if hasattr(b.status, 'value') else str(b.status),
             "passcode": ref,
-            "created_at": b.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            "created_at": b.created_at.strftime("%Y-%m-%d %H:%M:%S") if b.created_at else "Recently"
         })
-    
-    if not output:
-        output = [
-            {
-                "booking_id": 1001,
-                "customer_name": "Kasun Perera",
-                "customer_email": "kasun@quickshow.lk",
-                "movie_title": "Avatar: The Way of Water",
-                "theater_name": "Scope Cinemas - Colombo City Centre",
-                "hall_name": "Screen 1 - Dolby Atmos",
-                "seats": ["D5", "D6"],
-                "total_lkr": 3000.00,
-                "status": "confirmed",
-                "passcode": "TXN-LK8F92A1",
-                "created_at": "2026-10-08 14:30:00"
-            },
-            {
-                "booking_id": 1002,
-                "customer_name": "Nipuni Silva",
-                "customer_email": "nipuni@quickshow.lk",
-                "movie_title": "Kandak Sema",
-                "theater_name": "Savoy 3D Dolby Atmos - Wellawatte",
-                "hall_name": "Savoy Screen 1",
-                "seats": ["F8", "F9"],
-                "total_lkr": 3000.00,
-                "status": "confirmed",
-                "passcode": "TXN-LK3C14B8",
-                "created_at": "2026-10-08 15:10:00"
-            }
-        ]
         
     return output
 
@@ -421,14 +420,37 @@ def get_occupancy_heatmap(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Admin: Real-time hall seat fill rates & peak showtime analytics."""
-    return [
-        {"hall_id": 101, "hall_name": "Screen 1 - Dolby Atmos", "theater": "Scope Cinemas CCC", "capacity": 96, "booked_seats": 84, "fill_rate_percent": 87.5},
-        {"hall_id": 201, "hall_name": "Screen 1 - IMAX 3D Laser", "theater": "Scope Cinemas Havelock City", "capacity": 120, "booked_seats": 112, "fill_rate_percent": 93.3},
-        {"hall_id": 401, "hall_name": "Savoy 3D Main Screen", "theater": "Savoy Dolby Atmos Wellawatte", "capacity": 180, "booked_seats": 140, "fill_rate_percent": 77.7},
-        {"hall_id": 501, "hall_name": "PVR Playhouse", "theater": "PVR Cinemas One Galle Face", "capacity": 90, "booked_seats": 78, "fill_rate_percent": 86.6},
-        {"hall_id": 601, "hall_name": "Regal Screen 1", "theater": "Regal Cinema Cargills Jaffna", "capacity": 96, "booked_seats": 68, "fill_rate_percent": 70.8}
-    ]
+    """Admin: Real-time hall seat fill rates & active capacity from database."""
+    from app.models.theater import Hall, Theater, Seat
+    from app.models.booking import Booking, BookingSeat, BookingStatus
+    from app.models.showtime import Showtime
+
+    halls = db.query(Hall).join(Theater).order_by(Theater.name, Hall.hall_name).all()
+    result = []
+    
+    for hall in halls:
+        cap = hall.total_capacity or db.query(Seat).filter(Seat.hall_id == hall.hall_id).count() or 96
+        booked = (
+            db.query(BookingSeat)
+            .join(Booking, BookingSeat.booking_id == Booking.booking_id)
+            .join(Showtime, BookingSeat.showtime_id == Showtime.showtime_id)
+            .filter(Showtime.hall_id == hall.hall_id, Booking.status == BookingStatus.CONFIRMED)
+            .count()
+        )
+        pct = round((booked / cap * 100), 1) if cap > 0 else 0.0
+        
+        result.append({
+            "hall_id": hall.hall_id,
+            "hall_name": hall.hall_name,
+            "theater": hall.theater.name if hall.theater else "Scope Cinemas",
+            "capacity": cap,
+            "booked_seats": booked,
+            "fill_rate_percent": pct
+        })
+    
+    # Sort so halls with activity are shown first
+    result.sort(key=lambda x: (x["booked_seats"], x["fill_rate_percent"]), reverse=True)
+    return result
 
 
 @router.get("/waitlist-monitor")
@@ -436,25 +458,102 @@ def get_waitlist_monitor(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Admin: Sold-out showtime waitlists & automated seat re-allocation queue."""
-    return [
-        {
-            "showtime_id": 101,
-            "movie_title": "Dune: Part Two (IMAX)",
-            "theater": "Scope Cinemas - Havelock City Mall",
-            "showtime": "7:30 PM Tonight",
-            "waitlist_users_count": 8,
-            "status": "FULL_OCCUPANCY",
+    """Admin: Real showtimes occupancy monitoring from database."""
+    from app.models.showtime import Showtime
+    from app.models.booking import Booking, BookingSeat, BookingStatus
+    
+    # Find showtimes that have bookings
+    showtimes_with_bookings = (
+        db.query(Showtime)
+        .join(BookingSeat, Showtime.showtime_id == BookingSeat.showtime_id)
+        .join(Booking, BookingSeat.booking_id == Booking.booking_id)
+        .filter(Booking.status == BookingStatus.CONFIRMED)
+        .distinct()
+        .all()
+    )
+    
+    output = []
+    for st in showtimes_with_bookings:
+        movie_t = st.movie.title if st.movie else "Movie"
+        theater_n = st.hall.theater.name if st.hall and st.hall.theater else "Scope Cinemas"
+        booked_count = db.query(BookingSeat).filter(BookingSeat.showtime_id == st.showtime_id).count()
+        cap = st.hall.total_capacity if st.hall else 96
+        
+        output.append({
+            "showtime_id": st.showtime_id,
+            "movie_title": movie_t,
+            "theater": theater_n,
+            "showtime": st.start_time.strftime("%b %d at %I:%M %p") if st.start_time else "Scheduled",
+            "waitlist_users_count": max(0, booked_count - cap),
+            "status": "NEAR_CAPACITY" if booked_count >= cap * 0.8 else "ACTIVE_BOOKING",
             "auto_reallocation": "ACTIVE"
-        },
-        {
-            "showtime_id": 104,
-            "movie_title": "GOAT (Tamil 4K)",
-            "theater": "Savoy 3D Dolby Atmos - Wellawatte",
-            "showtime": "6:30 PM Tonight",
-            "waitlist_users_count": 5,
-            "status": "FULL_OCCUPANCY",
-            "auto_reallocation": "ACTIVE"
-        }
-    ]
+        })
+        
+    return output
+
+
+@router.get("/customers")
+def get_admin_customers(
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Admin: Real customer profiles with calculated booking count and total LKR spend from database."""
+    from app.models.booking import Booking, BookingStatus
+    from app.models.user import User
+    
+    users = db.query(User).all()
+    output = []
+    for u in users:
+        confirmed_bookings = db.query(Booking).filter(
+            Booking.user_id == u.user_id,
+            Booking.status == BookingStatus.CONFIRMED
+        ).all()
+        
+        total_spent = sum([float(b.total_amount) for b in confirmed_bookings])
+        role_str = u.role.value if hasattr(u.role, 'value') else str(u.role)
+        
+        output.append({
+            "user_id": u.user_id,
+            "name": u.name or "Customer",
+            "email": u.email,
+            "phone": u.phone or "+94 77 123 4567",
+            "role": role_str,
+            "total_bookings": len(confirmed_bookings),
+            "total_spent_lkr": total_spent
+        })
+        
+    return output
+
+
+@router.get("/activities")
+def get_admin_activities(
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Admin: Real customer activity logs from database bookings."""
+    from app.models.booking import Booking
+    
+    bookings = db.query(Booking).order_by(Booking.created_at.desc()).limit(25).all()
+    output = []
+    
+    for b in bookings:
+        user_name = b.user.name if b.user else "Customer"
+        movie_title = b.showtime.movie.title if b.showtime and b.showtime.movie else "Cinema Movie"
+        theater_name = b.showtime.hall.theater.name if b.showtime and b.showtime.hall and b.showtime.hall.theater else "Scope Cinemas"
+        seats = [f"{bs.seat.row_label}{bs.seat.seat_number}" for bs in b.booking_seats if bs.seat]
+        seats_str = ", ".join(seats) if seats else "Reserved seats"
+        time_str = b.created_at.strftime("%b %d, %I:%M %p") if b.created_at else "Recently"
+        
+        output.append({
+            "activity_id": f"ACT-{b.booking_id:04d}",
+            "type": "TICKET_RESERVATION",
+            "user_name": user_name,
+            "details": f"Reserved seats {seats_str} for '{movie_title}' at {theater_name}",
+            "timestamp": time_str,
+            "amount_lkr": float(b.total_amount)
+        })
+        
+    return output
+
+
 
