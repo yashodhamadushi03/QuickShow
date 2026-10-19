@@ -22,7 +22,7 @@ class Movie(Base):
     poster_url = Column(String(500), nullable=True)
     rating = Column(String(10), nullable=True)
     release_date = Column(Date, nullable=True)
-    status = Column(Enum(MovieStatus), default=MovieStatus.NOW_SHOWING, nullable=False, index=True)
+    status = Column(Enum(MovieStatus, values_callable=lambda obj: [e.value for e in obj]), default=MovieStatus.NOW_SHOWING, nullable=False, index=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships

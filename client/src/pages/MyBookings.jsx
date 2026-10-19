@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Ticket, Calendar, MapPin, Clock, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { FALLBACK_POSTER } from "../assets/assets";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
@@ -107,8 +108,12 @@ const MyBookings = () => {
                   {/* Poster */}
                   <div className="md:w-48 bg-slate-950 shrink-0">
                     <img
-                      src={movie?.poster_url || "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800"}
-                      alt={movie?.title}
+                      src={movie?.poster_url || FALLBACK_POSTER}
+                      alt={movie?.title || "Movie"}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = FALLBACK_POSTER;
+                      }}
                       className="w-full h-48 md:h-full object-cover"
                     />
                   </div>

@@ -106,28 +106,33 @@ const SeatLayout = () => {
   const [aiPreference, setAiPreference] = useState("acoustic");
   const [aiRecommendationInfo, setAiRecommendationInfo] = useState(null);
 
-  // Advanced AI Smart Seat Optimizer Algorithm
+  // Real-World Hall Seating Intelligence & Smart Seat Optimizer Algorithm
   const recommendBestSeats = (count = partySize, pref = aiPreference) => {
-    let targetRowLabels = ["D", "E", "F"];
-    let prefTitle = "Dolby Atmos Acoustic Sweet-Spot";
-    let explanationText = `Positioned at the 3D Dolby Atmos audio convergence zone with zero neck strain.`;
-    let matchScore = 98;
+    // Row weighting tiers:
+    // Back Rows E, F: Optimal viewing angles and acoustic sweet spots (zero neck strain)
+    // Rows G, H: VIP luxury recliners / rear elevated vantage point
+    // Rows C, D: Standard mid rows
+    // Rows A, B: Front rows closest to screen (designated lower priority)
+    let targetRowLabels = ["E", "F", "G", "H"];
+    let prefTitle = "Dolby Atmos Acoustic Sweet-Spot (Rows E & F)";
+    let explanationText = `Positioned at the prime center-back tier (optimal viewing angle & acoustic sweet-spot) with zero neck strain.`;
+    let matchScore = 99;
 
     if (pref === "vip") {
-      targetRowLabels = ["G", "H"];
-      prefTitle = "VIP Recliner Suite";
-      explanationText = `Luxury recliner seats with extended legroom and elevated sightlines.`;
-      matchScore = 96;
+      targetRowLabels = ["H", "G"];
+      prefTitle = "VIP Recliner Suite (Rows G & H)";
+      explanationText = `Luxury rear recliner seats with extended legroom and elevated sightlines.`;
+      matchScore = 98;
     } else if (pref === "view") {
-      targetRowLabels = ["C", "D", "E"];
-      prefTitle = "100% Full Field of View";
-      explanationText = `Direct visual line-of-sight covering 100% of the cinema screen.`;
-      matchScore = 95;
+      targetRowLabels = ["F", "E", "G", "H", "D"];
+      prefTitle = "Best Seat in the House (Prime Center-Back View)";
+      explanationText = `Optimal cinema viewing perspective covering 100% of the screen without keystoning or neck fatigue.`;
+      matchScore = 97;
     } else if (pref === "aisle") {
-      targetRowLabels = ["C", "D", "E", "F", "G"];
+      targetRowLabels = ["F", "E", "G", "H", "D", "C"];
       prefTitle = "Quick-Access Side Aisle";
-      explanationText = `Convenient side-aisle seating for easy entrance and lobby access.`;
-      matchScore = 91;
+      explanationText = `Convenient side-aisle seating in prime tiers for easy entrance and lobby access.`;
+      matchScore = 92;
     }
 
     const available = seats.filter((s) => s.status === "Available");
@@ -136,52 +141,79 @@ const SeatLayout = () => {
       return;
     }
 
-    // Filter by target rows
-    const rowFiltered = available.filter((s) => targetRowLabels.includes(s.row_label));
-    const targetPool = rowFiltered.length >= count ? rowFiltered : available;
+    // Rate an individual seat
+    const rateSeat = (s) => {
+      const row = (s.row_label || "").toUpperCase();
+      let rowScore = 8;
+      if (row === "E" || row === "F") rowScore = 20;
+      else if (row === "G" || row === "H") rowScore = 18;
+      else if (row === "C" || row === "D") rowScore = 10;
+      else if (row === "A" || row === "B") rowScore = 2; // Front rows lower priority
 
-    // Group by row
+      // Center proximity score (seats 6 and 7 are center)
+      const centerScore = 10 - Math.abs(6.5 - s.seat_number);
+      const vipBonus = s.seat_type === "VIP" ? 3 : 0;
+      return rowScore + centerScore + vipBonus;
+    };
+
+    // Group available seats by row
     const rowsMap = {};
-    targetPool.forEach((s) => {
+    available.forEach((s) => {
       if (!rowsMap[s.row_label]) rowsMap[s.row_label] = [];
       rowsMap[s.row_label].push(s);
     });
 
-    let selectedIds = [];
-    let selectedSeatNames = [];
+    let bestBlock = null;
+    let bestBlockScore = -999;
 
-    // Find contiguous seats in same row closest to center (seats 6, 7)
-    for (const rLabel of targetRowLabels) {
-      if (rowsMap[rLabel]) {
-        const rSeats = rowsMap[rLabel].sort((a, b) => a.seat_number - b.seat_number);
+    // Search target rows first, then all remaining rows
+    const searchOrder = [
+      ...targetRowLabels,
+      ...["E", "F", "G", "H", "D", "C", "B", "A"].filter((r) => !targetRowLabels.includes(r))
+    ];
 
-        if (pref === "aisle") {
-          // Aisle seats 1, 2, 11, 12
-          const aisleSeats = rSeats.filter((s) => s.seat_number <= 2 || s.seat_number >= 11);
-          if (aisleSeats.length >= count) {
-            selectedIds = aisleSeats.slice(0, count).map((s) => s.seat_id);
-            selectedSeatNames = aisleSeats.slice(0, count).map((s) => `${s.row_label}${s.seat_number}`);
-            break;
-          }
-        }
+    for (const rLabel of searchOrder) {
+      const rSeats = rowsMap[rLabel];
+      if (!rSeats || rSeats.length < count) continue;
 
-        // Center search
-        for (let i = 0; i <= rSeats.length - count; i++) {
-          const subset = rSeats.slice(i, i + count);
-          const isContiguous = subset.every((s, idx) => idx === 0 || s.seat_number === subset[idx - 1].seat_number + 1);
-          if (isContiguous) {
-            selectedIds = subset.map((s) => s.seat_id);
-            selectedSeatNames = subset.map((s) => `${s.row_label}${s.seat_number}`);
-            break;
+      rSeats.sort((a, b) => a.seat_number - b.seat_number);
+
+      if (pref === "aisle") {
+        const aisleSeats = rSeats.filter((s) => s.seat_number <= 2 || s.seat_number >= 11);
+        if (aisleSeats.length >= count) {
+          const subset = aisleSeats.slice(0, count);
+          const score = subset.reduce((acc, s) => acc + rateSeat(s), 0);
+          if (score > bestBlockScore) {
+            bestBlockScore = score;
+            bestBlock = subset;
           }
         }
       }
-      if (selectedIds.length > 0) break;
+
+      // Evaluate every contiguous candidate window of size `count`
+      for (let i = 0; i <= rSeats.length - count; i++) {
+        const subset = rSeats.slice(i, i + count);
+        const isContiguous = subset.every((s, idx) => idx === 0 || s.seat_number === subset[idx - 1].seat_number + 1);
+        if (isContiguous) {
+          const score = subset.reduce((acc, s) => acc + rateSeat(s), 0);
+          if (score > bestBlockScore) {
+            bestBlockScore = score;
+            bestBlock = subset;
+          }
+        }
+      }
     }
 
-    // Fallback if contiguous not found
-    if (selectedIds.length === 0) {
-      const fallbackSubset = targetPool.slice(0, count);
+    let selectedIds = [];
+    let selectedSeatNames = [];
+
+    if (bestBlock) {
+      selectedIds = bestBlock.map((s) => s.seat_id);
+      selectedSeatNames = bestBlock.map((s) => `${s.row_label}${s.seat_number}`);
+    } else {
+      // Fallback: Pick top rated individual available seats (prioritizing E-H center)
+      const sortedAvailable = [...available].sort((a, b) => rateSeat(b) - rateSeat(a));
+      const fallbackSubset = sortedAvailable.slice(0, count);
       selectedIds = fallbackSubset.map((s) => s.seat_id);
       selectedSeatNames = fallbackSubset.map((s) => `${s.row_label}${s.seat_number}`);
     }
@@ -588,63 +620,88 @@ const SeatLayout = () => {
           {/* Seat Grid Box */}
           <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl sm:rounded-3xl p-4 sm:p-8 md:p-10 mb-6 sm:mb-8 overflow-x-auto">
             <div className="min-w-[460px] sm:min-w-[540px] flex flex-col items-center gap-2.5 sm:gap-3.5">
-              {Object.keys(rowsGrouped).map((rowLabel) => (
-                <div key={rowLabel} className="flex items-center gap-2 sm:gap-3">
-                  <span className="w-6 sm:w-7 text-center font-bold text-slate-300 text-sm">
-                    {rowLabel}
-                  </span>
+              {Object.keys(rowsGrouped).map((rowLabel) => {
+                const isFront = rowLabel === "A" || rowLabel === "B";
+                const isSweetSpot = rowLabel === "E" || rowLabel === "F";
+                const isVIPRow = rowLabel === "G" || rowLabel === "H";
 
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    {rowsGrouped[rowLabel].map((seat) => {
-                      const isSelected = selectedSeatIds.includes(seat.seat_id);
-                      const isBooked = seat.status === "Booked";
-                      const isLocked = seat.status === "Locked";
-                      const isVIP = seat.seat_type === "VIP";
+                return (
+                  <div key={rowLabel} className="flex items-center gap-2 sm:gap-3">
+                    <span className="w-6 sm:w-7 text-center font-bold text-slate-300 text-sm">
+                      {rowLabel}
+                    </span>
 
-                      return (
-                        <button
-                          key={seat.seat_id}
-                          disabled={isBooked || isLocked}
-                          onClick={() => toggleSeatSelection(seat)}
-                          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-t-md sm:rounded-t-lg text-xs font-bold transition-all duration-200 flex items-center justify-center ${
-                            isBooked
-                              ? "bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700/40 opacity-40"
-                              : isLocked
-                              ? "bg-amber-950/60 text-amber-500/60 border border-amber-500/40 cursor-not-allowed"
-                              : isSelected
-                              ? "bg-rose-600 text-white shadow-lg shadow-rose-600/50 scale-110 ring-2 ring-white"
-                              : isVIP
-                              ? "bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30"
-                              : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:border-slate-500"
-                          }`}
-                          title={`Seat ${seat.row_label}${seat.seat_number} (${seat.seat_type}) - LKR ${getSeatPrice(seat).toLocaleString()}`}
-                        >
-                          {seat.seat_number}
-                        </button>
-                      );
-                    })}
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      {rowsGrouped[rowLabel].map((seat) => {
+                        const isSelected = selectedSeatIds.includes(seat.seat_id);
+                        const isBooked = seat.status === "Booked";
+                        const isLocked = seat.status === "Locked";
+                        const isVIP = seat.seat_type === "VIP";
+
+                        return (
+                          <button
+                            key={seat.seat_id}
+                            disabled={isBooked || isLocked}
+                            onClick={() => toggleSeatSelection(seat)}
+                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-t-md sm:rounded-t-lg text-xs font-bold transition-all duration-200 flex items-center justify-center ${
+                              isBooked
+                                ? "bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700/40 opacity-40"
+                                : isLocked
+                                ? "bg-amber-950/60 text-amber-500/60 border border-amber-500/40 cursor-not-allowed"
+                                : isSelected
+                                ? "bg-rose-600 text-white shadow-lg shadow-rose-600/50 scale-110 ring-2 ring-white"
+                                : isVIP
+                                ? "bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30"
+                                : isSweetSpot
+                                ? "bg-slate-800 text-slate-200 border border-rose-500/30 hover:bg-slate-700 hover:border-rose-500"
+                                : isFront
+                                ? "bg-slate-900 text-slate-400 border border-slate-800 hover:bg-slate-800"
+                                : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:border-slate-500"
+                            }`}
+                            title={`Seat ${seat.row_label}${seat.seat_number} (${seat.seat_type}${isFront ? ' - Front View' : isSweetSpot ? ' - Acoustic Sweet Spot' : ''}) - LKR ${getSeatPrice(seat).toLocaleString()}`}
+                          >
+                            {seat.seat_number}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <span className="w-6 sm:w-7 text-center font-bold text-slate-300 text-sm">
+                      {rowLabel}
+                    </span>
+
+                    {/* Tier badge indicator on right */}
+                    <span className="hidden md:inline-block ml-2 text-[11px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full whitespace-nowrap">
+                      {isVIPRow && <span className="text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">VIP Recliners</span>}
+                      {isSweetSpot && <span className="text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">★ Prime Sweet-Spot</span>}
+                      {isFront && <span className="text-slate-400 bg-slate-950 border border-slate-800 px-2 py-0.5 rounded-full">Front Row</span>}
+                    </span>
                   </div>
-
-                  <span className="w-6 sm:w-7 text-center font-bold text-slate-300 text-sm">
-                    {rowLabel}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            {/* Legend */}
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-8 pt-6 border-t border-slate-800 text-xs sm:text-sm text-slate-300">
+            {/* Real-World Seating Legend */}
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-5 mt-8 pt-6 border-t border-slate-800 text-xs sm:text-sm text-slate-300">
               <div className="flex items-center gap-1.5">
                 <div className="w-3.5 h-3.5 rounded-t bg-slate-800 border border-slate-700"></div>
-                <span>Available</span>
+                <span>Standard (C & D)</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3.5 h-3.5 rounded-t bg-rose-600 shadow-md"></div>
-                <span>Selected</span>
+                <div className="w-3.5 h-3.5 rounded-t bg-slate-800 border border-rose-500/50"></div>
+                <span>★ Prime Sweet-Spot (E & F)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3.5 h-3.5 rounded-t bg-amber-500/20 border border-amber-500/40"></div>
                 <span>VIP Recliner (G & H)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3.5 h-3.5 rounded-t bg-slate-900 border border-slate-800"></div>
+                <span>Front Rows (A & B)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3.5 h-3.5 rounded-t bg-rose-600 shadow-md"></div>
+                <span>Selected</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3.5 h-3.5 rounded-t bg-slate-800 opacity-40"></div>

@@ -3,6 +3,8 @@ import { Search, Film, Star, Sparkles, Filter, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import BlurCircle from "../components/BlurCircle";
 
+import { FALLBACK_POSTER } from "../assets/assets";
+
 const API_BASE_URL = "http://localhost:8000/api";
 
 const Movies = () => {
@@ -44,7 +46,7 @@ const Movies = () => {
       duration_min: 135,
       rating: "U/A",
       poster_url: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800",
-      description: "A poignant Sri Lankan cinema drama depicting love, resilience, and personal triumph."
+      description: "A poignant Sri Lankan cinema drama depicting love, resilience, and personal triumph across tea estates."
     },
     {
       movie_id: 4,
@@ -58,18 +60,38 @@ const Movies = () => {
     },
     {
       movie_id: 5,
+      title: "Leo: Bloody Sweet",
+      genre: "Action / Thriller",
+      language: "Tamil",
+      duration_min: 164,
+      rating: "U/A",
+      poster_url: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=800",
+      description: "A mild-mannered cafe owner defends his family against lethal cartel gangsters seeking revenge."
+    },
+    {
+      movie_id: 6,
+      title: "Kathuru Mithuru",
+      genre: "Comedy / Family",
+      language: "Sinhala",
+      duration_min: 128,
+      rating: "U",
+      poster_url: "https://images.unsplash.com/photo-1514306191717-452ec28c7814?q=80&w=800",
+      description: "A classic Sri Lankan comedy recounting the humorous bond between an eccentric tailor and barber."
+    },
+    {
+      movie_id: 7,
       title: "Oppenheimer",
-      genre: "Biography / Drama",
+      genre: "Biography / Drama / Thriller",
       language: "English",
       duration_min: 180,
       rating: "R",
       poster_url: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=800",
-      description: "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb."
+      description: "The story of American scientist J. Robert Oppenheimer and his role in the Manhattan Project."
     },
     {
-      movie_id: 6,
+      movie_id: 8,
       title: "Spider-Man: Across the Spider-Verse",
-      genre: "Animation / Action",
+      genre: "Animation / Action / Sci-Fi",
       language: "English",
       duration_min: 140,
       rating: "PG",
@@ -77,7 +99,37 @@ const Movies = () => {
       description: "Miles Morales catapults across the Multiverse to protect its existence alongside Spider-People."
     },
     {
-      movie_id: 7,
+      movie_id: 9,
+      title: "Deadpool & Wolverine",
+      genre: "Action / Comedy",
+      language: "English",
+      duration_min: 128,
+      rating: "R",
+      poster_url: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=800",
+      description: "Wolverine joins forces with Deadpool on a chaotic multiverse mission to save their timeline."
+    },
+    {
+      movie_id: 10,
+      title: "A Quiet Place: Day One",
+      genre: "Thriller / Horror / Sci-Fi",
+      language: "English",
+      duration_min: 100,
+      rating: "PG-13",
+      poster_url: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=800",
+      description: "The terrifying first hours as sound-hunting alien predators suddenly descend upon New York City."
+    },
+    {
+      movie_id: 11,
+      title: "Anyone But You",
+      genre: "Romance / Comedy",
+      language: "English",
+      duration_min: 103,
+      rating: "R",
+      poster_url: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=800",
+      description: "Two polar opposites pretend to be an affectionate couple at an unforgettable Sydney destination wedding."
+    },
+    {
+      movie_id: 12,
       title: "Stree 2",
       genre: "Comedy / Horror",
       language: "Hindi",
@@ -110,7 +162,7 @@ const Movies = () => {
   };
 
   const languages = ["All", "English", "Sinhala", "Tamil", "Hindi"];
-  const genres = ["All", "Action", "Sci-Fi", "Drama", "Comedy", "Horror", "Animation"];
+  const genres = ["All", "Action", "Romance", "Sci-Fi", "Thriller", "Comedy", "Drama", "Animation", "Horror"];
 
   const filteredMovies = movies.filter((movie) => {
     const matchesSearch =
@@ -248,8 +300,12 @@ const Movies = () => {
                 {/* Poster Container */}
                 <div className="relative aspect-[2/3] overflow-hidden bg-slate-950">
                   <img
-                    src={movie.poster_url || "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800"}
+                    src={movie.poster_url || FALLBACK_POSTER}
                     alt={movie.title}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = FALLBACK_POSTER;
+                    }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
 

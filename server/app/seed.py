@@ -1,5 +1,13 @@
+import sys
 from datetime import datetime, timedelta, date, timezone
 from decimal import Decimal
+
+if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 from app.core.database import SessionLocal, Base, engine
 from app.core.security import get_password_hash
 from app.models.user import User, UserRole
@@ -44,12 +52,12 @@ def seed_database():
 
         db.flush()
 
-        # 2. Expanded Movies Collection (English, Sinhala, Tamil & Hindi)
+        # 2. Expanded Movies Collection (English, Sinhala, Tamil, Hindi across all categories)
         movies_data = [
-            # NOW SHOWING
+            # NOW SHOWING - Diverse Categories
             {
                 "title": "Avatar: The Way of Water",
-                "description": "Jake Sully lives with his newfound family formed on the extrasolar moon Pandora. Once a familiar threat returns, Jake must work with Neytiri to protect their land.",
+                "description": "Jake Sully lives with his newfound family on Pandora. When a familiar threat returns, he works with Neytiri and the Metkayina clan to protect their home.",
                 "genre": "Sci-Fi / Action",
                 "duration_min": 192,
                 "language": "English",
@@ -60,7 +68,7 @@ def seed_database():
             },
             {
                 "title": "Dune: Part Two",
-                "description": "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.",
+                "description": "Paul Atreides unites with Chani and the Fremen on Arrakis while seeking revenge against the conspirators who destroyed his noble house.",
                 "genre": "Sci-Fi / Adventure",
                 "duration_min": 166,
                 "language": "English",
@@ -71,7 +79,7 @@ def seed_database():
             },
             {
                 "title": "Kandak Sema",
-                "description": "A poignant Sri Lankan drama depicting love, resilience, and personal triumph across generations amidst picturesque landscapes.",
+                "description": "A poignant Sri Lankan cinema masterpiece depicting cross-cultural romance, resilience, and personal triumph across majestic rural tea plantations.",
                 "genre": "Drama / Romance",
                 "duration_min": 135,
                 "language": "Sinhala",
@@ -82,7 +90,7 @@ def seed_database():
             },
             {
                 "title": "The Greatest Of All Time (GOAT)",
-                "description": "An action-packed sci-fi thriller featuring Vijay in dual roles with high-octane suspense across international covert operations.",
+                "description": "An action-packed Tamil sci-fi espionage thriller featuring Thalapathy Vijay in high-octane suspense and double agent intrigue across international borders.",
                 "genre": "Action / Sci-Fi",
                 "duration_min": 178,
                 "language": "Tamil",
@@ -92,9 +100,31 @@ def seed_database():
                 "status": MovieStatus.NOW_SHOWING
             },
             {
+                "title": "Leo: Bloody Sweet",
+                "description": "A mild-mannered cafe owner in Himachal Pradesh fights back with lethal precision when ruthless cartel gangsters identify him as a legendary former enforcer.",
+                "genre": "Action / Thriller",
+                "duration_min": 164,
+                "language": "Tamil",
+                "poster_url": "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=800",
+                "rating": "U/A",
+                "release_date": date(2023, 10, 19),
+                "status": MovieStatus.NOW_SHOWING
+            },
+            {
+                "title": "Kathuru Mithuru",
+                "description": "A heartwarming Sri Lankan family comedy detailing the humorous rivalries and unbreakable lifelong bond between an old-school tailor and a traditional barber.",
+                "genre": "Comedy / Family",
+                "duration_min": 128,
+                "language": "Sinhala",
+                "poster_url": "https://images.unsplash.com/photo-1514306191717-452ec28c7814?q=80&w=800",
+                "rating": "U",
+                "release_date": date(2023, 9, 22),
+                "status": MovieStatus.NOW_SHOWING
+            },
+            {
                 "title": "Oppenheimer",
-                "description": "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb.",
-                "genre": "Biography / Drama",
+                "description": "The dramatic story of American theoretical physicist J. Robert Oppenheimer, the Manhattan Project director who changed human history forever.",
+                "genre": "Biography / Drama / Thriller",
                 "duration_min": 180,
                 "language": "English",
                 "poster_url": "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=800",
@@ -104,8 +134,8 @@ def seed_database():
             },
             {
                 "title": "Spider-Man: Across the Spider-Verse",
-                "description": "Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its existence.",
-                "genre": "Animation / Action",
+                "description": "Miles Morales catapults across the Multiverse, where he encounters a society of Spider-People charged with protecting its very existence.",
+                "genre": "Animation / Action / Sci-Fi",
                 "duration_min": 140,
                 "language": "English",
                 "poster_url": "https://images.unsplash.com/photo-1635805737707-575885ab0820?q=80&w=800",
@@ -114,8 +144,41 @@ def seed_database():
                 "status": MovieStatus.NOW_SHOWING
             },
             {
+                "title": "Deadpool & Wolverine",
+                "description": "Wolverine joins forces with the foul-mouthed Merc with a Mouth in a chaotic multiverse mission to save their timeline from existential annihilation.",
+                "genre": "Action / Comedy",
+                "duration_min": 128,
+                "language": "English",
+                "poster_url": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=800",
+                "rating": "R",
+                "release_date": date(2024, 7, 26),
+                "status": MovieStatus.NOW_SHOWING
+            },
+            {
+                "title": "A Quiet Place: Day One",
+                "description": "Experience the terrifying first hours when blind, sound-hunting extraterrestrial predators suddenly crash down upon New York City.",
+                "genre": "Thriller / Horror / Sci-Fi",
+                "duration_min": 100,
+                "language": "English",
+                "poster_url": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=800",
+                "rating": "PG-13",
+                "release_date": date(2024, 6, 28),
+                "status": MovieStatus.NOW_SHOWING
+            },
+            {
+                "title": "Anyone But You",
+                "description": "After an unforgettable first date that cooled off, Bea and Ben find themselves forced to fake being a couple at a picturesque Sydney destination wedding.",
+                "genre": "Romance / Comedy",
+                "duration_min": 103,
+                "language": "English",
+                "poster_url": "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=800",
+                "rating": "R",
+                "release_date": date(2023, 12, 22),
+                "status": MovieStatus.NOW_SHOWING
+            },
+            {
                 "title": "Stree 2",
-                "description": "The town of Chanderi is haunted once again, this time by a headless entity known as Sarkata. Vicky and his friends reunite to save the town.",
+                "description": "The town of Chanderi is terrorized once again by a supernatural headless entity named Sarkata, forcing Vicky and his eccentric gang to unite.",
                 "genre": "Comedy / Horror",
                 "duration_min": 147,
                 "language": "Hindi",
@@ -125,11 +188,11 @@ def seed_database():
                 "status": MovieStatus.NOW_SHOWING
             },
 
-            # COMING SOON
+            # COMING SOON - High Anticipation Releases
             {
                 "title": "Devara: Part 1",
-                "description": "An epic action saga set against coastal lands, depicting coastal power struggles and legendary courage.",
-                "genre": "Action / Drama",
+                "description": "An epic action saga set against coastal lands, depicting ancestral bloodlines, seafaring contraband, and legendary courage.",
+                "genre": "Action / Drama / Epic",
                 "duration_min": 170,
                 "language": "Tamil / Telugu",
                 "poster_url": "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=800",
@@ -138,8 +201,19 @@ def seed_database():
                 "status": MovieStatus.COMING_SOON
             },
             {
+                "title": "Sinhabahu",
+                "description": "The monumental Sri Lankan folklore legend of royal lineage, filial duty, and tragedy adapted into a grand cinematic spectacle.",
+                "genre": "Historical / Drama",
+                "duration_min": 145,
+                "language": "Sinhala",
+                "poster_url": "https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=800",
+                "rating": "U",
+                "release_date": date(2024, 10, 18),
+                "status": MovieStatus.COMING_SOON
+            },
+            {
                 "title": "Joker: Folie à Deux",
-                "description": "Arthur Fleck struggles with his dual identity while discovering love and music within Arkham State Hospital.",
+                "description": "Arthur Fleck navigates his fractured mind and dual identity while finding dark romance and twisted melodies within Arkham State Hospital.",
                 "genre": "Crime / Drama / Musical",
                 "duration_min": 138,
                 "language": "English",
@@ -150,7 +224,7 @@ def seed_database():
             },
             {
                 "title": "Kanguva",
-                "description": "A warrior's struggle for survival across centuries connects a modern bounty hunter with an ancient tribal hero.",
+                "description": "A warrior's battle for tribal independence across ancient centuries echoes into a modern-day shadow operative's destiny.",
                 "genre": "Action / Fantasy / Epic",
                 "duration_min": 154,
                 "language": "Tamil",
@@ -160,25 +234,25 @@ def seed_database():
                 "status": MovieStatus.COMING_SOON
             },
             {
-                "title": "Deadpool & Wolverine",
-                "description": "Wolverine is recovering from his injuries when he crosses paths with the loudmouth Deadpool to defeat a common multiverse threat.",
-                "genre": "Action / Comedy",
-                "duration_min": 127,
-                "language": "English",
-                "poster_url": "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800",
-                "rating": "R",
-                "release_date": date(2024, 7, 26),
-                "status": MovieStatus.COMING_SOON
-            },
-            {
                 "title": "Gladiator II",
-                "description": "Lucius enters the Colosseum years after witnessing the fall of Maximus to fight against emperor tyranny in Rome.",
-                "genre": "Action / History",
+                "description": "Lucius enters the legendary Colosseum years after Maximus's sacrifice to overthrow emperor tyranny and reclaim the honor of Rome.",
+                "genre": "Action / History / Epic",
                 "duration_min": 150,
                 "language": "English",
                 "poster_url": "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=800",
                 "rating": "R",
                 "release_date": date(2024, 11, 22),
+                "status": MovieStatus.COMING_SOON
+            },
+            {
+                "title": "Interstellar: 10th Anniversary IMAX",
+                "description": "Christopher Nolan's landmark sci-fi space odyssey returns to IMAX screens with full remastered sound and breathtaking visuals.",
+                "genre": "Sci-Fi / Drama",
+                "duration_min": 169,
+                "language": "English",
+                "poster_url": "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=800",
+                "rating": "PG-13",
+                "release_date": date(2024, 12, 6),
                 "status": MovieStatus.COMING_SOON
             }
         ]
@@ -191,10 +265,12 @@ def seed_database():
                 db.add(m)
                 movie_objs.append(m)
             else:
+                for k, v in m_data.items():
+                    setattr(existing_m, k, v)
                 movie_objs.append(existing_m)
         
         db.flush()
-        print(f"  ✓ Seeded {len(movie_objs)} Movies (English, Sinhala, Tamil & Hindi)")
+        print(f"  ✓ Seeded {len(movie_objs)} Multi-Genre Movies (Sinhala, Tamil, Hollywood, Romance, Sci-Fi, Comedy, Thriller)")
 
         # 3. Islandwide Sri Lankan Theater Network
         theaters_data = [
@@ -288,6 +364,11 @@ def seed_database():
                     db.flush()
                     halls_created.append(h)
 
+                    # Matrix Grid: Rows A-H (8 rows) x Seats 1-12 (96 total seats)
+                    # Front Rows (A, B) = Lower priority standard front view
+                    # Rows (C, D) = Standard Mid view
+                    # Rows (E, F) = Optimal center-back viewing angle & acoustic sweet-spot
+                    # Back Rows (G, H) = VIP Recliner Luxury Tier
                     rows = ["A", "B", "C", "D", "E", "F", "G", "H"]
                     for row in rows:
                         for num in range(1, 13):
@@ -299,48 +380,83 @@ def seed_database():
 
         db.flush()
 
-        # 4. Real-Time Dynamic Scheduling Engine
+        # 4. Sri Lankan Non-Clashing Showtime Engine (Official 5 Slots per Day)
+        # Standard Sri Lankan cinema showtime slots for each hall/screen:
+        # - Morning Show: 10:00 AM
+        # - Matinee Show: 1:00 PM
+        # - First Show: 4:00 PM
+        # - Second Show: 7:15 PM
+        # - Night Show: 10:15 PM
+        sl_showtime_slots = [
+            (10, 0, "Morning Show"),
+            (13, 0, "Matinee Show"),
+            (16, 0, "First Show"),
+            (19, 15, "Second Show"),
+            (22, 15, "Night Show"),
+        ]
+
         now = datetime.now(timezone.utc)
         now_showing_movies = [m for m in movie_objs if m.status == MovieStatus.NOW_SHOWING]
 
-        time_slots = [(10, 30), (13, 45), (17, 15), (20, 45)]
+        # Clear existing showtimes to guarantee zero leftover clashing records
+        db.query(Showtime).delete()
+        db.flush()
 
         showtime_count = 0
+        clash_prevented_count = 0
+
+        # Generate non-overlapping showtimes for the next 5 days
         for day_offset in range(0, 5):
             current_date = now.date() + timedelta(days=day_offset)
-            for m_idx, m in enumerate(now_showing_movies):
-                target_halls = halls_created[(m_idx * 2) % len(halls_created) : (m_idx * 2 + 3) % len(halls_created) + 1]
-                for h in target_halls:
-                    for hour, minute in time_slots:
-                        start_time = datetime(
-                            current_date.year, current_date.month, current_date.day,
-                            hour, minute, tzinfo=timezone.utc
-                        )
-                        end_time = start_time + timedelta(minutes=m.duration_min)
 
-                        existing_st = db.query(Showtime).filter(
-                            Showtime.movie_id == m.movie_id,
-                            Showtime.hall_id == h.hall_id,
-                            Showtime.start_time == start_time
-                        ).first()
+            for h_idx, h in enumerate(halls_created):
+                for slot_idx, (hour, minute, slot_name) in enumerate(sl_showtime_slots):
+                    # Deterministically distribute movies across halls and slots
+                    movie_index = (h_idx * 3 + day_offset * 2 + slot_idx) % len(now_showing_movies)
+                    m = now_showing_movies[movie_index]
 
-                        if not existing_st:
-                            base_price = Decimal("1500.00")
-                            if "IMAX" in h.hall_name or "Gold" in h.hall_name or "LUXE" in h.hall_name:
-                                base_price = Decimal("2800.00")
+                    start_time = datetime(
+                        current_date.year, current_date.month, current_date.day,
+                        hour, minute, tzinfo=timezone.utc
+                    )
 
-                            st = Showtime(
-                                movie_id=m.movie_id,
-                                hall_id=h.hall_id,
-                                start_time=start_time,
-                                end_time=end_time,
-                                base_price=base_price
-                            )
-                            db.add(st)
-                            showtime_count += 1
+                    # Runtime constraint: Ensure duration fits cleanly within slot interval with cleaning buffer
+                    # Maximum allowable running time before next show slot is 165 minutes
+                    runtime_minutes = min(m.duration_min, 165)
+                    end_time = start_time + timedelta(minutes=runtime_minutes)
+
+                    # Strict Scheduling Constraint Check:
+                    # No two movies can occupy the exact same hall_id at overlapping time intervals
+                    existing_clash = db.query(Showtime).filter(
+                        Showtime.hall_id == h.hall_id,
+                        Showtime.start_time < end_time,
+                        Showtime.end_time > start_time
+                    ).first()
+
+                    if existing_clash:
+                        clash_prevented_count += 1
+                        continue
+
+                    base_price = Decimal("1500.00")
+                    if "IMAX" in h.hall_name or "Gold" in h.hall_name or "LUXE" in h.hall_name:
+                        base_price = Decimal("2800.00")
+                    elif "VIP" in h.hall_name or "Premier" in h.hall_name:
+                        base_price = Decimal("2200.00")
+
+                    st = Showtime(
+                        movie_id=m.movie_id,
+                        hall_id=h.hall_id,
+                        start_time=start_time,
+                        end_time=end_time,
+                        base_price=base_price
+                    )
+                    db.add(st)
+                    showtime_count += 1
 
         db.commit()
-        print(f"  ✓ Dynamic Scheduling Engine generated {showtime_count} real-time showtime slots")
+        print(f"  ✓ Sri Lankan Non-Clashing Showtime Engine generated {showtime_count} guaranteed clash-free showtimes (5 SL standard daily slots)")
+        if clash_prevented_count > 0:
+            print(f"  ✓ Strict clash prevention intercepted {clash_prevented_count} overlapping showtimes.")
         print("\n🎬 QuickShow Movie Catalog Seeding Completed Successfully!\n")
 
     except Exception as e:

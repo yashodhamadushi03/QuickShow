@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { dummyShowsData, dummyDateTimeData } from '../assets/assets';
+import { dummyShowsData, dummyDateTimeData, FALLBACK_POSTER, FALLBACK_AVATAR } from '../assets/assets';
 import { StarIcon } from '@heroicons/react/24/solid';
 import BlurCircle from '../components/BlurCircle';
 import timeFormat  from "../lib/timeFormat";
@@ -76,8 +76,12 @@ const MovieDetails = () => {
     <div className="px-6 md:px-16 lg:px-40 pt-28 md:pt-36 pb-20">
       <div className="flex flex-col md:flex-row gap-8 max-w-6xl mx-auto">
         <img
-          src={show.movie.poster_path}
+          src={show.movie.poster_path || show.movie.poster_url || FALLBACK_POSTER}
           alt={show.movie.title}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = FALLBACK_POSTER;
+          }}
           className="max-md:mx-auto rounded-xl h-104 max-w-70 object-cover shadow-2xl border border-slate-800"
         />
         <div className="relative flex flex-col gap-3 justify-center">
@@ -133,8 +137,12 @@ const MovieDetails = () => {
           {show.movie.casts?.slice(0, 12).map((cast, index) => (
             <div key={index} className="flex flex-col items-center text-center w-24">
               <img
-                src={cast.profile_path}
+                src={cast.profile_path || FALLBACK_AVATAR}
                 alt={cast.name}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = FALLBACK_AVATAR;
+                }}
                 className="rounded-full h-16 w-16 aspect-square object-cover border border-slate-700 shadow-md"
               />
               <p className="font-semibold text-slate-200 text-xs sm:text-sm mt-2 line-clamp-1">{cast.name}</p>

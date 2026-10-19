@@ -148,13 +148,47 @@ def generate_seat_grid(
 
 # --- Showtimes Management ---
 
+SL_SHOWTIME_SLOTS = [
+    {"slot_name": "Morning Show", "time": "10:00 AM", "hour": 10, "minute": 0},
+    {"slot_name": "Matinee Show", "time": "01:00 PM", "hour": 13, "minute": 0},
+    {"slot_name": "First Show", "time": "04:00 PM", "hour": 16, "minute": 0},
+    {"slot_name": "Second Show", "time": "07:15 PM", "hour": 19, "minute": 15},
+    {"slot_name": "Night Show", "time": "10:15 PM", "hour": 22, "minute": 15},
+]
+
+
+@router.get("/showtimes/slots")
+def get_sri_lankan_showtime_slots():
+    """Returns the official standard Sri Lankan cinema showtime slots."""
+    return SL_SHOWTIME_SLOTS
+
+
+@router.get("/showtimes", response_model=List[ShowtimeOut])
+def get_all_showtimes(
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Admin: Fetch all scheduled showtimes across all halls."""
+    return db.query(Showtime).order_by(Showtime.start_time.asc()).all()
+
+
 @router.post("/showtimes", response_model=ShowtimeOut, status_code=status.HTTP_201_CREATED)
 def create_showtime(
     st_in: ShowtimeCreate,
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Admin: Create a showtime for a movie in a specific hall."""
+    """
+    Admin: Create a showtime for a movie in a specific hall.
+    Enforces Sri Lankan non-clashing scheduling constraint:
+    No two movies can occupy the exact same hall at overlapping time intervals.
+    """
+    if st_in.end_time <= st_in.start_time:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Showtime end time must be later than start time."
+        )
+
     movie = db.query(Movie).filter(Movie.movie_id == st_in.movie_id).first()
     if not movie:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
@@ -162,12 +196,47 @@ def create_showtime(
     hall = db.query(Hall).filter(Hall.hall_id == st_in.hall_id).first()
     if not hall:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Hall not found")
+
+    # Strict Scheduling Constraint: Interval overlap check for the same hall_id
+    # Overlap condition: existing.start_time < new.end_time AND existing.end_time > new.start_time
+    clashing_showtime = db.query(Showtime).filter(
+        Showtime.hall_id == st_in.hall_id,
+        Showtime.start_time < st_in.end_time,
+        Showtime.end_time > st_in.start_time
+    ).first()
+
+    if clashing_showtime:
+        clash_movie = clashing_showtime.movie.title if clashing_showtime.movie else "Another movie"
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Showtime clash in Hall '{hall.hall_name}': "
+                f"'{clash_movie}' is already scheduled from "
+                f"{clashing_showtime.start_time.strftime('%I:%M %p')} to {clashing_showtime.end_time.strftime('%I:%M %p')}."
+            )
+        )
     
     st = Showtime(**st_in.model_dump())
     db.add(st)
     db.commit()
     db.refresh(st)
     return st
+
+
+@router.delete("/showtimes/{showtime_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_showtime(
+    showtime_id: int,
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Admin: Cancel and delete a scheduled showtime."""
+    st = db.query(Showtime).filter(Showtime.showtime_id == showtime_id).first()
+    if not st:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Showtime not found")
+
+    db.delete(st)
+    db.commit()
+    return None
 
 
 # --- Customer Activity Monitoring & Real-Time Analytics Dashboard ---

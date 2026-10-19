@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, Bell, Film, Play, Sparkles } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { FALLBACK_POSTER } from "../assets/assets";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
@@ -13,50 +14,74 @@ const Releases = () => {
     {
       movie_id: 101,
       title: "Devara: Part 1",
-      genre: "Action / Drama",
+      genre: "Action / Drama / Epic",
       language: "Tamil / Telugu",
       duration_min: 170,
       rating: "U/A",
       release_date: "2024-09-27",
       status: "Coming Soon",
       poster_url: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=800",
-      description: "An epic action saga set against coastal lands, depicting coastal power struggles and legendary courage."
+      description: "An epic action saga set against coastal lands, depicting ancestral bloodlines, seafaring contraband, and legendary courage."
     },
     {
       movie_id: 102,
+      title: "Sinhabahu",
+      genre: "Historical / Epic Drama",
+      language: "Sinhala",
+      duration_min: 145,
+      rating: "U",
+      release_date: "2024-10-18",
+      status: "Coming Soon",
+      poster_url: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=800",
+      description: "The monumental Sri Lankan folklore legend of royal lineage, filial duty, and tragedy adapted into a grand cinematic spectacle."
+    },
+    {
+      movie_id: 103,
       title: "Joker: Folie à Deux",
-      genre: "Crime / Musical / Drama",
+      genre: "Crime / Drama / Musical",
       language: "English",
       duration_min: 138,
       rating: "R",
       release_date: "2024-10-04",
       status: "Coming Soon",
       poster_url: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800",
-      description: "Struggling with his dual identity, Arthur Fleck stumbles upon true love and music inside Arkham State Hospital."
+      description: "Arthur Fleck navigates his fractured mind and dual identity while discovering dark romance within Arkham State Hospital."
     },
     {
-      movie_id: 103,
+      movie_id: 104,
+      title: "Kanguva",
+      genre: "Action / Fantasy / Epic",
+      language: "Tamil",
+      duration_min: 154,
+      rating: "U/A",
+      release_date: "2024-11-14",
+      status: "Coming Soon",
+      poster_url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800",
+      description: "A warrior's battle for tribal independence across ancient centuries echoes into a modern-day shadow operative's destiny."
+    },
+    {
+      movie_id: 105,
       title: "Gladiator II",
-      genre: "Action / Epic History",
+      genre: "Action / History / Epic",
       language: "English",
       duration_min: 150,
       rating: "R",
       release_date: "2024-11-22",
       status: "Coming Soon",
-      poster_url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800",
-      description: "Lucius enters the Colosseum years after witnessing the fall of Maximus to fight against emperor tyranny in Rome."
+      poster_url: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=800",
+      description: "Lucius enters the legendary Colosseum years after Maximus's sacrifice to overthrow emperor tyranny and reclaim the honor of Rome."
     },
     {
-      movie_id: 104,
-      title: "Wicked",
-      genre: "Fantasy / Musical",
+      movie_id: 106,
+      title: "Interstellar: 10th Anniversary IMAX",
+      genre: "Sci-Fi / Drama",
       language: "English",
-      duration_min: 160,
+      duration_min: 169,
       rating: "PG-13",
-      release_date: "2024-11-27",
+      release_date: "2024-12-06",
       status: "Coming Soon",
-      poster_url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800",
-      description: "Elphaba, a misunderstood young woman with green skin, forms an unlikely friendship with Glinda before becoming the Wicked Witch."
+      poster_url: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=800",
+      description: "Christopher Nolan's landmark sci-fi space odyssey returns to IMAX screens with full remastered sound and breathtaking visuals."
     }
   ];
 
@@ -128,8 +153,12 @@ const Releases = () => {
                 {/* Poster Image */}
                 <div className="sm:w-2/5 relative overflow-hidden bg-slate-950 shrink-0">
                   <img
-                    src={movie.poster_url || "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800"}
+                    src={movie.poster_url || FALLBACK_POSTER}
                     alt={movie.title}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = FALLBACK_POSTER;
+                    }}
                     className="w-full h-64 sm:h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-3 left-3 px-2.5 py-1 bg-rose-600/90 text-white text-xs font-bold rounded-md shadow-md uppercase tracking-wider">

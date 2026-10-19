@@ -53,85 +53,94 @@ const dummyCastsData = [
     { "name": "Tomasz Cymerman", "profile_path": "https://image.tmdb.org/t/p/original/nTSPtzWu6deZTJtWXHUpACVznY4.jpg", }
 ]
 
+export const FALLBACK_POSTER = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800";
+export const FALLBACK_BACKDROP = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200";
+export const FALLBACK_AVATAR = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200";
+
+export const SL_SHOWTIME_SLOTS = [
+    { slotName: "Morning Show", time: "10:00 AM", hour: 10, minute: 0 },
+    { slotName: "Matinee Show", time: "01:00 PM", hour: 13, minute: 0 },
+    { slotName: "First Show", time: "04:00 PM", hour: 16, minute: 0 },
+    { slotName: "Second Show", time: "07:15 PM", hour: 19, minute: 15 },
+    { slotName: "Night Show", time: "10:15 PM", hour: 22, minute: 15 },
+];
+
 export const dummyShowsData = [
     {
         "_id": "324544",
         "id": 324544,
-        "title": "In the Lost Lands",
-        "overview": "A queen sends the powerful and feared sorceress Gray Alys to the ghostly wilderness of the Lost Lands in search of a magical power, where she and her guide, the drifter Boyce, must outwit and outfight both man and demon.",
-        "poster_path": "https://image.tmdb.org/t/p/original/dDlfjR7gllmr8HTeN6rfrYhTdwX.jpg",
-        "backdrop_path": "https://image.tmdb.org/t/p/original/op3qmNhvwEvyT7UFyPbIfQmKriB.jpg",
+        "title": "Avatar: The Way of Water",
+        "overview": "Jake Sully lives with his newfound family formed on the extrasolar moon Pandora. Once a familiar threat returns, Jake must work with Neytiri to protect their land.",
+        "poster_path": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800",
+        "backdrop_path": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200",
         "genres": [
-            { "id": 28, "name": "Action" },
-            { "id": 14, "name": "Fantasy" },
-            { "id": 12, "name": "Adventure" }
+            { "id": 878, "name": "Sci-Fi" },
+            { "id": 28, "name": "Action" }
         ],
         "casts": dummyCastsData,
-        "release_date": "2025-02-27",
+        "release_date": "2024-05-15",
         "original_language": "en",
-        "tagline": "She seeks the power to free her people.",
-        "vote_average": 6.4,
-        "vote_count": 15000,
-        "runtime": 102,
+        "tagline": "Return to Pandora.",
+        "vote_average": 8.5,
+        "vote_count": 28500,
+        "runtime": 192,
     },
     {
         "_id": "1232546",
         "id": 1232546,
-        "title": "Until Dawn",
-        "overview": "One year after her sister Melanie mysteriously disappeared, Clover and her friends head into the remote valley where she vanished in search of answers.",
-        "poster_path": "https://image.tmdb.org/t/p/original/juA4IWO52Fecx8lhAsxmDgy3M3.jpg",
-        "backdrop_path": "https://image.tmdb.org/t/p/original/icFWIk1KfkWLZnugZAJEDauNZ94.jpg",
+        "title": "Dune: Part Two",
+        "overview": "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.",
+        "poster_path": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800",
+        "backdrop_path": "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1200",
         "genres": [
-            { "id": 27, "name": "Horror" },
-            { "id": 9648, "name": "Mystery" }
+            { "id": 878, "name": "Sci-Fi" },
+            { "id": 12, "name": "Adventure" }
         ],
         "casts": dummyCastsData,
-        "release_date": "2025-04-23",
+        "release_date": "2024-03-01",
         "original_language": "en",
-        "tagline": "Every night a different nightmare.",
-        "vote_average": 6.405,
-        "vote_count": 18000,
-        "runtime": 103,
+        "tagline": "Long live the fighters.",
+        "vote_average": 8.8,
+        "vote_count": 31000,
+        "runtime": 166,
     },
     {
         "_id": "552524",
         "id": 552524,
-        "title": "Lilo & Stitch",
-        "overview": "The wildly funny and touching story of a lonely Hawaiian girl and the fugitive alien who helps to mend her broken family.",
-        "poster_path": "https://image.tmdb.org/t/p/original/mKKqV23MQ0uakJS8OCE2TfV5jNS.jpg",
-        "backdrop_path": "https://image.tmdb.org/t/p/original/7Zx3wDG5bBtcfk8lcnCWDOLM4Y4.jpg",
+        "title": "Kandak Sema",
+        "overview": "A poignant Sri Lankan cinema masterpiece depicting cross-cultural romance, resilience, and personal triumph across majestic rural tea plantations.",
+        "poster_path": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800",
+        "backdrop_path": "https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=1200",
         "genres": [
-            { "id": 10751, "name": "Family" },
-            { "id": 35, "name": "Comedy" },
-            { "id": 878, "name": "Science Fiction" }
+            { "id": 18, "name": "Drama" },
+            { "id": 10749, "name": "Romance" }
         ],
         "casts": dummyCastsData,
-        "release_date": "2025-05-17",
-        "original_language": "en",
-        "tagline": "Hold on to your coconuts.",
-        "vote_average": 7.117,
-        "vote_count": 27500,
-        "runtime": 108,
+        "release_date": "2024-05-10",
+        "original_language": "si",
+        "tagline": "A love that echoes across the hills.",
+        "vote_average": 8.7,
+        "vote_count": 14200,
+        "runtime": 135,
     },
     {
         "_id": "668489",
         "id": 668489,
-        "title": "Havoc",
-        "overview": "When a drug heist swerves lethally out of control, a jaded cop fights his way through a corrupt city's criminal underworld.",
-        "poster_path": "https://image.tmdb.org/t/p/original/ubP2OsF3GlfqYPvXyLw9d78djGX.jpg",
-        "backdrop_path": "https://image.tmdb.org/t/p/original/65MVgDa6YjSdqzh7YOA04mYkioo.jpg",
+        "title": "The Greatest Of All Time (GOAT)",
+        "overview": "An action-packed Tamil sci-fi espionage thriller featuring Thalapathy Vijay in high-octane suspense and double agent intrigue across international borders.",
+        "poster_path": "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800",
+        "backdrop_path": "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=1200",
         "genres": [
             { "id": 28, "name": "Action" },
-            { "id": 80, "name": "Crime" },
-            { "id": 53, "name": "Thriller" }
+            { "id": 878, "name": "Sci-Fi" }
         ],
         "casts": dummyCastsData,
-        "release_date": "2025-04-25",
-        "original_language": "en",
-        "tagline": "No law. Only disorder.",
-        "vote_average": 6.537,
-        "vote_count": 35960,
-        "runtime": 107,
+        "release_date": "2024-09-05",
+        "original_language": "ta",
+        "tagline": "The legend never surrenders.",
+        "vote_average": 8.6,
+        "vote_count": 26900,
+        "runtime": 178,
     }
 ]
 
@@ -147,28 +156,36 @@ const d1 = getDynamicDateString(1);
 const d2 = getDynamicDateString(2);
 const d3 = getDynamicDateString(3);
 
+// Standard Sri Lankan Cinema Showtime Slots:
+// Morning Show: 10:00 AM | Matinee Show: 1:00 PM | First Show: 4:00 PM | Second Show: 7:15 PM | Night Show: 10:15 PM
 export const dummyDateTimeData = {
     [d0]: [
-        { "time": `${d0}T10:30:00.000Z`, "showId": "show_1" },
-        { "time": `${d0}T13:45:00.000Z`, "showId": "show_2" },
-        { "time": `${d0}T17:15:00.000Z`, "showId": "show_3" },
-        { "time": `${d0}T20:45:00.000Z`, "showId": "show_4" }
+        { "time": `${d0}T10:00:00.000Z`, "showId": "show_1", "slotName": "Morning Show (10:00 AM)" },
+        { "time": `${d0}T13:00:00.000Z`, "showId": "show_2", "slotName": "Matinee Show (01:00 PM)" },
+        { "time": `${d0}T16:00:00.000Z`, "showId": "show_3", "slotName": "First Show (04:00 PM)" },
+        { "time": `${d0}T19:15:00.000Z`, "showId": "show_4", "slotName": "Second Show (07:15 PM)" },
+        { "time": `${d0}T22:15:00.000Z`, "showId": "show_5", "slotName": "Night Show (10:15 PM)" }
     ],
     [d1]: [
-        { "time": `${d1}T10:30:00.000Z`, "showId": "show_5" },
-        { "time": `${d1}T13:45:00.000Z`, "showId": "show_6" },
-        { "time": `${d1}T17:15:00.000Z`, "showId": "show_7" },
-        { "time": `${d1}T20:45:00.000Z`, "showId": "show_8" }
+        { "time": `${d1}T10:00:00.000Z`, "showId": "show_6", "slotName": "Morning Show (10:00 AM)" },
+        { "time": `${d1}T13:00:00.000Z`, "showId": "show_7", "slotName": "Matinee Show (01:00 PM)" },
+        { "time": `${d1}T16:00:00.000Z`, "showId": "show_8", "slotName": "First Show (04:00 PM)" },
+        { "time": `${d1}T19:15:00.000Z`, "showId": "show_9", "slotName": "Second Show (07:15 PM)" },
+        { "time": `${d1}T22:15:00.000Z`, "showId": "show_10", "slotName": "Night Show (10:15 PM)" }
     ],
     [d2]: [
-        { "time": `${d2}T10:30:00.000Z`, "showId": "show_9" },
-        { "time": `${d2}T13:45:00.000Z`, "showId": "show_10" },
-        { "time": `${d2}T17:15:00.000Z`, "showId": "show_11" }
+        { "time": `${d2}T10:00:00.000Z`, "showId": "show_11", "slotName": "Morning Show (10:00 AM)" },
+        { "time": `${d2}T13:00:00.000Z`, "showId": "show_12", "slotName": "Matinee Show (01:00 PM)" },
+        { "time": `${d2}T16:00:00.000Z`, "showId": "show_13", "slotName": "First Show (04:00 PM)" },
+        { "time": `${d2}T19:15:00.000Z`, "showId": "show_14", "slotName": "Second Show (07:15 PM)" },
+        { "time": `${d2}T22:15:00.000Z`, "showId": "show_15", "slotName": "Night Show (10:15 PM)" }
     ],
     [d3]: [
-        { "time": `${d3}T10:30:00.000Z`, "showId": "show_12" },
-        { "time": `${d3}T17:15:00.000Z`, "showId": "show_13" },
-        { "time": `${d3}T20:45:00.000Z`, "showId": "show_14" }
+        { "time": `${d3}T10:00:00.000Z`, "showId": "show_16", "slotName": "Morning Show (10:00 AM)" },
+        { "time": `${d3}T13:00:00.000Z`, "showId": "show_17", "slotName": "Matinee Show (01:00 PM)" },
+        { "time": `${d3}T16:00:00.000Z`, "showId": "show_18", "slotName": "First Show (04:00 PM)" },
+        { "time": `${d3}T19:15:00.000Z`, "showId": "show_19", "slotName": "Second Show (07:15 PM)" },
+        { "time": `${d3}T22:15:00.000Z`, "showId": "show_20", "slotName": "Night Show (10:15 PM)" }
     ]
 }
 

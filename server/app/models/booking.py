@@ -18,7 +18,7 @@ class Booking(Base):
     user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
     showtime_id = Column(Integer, ForeignKey("showtimes.showtime_id", ondelete="CASCADE"), nullable=False)
     total_amount = Column(Numeric(10, 2), nullable=False)
-    status = Column(Enum(BookingStatus), default=BookingStatus.PENDING, nullable=False)
+    status = Column(Enum(BookingStatus, values_callable=lambda obj: [e.value for e in obj]), default=BookingStatus.PENDING, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships

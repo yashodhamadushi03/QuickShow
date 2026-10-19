@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import ReactPlayer from 'react-player';
 import BlurCircle from './BlurCircle';
-import { dummyTrailers } from '../assets/assets';
+import { dummyTrailers, FALLBACK_BACKDROP } from '../assets/assets';
 import { PlayCircleIcon } from 'lucide-react';
 
 const TrailerSection = () => {
   const [currentTrailer, setCurrentTrailer] = useState(
     dummyTrailers?.[0] || null
   );
-  console.log(currentTrailer);
-console.log(currentTrailer?.videoUrl);
 
   return (
     <div className="px-6 md:px-16 lg:px-24 xl:px-44 py-20 overflow-hidden">
@@ -17,39 +15,45 @@ console.log(currentTrailer?.videoUrl);
         Official Movie Trailers
       </h2>
 
-      <div className="relative mt-6">
+      <div className="relative mt-6 max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl border border-slate-800">
         <BlurCircle top="-100px" right="-100px" />
 
         {currentTrailer ? (
           <ReactPlayer
-  src={currentTrailer.videoUrl}
-  controls
-  width="100%"
-  height="540px"
-/>
+            src={currentTrailer.videoUrl}
+            controls
+            width="100%"
+            height="480px"
+          />
         ) : (
-          <p className="text-center text-gray-400">
+          <p className="text-center text-gray-400 py-16">
             No trailer available
           </p>
         )}
       </div>
-      <div className='group grid grid-cols-4 md:gap-8 max-w-3xl mx-auto'>
-        {dummyTrailers.map((trailer)=> (
-            <div key={trailer.image} className='relative
-            group-hover:not:not-hover:opacity-50 hover:-translate-y-1 duration-300
-            transition max-md:h-60 md:max-h-60 cursor-pointer' onClick={()=>
-                setCurrentTrailer(trailer)}>
 
-
-            
-              <img src={trailer.image} alt="trailer" className='rounded-lg w-fullh 
-              h-full object-cover brightness-75'/>
-              <PlayCircleIcon strokeWidth={1.6}className="absolutr top-1/2
-              left-1/2 w-5 md:w-8 h-5 md:h-12 transforms -translate-x-1/2
-              -translate-y-1/2"/>
-            </div>
+      <div className='group grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto mt-8'>
+        {dummyTrailers.map((trailer) => (
+          <div
+            key={trailer.image}
+            className='relative rounded-xl overflow-hidden group-hover:not:not-hover:opacity-50 hover:-translate-y-1.5 duration-300 transition h-32 sm:h-36 md:h-44 cursor-pointer border border-slate-800 hover:border-rose-500/60 shadow-lg'
+            onClick={() => setCurrentTrailer(trailer)}
+          >
+            <img
+              src={trailer.image}
+              alt="trailer"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = FALLBACK_BACKDROP;
+              }}
+              className='rounded-xl w-full h-full object-cover brightness-75 hover:brightness-90 transition-all'
+            />
+            <PlayCircleIcon
+              strokeWidth={1.8}
+              className="absolute top-1/2 left-1/2 w-8 sm:w-10 md:w-12 h-8 sm:h-10 md:h-12 transform -translate-x-1/2 -translate-y-1/2 text-white/90 drop-shadow-lg"
+            />
+          </div>
         ))}
-
       </div>
     </div>
   );
