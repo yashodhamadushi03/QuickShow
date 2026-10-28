@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Numeric, String, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, Numeric, String, DateTime, ForeignKey, Enum, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 import enum
@@ -20,6 +20,7 @@ class Payment(Base):
     payment_method = Column(String(50), nullable=False)  # e.g., 'Card', 'UPI', 'NetBanking', 'PayPal'
     status = Column(Enum(PaymentStatus, values_callable=lambda obj: [e.value for e in obj]), default=PaymentStatus.PENDING, nullable=False)
     transaction_reference = Column(String(100), unique=True, nullable=False)
+    is_sandbox = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships

@@ -62,7 +62,13 @@ def sync_database():
                     null_str = "NULL" if column.nullable else "NOT NULL"
                     default_str = ""
                     if column.default is not None and column.default.is_scalar:
-                        default_str = f" DEFAULT '{column.default.arg}'"
+                        arg_val = column.default.arg
+                        if isinstance(arg_val, bool):
+                            default_str = f" DEFAULT {1 if arg_val else 0}"
+                        elif isinstance(arg_val, (int, float)):
+                            default_str = f" DEFAULT {arg_val}"
+                        else:
+                            default_str = f" DEFAULT '{arg_val}'"
                     
                     alter_sql = f"ALTER TABLE `{table_name}` ADD COLUMN `{column.name}` {col_type} {null_str}{default_str};"
                     print(f"  -> Adding missing column: `{table_name}`.`{column.name}` ({col_type})")

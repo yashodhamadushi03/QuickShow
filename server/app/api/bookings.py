@@ -216,7 +216,8 @@ def process_payment(
         amount=booking.total_amount,
         payment_method=payment_method_str,
         status=PaymentStatus.SUCCESS,
-        transaction_reference=txn_ref
+        transaction_reference=txn_ref,
+        is_sandbox=is_sandbox
     )
     
     # Confirm booking status
