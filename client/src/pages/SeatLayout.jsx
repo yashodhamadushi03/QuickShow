@@ -46,7 +46,7 @@ const SeatLayout = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isSandboxMode, setIsSandboxMode] = useState(true); // Default to Sandbox Active for Viva Demo!
   const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242");
-  const [cardHolder, setCardHolder] = useState("Kasun Perera");
+  const [cardHolder, setCardHolder] = useState("");
   const [cardExpiry, setCardExpiry] = useState("12/28");
   const [cardCvv, setCardCvv] = useState("123");
   const [isAuthorizing, setIsAuthorizing] = useState(false);
@@ -356,9 +356,10 @@ const SeatLayout = () => {
 
   // 1-Click Sandbox Test Card Fillers for Viva Demo
   const fillTestCard = (type = "visa") => {
+    const activeHolder = customerName || (clerkUser?.fullName) || "Verified Customer";
     if (type === "visa") {
       setCardNumber("4242 4242 4242 4242");
-      setCardHolder(customerName || "Kasun Perera (Viva Demo)");
+      setCardHolder(activeHolder);
       setCardExpiry("12/28");
       setCardCvv("456");
       toast.success("Filled Test Visa: 4242 4242 4242 4242", {
@@ -367,7 +368,7 @@ const SeatLayout = () => {
       });
     } else {
       setCardNumber("5555 5555 5555 4444");
-      setCardHolder(customerName || "Kasun Perera (Viva Demo)");
+      setCardHolder(activeHolder);
       setCardExpiry("10/27");
       setCardCvv("789");
       toast.success("Filled Test Mastercard: 5555 5555 5555 4444", {

@@ -841,9 +841,14 @@ const AdminDashboard = () => {
                                 <Ticket className="w-3 h-3 text-rose-400" />
                                 {c.total_bookings} {c.total_bookings === 1 ? "Booking" : "Bookings"}
                               </div>
+                              {c.created_at && (
+                                <span className="text-[10px] text-slate-500 mt-1 font-mono">
+                                  Joined: {c.created_at}
+                                </span>
+                              )}
                               {c.last_active && (
-                                <span className="text-[10px] text-slate-500 mt-1.5 font-mono">
-                                  Active: {c.last_active}
+                                <span className="text-[10px] text-rose-400/90 font-mono">
+                                  Active: {c.last_active_relative || c.last_active}
                                 </span>
                               )}
                             </div>
@@ -900,9 +905,23 @@ const AdminDashboard = () => {
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-center text-sm gap-2">
-                              <span className="font-bold text-white truncate">{act.user_name}</span>
-                              <span className="text-xs text-slate-400 font-mono shrink-0">{act.timestamp}</span>
+                            <div className="flex justify-between items-start text-sm gap-2">
+                              <div className="min-w-0">
+                                <span className="font-bold text-white truncate block">{act.user_name}</span>
+                                {act.user_email && (
+                                  <span className="text-[11px] text-slate-500 font-normal truncate block">
+                                    {act.user_email}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-right shrink-0">
+                                <span className="text-xs text-rose-400 font-semibold block">
+                                  {act.timestamp_relative || act.timestamp}
+                                </span>
+                                <span className="text-[10px] text-slate-500 font-mono block">
+                                  {act.timestamp}
+                                </span>
+                              </div>
                             </div>
 
                             <p className="text-xs sm:text-sm text-slate-300 mt-1 break-words">{act.details}</p>

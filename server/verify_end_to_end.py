@@ -146,6 +146,11 @@ def verify_theater_booking_flow():
         assert persisted_theater.theater_id == theater.theater_id, f"Theater mismatch: {persisted_theater.theater_id} vs {theater.theater_id}"
         print("  -> SUCCESS: Theater ID and Hall ID match exactly the user's selected branch!")
         
+        # Clean up test booking so no test records linger in MySQL
+        db.delete(persisted_booking)
+        db.commit()
+        print("  -> Cleaned up test verification booking.")
+        
     finally:
         db.close()
 

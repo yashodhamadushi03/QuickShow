@@ -38,18 +38,6 @@ def seed_database():
             db.add(admin)
             print("  ✓ Created Admin User: admin@quickshow.lk")
 
-        customer = db.query(User).filter(User.email == customer_email).first()
-        if not customer:
-            customer = User(
-                name="Kasun Perera",
-                email=customer_email,
-                password_hash=get_password_hash("user123"),
-                phone="+94719876543",
-                role=UserRole.CUSTOMER
-            )
-            db.add(customer)
-            print("  ✓ Created Customer User: user@quickshow.lk")
-
         db.flush()
 
         # 2. Expanded Movies Collection (English, Sinhala, Tamil, Hindi across all categories)

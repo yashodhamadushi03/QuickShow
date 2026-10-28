@@ -632,21 +632,51 @@ def get_waitlist_monitor(
     return output
 
 
+def format_activity_time(dt):
+    if not dt:
+        return "Recently", "Recently"
+    from datetime import datetime
+    formatted_exact = dt.strftime("%b %d, %Y, %I:%M %p")
+    now = datetime.now()
+    diff = now - (dt.replace(tzinfo=None) if hasattr(dt, 'tzinfo') and dt.tzinfo else dt)
+    seconds = int(diff.total_seconds())
+    if seconds < 60:
+        rel = "Just now"
+    elif seconds < 3600:
+        mins = max(1, seconds // 60)
+        rel = f"{mins} min{'s' if mins != 1 else ''} ago"
+    elif seconds < 86400:
+        hours = seconds // 3600
+        rel = f"{hours} hour{'s' if hours != 1 else ''} ago"
+    elif seconds < 172800:
+        rel = f"Yesterday at {dt.strftime('%I:%M %p')}"
+    else:
+        days = seconds // 86400
+        rel = f"{days} days ago" if days < 14 else dt.strftime("%b %d, %Y")
+    return formatted_exact, rel
+
+
 @router.get("/users")
 @router.get("/customers")
 def get_admin_customers(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Admin: Real customer profiles with calculated booking count and total LKR spend from database."""
+    """Admin: Real registered customer profiles with accurate calculated booking count and total LKR spend from MySQL."""
     from app.models.booking import Booking, BookingStatus
     from app.models.user import User
     from sqlalchemy import or_
     from datetime import datetime
     
+    # Query all users, strictly excluding dummy/mock seed names
     users = db.query(User).order_by(User.user_id.desc()).all()
     output = []
+    
     for u in users:
+        # Exclude dummy/seed user accounts
+        if u.email in ["user@quickshow.lk", "test_cust@quickshow.lk"] or (u.name and u.name.strip().lower() == "kasun perera"):
+            continue
+            
         # Match bookings by user_id OR customer_email matching user's email
         confirmed_bookings = db.query(Booking).filter(
             or_(
@@ -672,17 +702,22 @@ def get_admin_customers(
             if latest_b and latest_b.showtime and latest_b.showtime.movie:
                 recent_movie = latest_b.showtime.movie.title
         
+        created_str, created_rel = format_activity_time(u.created_at)
+        last_active_str, last_active_rel = format_activity_time(last_booking if last_booking else u.created_at)
+        
         output.append({
             "user_id": u.user_id,
             "id": u.user_id,
-            "name": u.name or "Customer",
+            "name": u.name or "Registered User",
             "email": u.email,
-            "phone": u.phone or "+94 77 123 4567",
+            "phone": u.phone or "Not Provided",
             "role": role_str,
             "total_bookings": len(confirmed_bookings),
             "total_spent_lkr": round(total_spent, 2),
-            "created_at": u.created_at.strftime("%Y-%m-%d %H:%M:%S") if u.created_at else None,
-            "last_active": last_booking.strftime("%b %d, %Y") if last_booking else (u.created_at.strftime("%b %d, %Y") if u.created_at else "Active"),
+            "created_at": created_str,
+            "created_at_relative": created_rel,
+            "last_active": last_active_str,
+            "last_active_relative": last_active_rel,
             "recent_movie": recent_movie
         })
         
@@ -700,36 +735,50 @@ def get_admin_activities(
     from datetime import datetime
     
     bookings = db.query(Booking).order_by(Booking.created_at.desc()).limit(30).all()
-    recent_users = db.query(User).order_by(User.created_at.desc()).limit(15).all()
+    recent_users = db.query(User).order_by(User.created_at.desc()).limit(20).all()
     output = []
     
     for b in bookings:
         user_name = b.customer_name or (b.user.name if b.user else "Customer")
+        user_email = b.customer_email or (b.user.email if b.user else "")
+        
+        # Skip dummy seed entries if any
+        if user_email in ["user@quickshow.lk", "test_cust@quickshow.lk"] or (user_name and user_name.strip().lower() == "kasun perera"):
+            continue
+            
         movie_title = b.showtime.movie.title if b.showtime and b.showtime.movie else "Cinema Movie"
         theater_name = b.showtime.hall.theater.name if b.showtime and b.showtime.hall and b.showtime.hall.theater else "Scope Cinemas"
         seats = [f"{bs.seat.row_label}{bs.seat.seat_number}" for bs in b.booking_seats if bs.seat]
         seats_str = ", ".join(seats) if seats else "Reserved seats"
-        time_str = b.created_at.strftime("%b %d, %I:%M %p") if b.created_at else "Recently"
+        exact_time, relative_time = format_activity_time(b.created_at)
         
         output.append({
             "activity_id": f"ACT-BK-{b.booking_id:04d}",
             "type": "TICKET_RESERVATION",
             "user_name": user_name,
-            "details": f"Reserved seats {seats_str} for '{movie_title}' at {theater_name}",
-            "timestamp": time_str,
+            "user_email": user_email,
+            "details": f"Reserved {len(seats)} seat{'s' if len(seats) != 1 else ''} ({seats_str}) for '{movie_title}' at {theater_name}",
+            "timestamp": exact_time,
+            "timestamp_relative": relative_time,
             "amount_lkr": float(b.total_amount) if b.total_amount else 0.0,
             "_raw_dt": b.created_at or datetime.min
         })
         
     for u in recent_users:
+        if u.email in ["user@quickshow.lk", "test_cust@quickshow.lk"] or (u.name and u.name.strip().lower() == "kasun perera"):
+            continue
+            
         if u.created_at:
-            time_str = u.created_at.strftime("%b %d, %I:%M %p")
+            exact_time, relative_time = format_activity_time(u.created_at)
+            role_label = u.role.value if hasattr(u.role, 'value') else str(u.role)
             output.append({
                 "activity_id": f"ACT-REG-{u.user_id:04d}",
                 "type": "USER_REGISTRATION",
                 "user_name": u.name or "New Customer",
-                "details": f"New user account registered ({u.email})",
-                "timestamp": time_str,
+                "user_email": u.email,
+                "details": f"New {role_label.replace('_', ' ').title()} account registered ({u.email})",
+                "timestamp": exact_time,
+                "timestamp_relative": relative_time,
                 "amount_lkr": 0.0,
                 "_raw_dt": u.created_at
             })

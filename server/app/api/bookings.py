@@ -464,7 +464,7 @@ def process_payment(
     if not recipient_email:
         recipient_email = "yashodhamadushi03@gmail.com"
 
-    recipient_name = payment_in.customer_name or (current_user.name if current_user else "Kasun Perera")
+    recipient_name = payment_in.customer_name or (current_user.name if current_user else "Valued Cinema Guest")
     recipient_phone = payment_in.customer_phone or (current_user.phone if current_user else None)
 
     # Direct SMTP dispatch to guarantee immediate delivery
