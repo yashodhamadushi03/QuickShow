@@ -16,6 +16,7 @@ from app.schemas.booking import BookingCreate, BookingOut
 from app.schemas.payment import PaymentCreate, PaymentOut
 from app.api.deps import get_current_user_optional
 from app.services.notification import NotificationService
+from app.core.timezone import get_local_now
 
 router = APIRouter(prefix="", tags=["Bookings & Payments"])
 
@@ -96,8 +97,8 @@ def create_booking(
                     st = Showtime(
                         movie_id=target_movie_id,
                         hall_id=hl.hall_id,
-                        start_time=st.start_time if st else datetime.now(timezone.utc),
-                        end_time=st.end_time if st else datetime.now(timezone.utc),
+                        start_time=st.start_time if st else get_local_now(),
+                        end_time=st.end_time if st else get_local_now(),
                         base_price=st.base_price if st else Decimal("1500.00")
                     )
                     db.add(st)
@@ -125,8 +126,8 @@ def create_booking(
                     st = Showtime(
                         movie_id=target_movie_id,
                         hall_id=hl.hall_id,
-                        start_time=st.start_time if st else datetime.now(timezone.utc),
-                        end_time=st.end_time if st else datetime.now(timezone.utc),
+                        start_time=st.start_time if st else get_local_now(),
+                        end_time=st.end_time if st else get_local_now(),
                         base_price=st.base_price if st else Decimal("1500.00")
                     )
                     db.add(st)
@@ -154,8 +155,8 @@ def create_booking(
             st = Showtime(
                 movie_id=mv.movie_id,
                 hall_id=hl.hall_id,
-                start_time=datetime.now(timezone.utc),
-                end_time=datetime.now(timezone.utc),
+                start_time=get_local_now(),
+                end_time=get_local_now(),
                 base_price=Decimal("1500.00")
             )
             db.add(st)

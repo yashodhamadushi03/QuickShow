@@ -635,11 +635,12 @@ def get_waitlist_monitor(
 def format_activity_time(dt):
     if not dt:
         return "Recently", "Recently"
-    from datetime import datetime
-    formatted_exact = dt.strftime("%b %d, %Y, %I:%M %p")
-    now = datetime.now()
-    diff = now - (dt.replace(tzinfo=None) if hasattr(dt, 'tzinfo') and dt.tzinfo else dt)
-    seconds = int(diff.total_seconds())
+    from app.core.timezone import get_local_now, to_local_time
+    local_dt = to_local_time(dt)
+    formatted_exact = local_dt.strftime("%b %d, %Y, %I:%M %p")
+    now = get_local_now()
+    diff = now - (local_dt.replace(tzinfo=None) if hasattr(local_dt, 'tzinfo') and local_dt.tzinfo else local_dt)
+    seconds = max(0, int(diff.total_seconds()))
     if seconds < 60:
         rel = "Just now"
     elif seconds < 3600:
@@ -649,10 +650,10 @@ def format_activity_time(dt):
         hours = seconds // 3600
         rel = f"{hours} hour{'s' if hours != 1 else ''} ago"
     elif seconds < 172800:
-        rel = f"Yesterday at {dt.strftime('%I:%M %p')}"
+        rel = f"Yesterday at {local_dt.strftime('%I:%M %p')}"
     else:
         days = seconds // 86400
-        rel = f"{days} days ago" if days < 14 else dt.strftime("%b %d, %Y")
+        rel = f"{days} days ago" if days < 14 else local_dt.strftime("%b %d, %Y")
     return formatted_exact, rel
 
 

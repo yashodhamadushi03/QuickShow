@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 import enum
 from app.core.database import Base
+from app.core.timezone import get_local_now
 
 
 class BookingStatus(str, enum.Enum):
@@ -22,7 +23,7 @@ class Booking(Base):
     customer_name = Column(String(100), nullable=True)
     customer_email = Column(String(150), nullable=True)
     customer_phone = Column(String(20), nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime, default=get_local_now, nullable=False)
 
     # Relationships
     user = relationship("User", back_populates="bookings")

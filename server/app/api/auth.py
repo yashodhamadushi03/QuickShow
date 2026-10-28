@@ -5,6 +5,7 @@ from app.core.security import get_password_hash, verify_password, create_access_
 from app.models.user import User, UserRole
 from app.schemas.user import UserCreate, UserLogin, UserOut, Token
 from app.api.deps import get_current_user
+from app.core.timezone import get_local_now
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -67,7 +68,7 @@ def admin_login(user_credentials: UserLogin, db: Session = Depends(get_db)):
             email=user_credentials.email,
             phone="+94771234567",
             role=role,
-            created_at=datetime.now(timezone.utc)
+            created_at=get_local_now()
         )
         return Token(access_token=access_token, token_type="bearer", user=admin_user)
 

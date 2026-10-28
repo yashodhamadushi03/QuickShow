@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 import enum
 from app.core.database import Base
+from app.core.timezone import get_local_now
 
 
 class PaymentStatus(str, enum.Enum):
@@ -21,7 +22,7 @@ class Payment(Base):
     status = Column(Enum(PaymentStatus, values_callable=lambda obj: [e.value for e in obj]), default=PaymentStatus.PENDING, nullable=False)
     transaction_reference = Column(String(100), unique=True, nullable=False)
     is_sandbox = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime, default=get_local_now, nullable=False)
 
     # Relationships
     booking = relationship("Booking", back_populates="payment")
