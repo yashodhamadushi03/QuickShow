@@ -4,11 +4,16 @@ from app.core.config import settings
 from app.core.database import Base, engine
 from app.api import auth, movies, showtimes, theaters, bookings, admin, fb_orders
 
-# Create Database tables automatically if missing
+# Automatically inspect, create missing tables/columns, and sync schema without data loss
 try:
-    Base.metadata.create_all(bind=engine)
+    from sync_database import sync_database
+    sync_database()
 except Exception as e:
-    print(f"[Warning] Auto table creation skipped: {e}")
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as inner_e:
+        print(f"[Warning] Auto table creation skipped: {inner_e}")
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
