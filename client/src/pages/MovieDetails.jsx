@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import { dummyShowsData, dummyDateTimeData, FALLBACK_POSTER, FALLBACK_AVATAR } from '../assets/assets';
 import { StarIcon } from '@heroicons/react/24/solid';
 import BlurCircle from '../components/BlurCircle';
@@ -12,9 +12,28 @@ import { isMovieFavourite, toggleFavourite } from '../lib/favourites';
 
 const MovieDetails = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { id } = useParams();
+
+  const passedTheaterId = location.state?.theaterId || searchParams.get("theater_id");
+  const passedTheaterName = location.state?.theaterName || searchParams.get("theater_name");
+  const passedHallId = location.state?.hallId || searchParams.get("hall_id");
+  const passedHallName = location.state?.hallName || searchParams.get("hall_name");
+
+  const [theaters, setTheaters] = useState([]);
   const [show, setShow] = useState(null);
   const [isFav, setIsFav] = useState(false);
+
+  useEffect(() => {
+    fetch(`http://localhost:8000/api/theaters`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) setTheaters(data);
+      })
+      .catch((e) => console.warn("Failed to load theaters in MovieDetails:", e));
+  }, []);
+
 
   const getShow = async () => {
     // 1. Check in dummyShowsData
@@ -204,7 +223,17 @@ const MovieDetails = () => {
       </div>
 
       {/* Date & Showtime Selector */}
-      <DateSelect dateTime={show.dateTime} id={id} movie={show.movie} />
+      <DateSelect
+        dateTime={show.dateTime}
+        id={id}
+        movie={show.movie}
+        initialTheaterId={passedTheaterId}
+        initialTheaterName={passedTheaterName}
+        initialHallId={passedHallId}
+        initialHallName={passedHallName}
+        theaters={theaters}
+      />
+
 
       <p className="text-2xl sm:text-3xl font-black text-white mt-20 mb-6">
         You May Also Like

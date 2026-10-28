@@ -246,43 +246,57 @@ const Theaters = () => {
                     )}
                   </div>
 
-                  {/* Screening Halls */}
-                  <div className="space-y-3 mb-6">
-                    <div className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <Film className="w-5 h-5 text-slate-400" /> Auditoriums ({theater.halls?.length || 0})
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {theater.halls && theater.halls.length > 0 ? (
-                        theater.halls.map((hall) => (
-                          <div
-                            key={hall.hall_id}
-                            className="flex items-center justify-between bg-slate-950/60 px-4 py-3 rounded-xl border border-slate-800/60 text-base text-slate-200"
-                          >
-                            <span className="font-semibold text-white">{hall.hall_name}</span>
-                            <span className="text-slate-300 font-mono text-sm font-bold">
-                              {hall.total_capacity ? `${hall.total_capacity} Seats` : "Multi-tier"}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-base text-slate-400 italic">Auditoriums updating...</p>
-                      )}
+                    {/* Screening Halls */}
+                    <div className="space-y-3 mb-6">
+                      <div className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                        <Film className="w-5 h-5 text-slate-400" /> Auditoriums ({theater.halls?.length || 0})
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {theater.halls && theater.halls.length > 0 ? (
+                          theater.halls.map((hall) => (
+                            <Link
+                              key={hall.hall_id}
+                              to={`/movies?theater_id=${theater.theater_id}&theater_name=${encodeURIComponent(theater.name)}&hall_id=${hall.hall_id}&hall_name=${encodeURIComponent(hall.hall_name)}`}
+                              state={{
+                                theaterId: theater.theater_id,
+                                theaterName: theater.name,
+                                hallId: hall.hall_id,
+                                hallName: hall.hall_name,
+                              }}
+                              className="flex items-center justify-between bg-slate-950/60 hover:bg-slate-800/80 px-4 py-3 rounded-xl border border-slate-800/60 hover:border-rose-500/40 text-base text-slate-200 transition-colors group/hall cursor-pointer"
+                            >
+                              <span className="font-semibold text-white group-hover/hall:text-rose-400 transition-colors">
+                                {hall.hall_name}
+                              </span>
+                              <span className="text-slate-300 font-mono text-sm font-bold flex items-center gap-1">
+                                {hall.total_capacity ? `${hall.total_capacity} Seats` : "Multi-tier"}
+                                <span className="text-rose-400 text-xs ml-1">&rarr;</span>
+                              </span>
+                            </Link>
+                          ))
+                        ) : (
+                          <p className="text-base text-slate-400 italic">Auditoriums updating...</p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Footer Action */}
-                <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-sm sm:text-base text-emerald-400 font-bold">
-                    <ShieldCheck className="w-5 h-5" /> Dolby Atmos & 4K Laser
+                  {/* Footer Action */}
+                  <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-sm sm:text-base text-emerald-400 font-bold">
+                      <ShieldCheck className="w-5 h-5" /> Dolby Atmos & 4K Laser
+                    </div>
+                    <Link
+                      to={`/movies?theater_id=${theater.theater_id}&theater_name=${encodeURIComponent(theater.name)}`}
+                      state={{
+                        theaterId: theater.theater_id,
+                        theaterName: theater.name,
+                      }}
+                      className="inline-flex items-center gap-1.5 text-base font-extrabold text-rose-500 hover:text-rose-400 transition-colors hover:scale-105"
+                    >
+                      Book at this Cinema &rarr;
+                    </Link>
                   </div>
-                  <Link
-                    to="/movies"
-                    className="inline-flex items-center gap-1.5 text-base font-extrabold text-rose-500 hover:text-rose-400 transition-colors hover:scale-105"
-                  >
-                    View Showtimes &rarr;
-                  </Link>
-                </div>
               </div>
             ))}
           </div>

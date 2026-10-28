@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import Base, engine
-from app.api import auth, movies, showtimes, theaters, bookings, admin, fb_orders
+from app.api import auth, movies, showtimes, theaters, bookings, admin, fb_orders, favourites
 
 # Automatically inspect, create missing tables/columns, and sync schema without data loss
 try:
@@ -47,6 +47,8 @@ app.include_router(theaters.router, prefix=settings.API_V1_STR)
 app.include_router(bookings.router, prefix=settings.API_V1_STR)
 app.include_router(admin.router, prefix=settings.API_V1_STR)
 app.include_router(fb_orders.router, prefix=settings.API_V1_STR)
+app.include_router(favourites.router, prefix=settings.API_V1_STR)
+
 
 
 @app.get("/")

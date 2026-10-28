@@ -14,6 +14,10 @@ class BookingCreate(BaseModel):
     customer_email: Optional[EmailStr] = None
     customer_name: Optional[str] = None
     customer_phone: Optional[str] = None
+    theater_id: Optional[int] = None
+    hall_id: Optional[int] = None
+    movie_id: Optional[int] = None
+
 
 
 class BookingSeatOut(BaseModel):

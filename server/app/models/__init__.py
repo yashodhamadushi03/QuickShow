@@ -6,6 +6,8 @@ from app.models.showtime import Showtime
 from app.models.booking import Booking, BookingSeat, BookingStatus
 from app.models.payment import Payment, PaymentStatus
 from app.models.fb_order import FBOrder, FBOrderStatus
+from app.models.favourite import Favourite
+from app.models.profile import Profile
 
 __all__ = [
     "Base",
@@ -23,5 +25,6 @@ __all__ = [
     "PaymentStatus",
     "FBOrder",
     "FBOrderStatus",
+    "Favourite",
+    "Profile",
 ]
-

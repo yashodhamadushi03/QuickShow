@@ -59,6 +59,22 @@ export const addFavourite = (movie) => {
     try {
       localStorage.setItem(FAVOURITES_KEY, JSON.stringify(updated));
       window.dispatchEvent(new Event("favouritesUpdated"));
+
+      // Asynchronously synchronize with MySQL backend database
+      const token = localStorage.getItem("token") || "";
+      const email = localStorage.getItem("customer_email") || localStorage.getItem("user_email") || "";
+      const numericId = parseInt(targetId, 10);
+      if (!isNaN(numericId)) {
+        fetch("/api/favourites", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ movie_id: numericId, email: email || undefined })
+        }).catch((e) => console.debug("Sync favourite error:", e));
+      }
+
       return true;
     } catch (err) {
       console.error("Failed to save favourite to localStorage:", err);
@@ -79,6 +95,21 @@ export const removeFavourite = (movieOrId) => {
   try {
     localStorage.setItem(FAVOURITES_KEY, JSON.stringify(updated));
     window.dispatchEvent(new Event("favouritesUpdated"));
+
+    // Asynchronously synchronize removal with MySQL backend database
+    const token = localStorage.getItem("token") || "";
+    const email = localStorage.getItem("customer_email") || localStorage.getItem("user_email") || "";
+    const numericId = parseInt(targetId, 10);
+    if (!isNaN(numericId)) {
+      const url = email ? `/api/favourites/${numericId}?email=${encodeURIComponent(email)}` : `/api/favourites/${numericId}`;
+      fetch(url, {
+        method: "DELETE",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      }).catch((e) => console.debug("Sync remove favourite error:", e));
+    }
+
     return true;
   } catch (err) {
     console.error("Failed to remove favourite from localStorage:", err);

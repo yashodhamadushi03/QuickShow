@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ShieldCheck, Ticket, CheckCircle2, ArrowLeft, CreditCard, Mail, Sparkles, Share2, Wallet, FlaskConical, Phone, Lock, Zap } from "lucide-react";
+import { useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { ShieldCheck, Ticket, CheckCircle2, ArrowLeft, CreditCard, Mail, Sparkles, Share2, Wallet, FlaskConical, Phone, Lock, Zap, MapPin } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useUser } from "@clerk/clerk-react";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
 const SeatLayout = () => {
+  const [searchParams] = useSearchParams();
   const { id: showtimeIdParam, date: dateParam } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,7 +18,12 @@ const SeatLayout = () => {
   const selectedSlot = passedState.selectedSlot;
   const passedMovie = passedState.movie;
 
-  const showtimeId = parseInt(passedState.showtimeId) || parseInt(showtimeIdParam) || 1;
+  const theaterId = passedState.theaterId || searchParams.get("theater_id") || selectedSlot?.theater_id;
+  const theaterName = passedState.theaterName || searchParams.get("theater_name") || selectedSlot?.theater;
+  const hallId = passedState.hallId || searchParams.get("hall_id") || selectedSlot?.hall_id;
+  const hallName = passedState.hallName || searchParams.get("hall_name") || selectedSlot?.hall;
+
+  const showtimeId = parseInt(passedState.showtimeId) || parseInt(searchParams.get("showtime_id")) || parseInt(showtimeIdParam) || 1;
 
   const formatHeaderDate = (dStr) => {
     if (!dStr) return "Today";
@@ -100,17 +106,28 @@ const SeatLayout = () => {
       // 1. Try to fetch requested showtime directly
       const stRes = await fetch(`${API_BASE_URL}/showtimes/${activeShowtimeId}`);
       if (stRes.ok) {
-        fetchedShowtime = await stRes.json();
-      } else {
-        // If showtimeId was not found (e.g. mock ID), look up real showtime for this movie from backend
+        const candidate = await stRes.json();
+        if (!theaterId || String(candidate.hall?.theater_id) === String(theaterId)) {
+          fetchedShowtime = candidate;
+        }
+      }
+
+      // 2. If no matching showtime for this theater yet, look up showtimes for this movie & theater from backend
+      if (!fetchedShowtime) {
         const movieIdCandidate = passedMovie?.movie_id || passedMovie?.id || passedMovie?._id || parseInt(showtimeIdParam);
         if (movieIdCandidate) {
           try {
             const mStRes = await fetch(`${API_BASE_URL}/movies/${movieIdCandidate}/showtimes`);
             if (mStRes.ok) {
               const grouped = await mStRes.json();
-              if (grouped.length > 0 && grouped[0].showtimes?.length > 0) {
-                fetchedShowtime = grouped[0].showtimes[0];
+              const matchedGroup = grouped.find((g) =>
+                (theaterId && String(g.theater_id) === String(theaterId)) ||
+                (theaterName && g.theater_name?.toLowerCase().includes(theaterName.toLowerCase()))
+              ) || grouped[0];
+
+              if (matchedGroup && matchedGroup.showtimes?.length > 0) {
+                const matchedSt = (hallId && matchedGroup.showtimes.find((s) => String(s.hall_id) === String(hallId))) || matchedGroup.showtimes[0];
+                fetchedShowtime = matchedSt;
                 activeShowtimeId = fetchedShowtime.showtime_id;
               }
             }
@@ -120,18 +137,39 @@ const SeatLayout = () => {
         }
       }
 
+      const activeBasePrice = selectedSlot?.price || (fetchedShowtime?.base_price ? parseFloat(fetchedShowtime.base_price) : 1500.00);
+
       if (fetchedShowtime) {
-        setShowtime(fetchedShowtime);
+        setShowtime({
+          ...fetchedShowtime,
+          base_price: activeBasePrice,
+          hall: {
+            ...fetchedShowtime.hall,
+            hall_name: hallName || fetchedShowtime.hall?.hall_name || selectedSlot?.hall || "Screen 1 - Dolby Atmos",
+            theater: {
+              ...(fetchedShowtime.hall?.theater || {}),
+              theater_id: theaterId || fetchedShowtime.hall?.theater?.theater_id || 1,
+              name: theaterName || fetchedShowtime.hall?.theater?.name || selectedSlot?.theater || "Scope Cinemas Multiplex - Colombo City Centre"
+            }
+          }
+        });
       } else {
         setShowtime({
           showtime_id: activeShowtimeId,
-          base_price: 1500.00,
-          movie: { title: passedMovie?.title || "Dune: Part Two" },
-          hall: { hall_name: "Screen 1 - Dolby Atmos", theater: { name: "Scope Cinemas - Colombo City Centre" } }
+          base_price: activeBasePrice,
+          movie: { title: passedMovie?.title || "Cinema Movie" },
+          hall: {
+            hall_id: hallId || 1,
+            hall_name: hallName || selectedSlot?.hall || "Screen 1 - Dolby Atmos",
+            theater: {
+              theater_id: theaterId || 1,
+              name: theaterName || selectedSlot?.theater || "Scope Cinemas Multiplex - Colombo City Centre"
+            }
+          }
         });
       }
 
-      // 2. Fetch seats layout for this showtime
+      // 3. Fetch seats layout for this showtime
       const seatsRes = await fetch(`${API_BASE_URL}/showtimes/${activeShowtimeId}/seats`);
       if (seatsRes.ok) {
         const seatsData = await seatsRes.json();
@@ -143,9 +181,16 @@ const SeatLayout = () => {
       console.warn("Backend API unavailable, using fallback Sri Lanka seat matrix.", err);
       setShowtime({
         showtime_id: showtimeId,
-        base_price: 1500.00,
-        movie: { title: passedMovie?.title || "Dune: Part Two" },
-        hall: { hall_name: "Screen 1 - Dolby Atmos", theater: { name: "Scope Cinemas - Colombo City Centre" } }
+        base_price: selectedSlot?.price || 1500.00,
+        movie: { title: passedMovie?.title || "Cinema Movie" },
+        hall: {
+          hall_id: hallId || 1,
+          hall_name: hallName || selectedSlot?.hall || "Screen 1 - Dolby Atmos",
+          theater: {
+            theater_id: theaterId || 1,
+            name: theaterName || selectedSlot?.theater || "Scope Cinemas Multiplex - Colombo City Centre"
+          }
+        }
       });
       setSeats(generateSriLankanSeatMatrix());
     } finally {
@@ -400,6 +445,9 @@ const SeatLayout = () => {
           customer_email: customerEmail,
           customer_name: customerName || cardHolder || "Cinema Fan",
           customer_phone: customerPhone,
+          theater_id: theaterId ? parseInt(theaterId) : (showtime?.hall?.theater?.theater_id || undefined),
+          hall_id: hallId ? parseInt(hallId) : (showtime?.hall?.hall_id || undefined),
+          movie_id: passedMovie?.movie_id || passedMovie?.id || (showtime?.movie?.movie_id || undefined),
         }),
       });
 
@@ -432,6 +480,9 @@ const SeatLayout = () => {
 
       if (paymentRes.ok) {
         const paymentData = await paymentRes.json();
+        const activeTheaterName = theaterName || showtime?.hall?.theater?.name || selectedSlot?.theater || "Scope Cinemas Multiplex";
+        const activeHallName = hallName || showtime?.hall?.hall_name || selectedSlot?.hall || "Screen 1 - Dolby Atmos";
+
         setBookingConfirmation({
           bookingId: bookingData.booking_id,
           txnRef: paymentData.transaction_reference,
@@ -439,6 +490,8 @@ const SeatLayout = () => {
           total: totalCalc,
           email: customerEmail,
           phone: customerPhone,
+          theater: activeTheaterName,
+          hall: activeHallName,
           isSandbox: paymentData.is_sandbox || isSandboxMode,
           paymentMethod: paymentData.payment_method,
         });
@@ -453,7 +506,14 @@ const SeatLayout = () => {
             created_at: new Date().toISOString(),
             showtime: {
               movie: showtime?.movie || passedMovie || { title: "Cinema Movie" },
-              hall: showtime?.hall || { hall_name: selectedSlot?.hall || "Screen 1 - Dolby Atmos", theater: { name: selectedSlot?.theater || "Scope Cinemas Multiplex - Colombo City Centre" } },
+              hall: {
+                hall_id: hallId || showtime?.hall?.hall_id || 1,
+                hall_name: activeHallName,
+                theater: {
+                  theater_id: theaterId || showtime?.hall?.theater?.theater_id || 1,
+                  name: activeTheaterName,
+                }
+              },
               start_time: showtime?.start_time || new Date().toISOString()
             },
             booking_seats: selectedSeatIds.map(id => {
@@ -587,7 +647,7 @@ const SeatLayout = () => {
             {showtime?.movie?.title || passedMovie?.title || "Movie Showtimes"}
           </h1>
           <p className="text-sm sm:text-base text-slate-300 mt-1 font-medium">
-            {showtime?.hall?.theater?.name || selectedSlot?.theater || "Scope Cinemas - Colombo City Centre"} &bull; {showtime?.hall?.hall_name || selectedSlot?.hall || "Screen 1 - Dolby Atmos 4K"}
+            {theaterName || showtime?.hall?.theater?.name || selectedSlot?.theater || "Scope Cinemas Multiplex"} &bull; {hallName || showtime?.hall?.hall_name || selectedSlot?.hall || "Screen 1 - Dolby Atmos 4K"}
           </p>
           <div className="inline-flex flex-wrap items-center justify-center gap-2.5 mt-2.5 px-4 py-1.5 bg-slate-900 border border-rose-500/30 rounded-full text-xs sm:text-sm font-bold text-rose-300 shadow-md">
             <span>📅 {formatHeaderDate(selectedDate)}</span>
@@ -636,6 +696,14 @@ const SeatLayout = () => {
           </p>
 
           <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-left mb-6 space-y-3">
+            <div className="flex justify-between text-sm sm:text-base">
+              <span className="text-slate-400">Cinema Location</span>
+              <span className="font-bold text-white text-right">{bookingConfirmation.theater || theaterName || showtime?.hall?.theater?.name || "Scope Cinemas Multiplex"}</span>
+            </div>
+            <div className="flex justify-between text-sm sm:text-base">
+              <span className="text-slate-400">Auditorium Screen</span>
+              <span className="font-semibold text-rose-300">{bookingConfirmation.hall || hallName || showtime?.hall?.hall_name || "Screen 1 - Dolby Atmos"}</span>
+            </div>
             <div className="flex justify-between text-sm sm:text-base">
               <span className="text-slate-400">Entry Passcode</span>
               <span className="font-mono font-bold text-rose-400">{bookingConfirmation.txnRef}</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, Film, Star, Sparkles, Filter, X } from "lucide-react";
+import { Search, Film, Star, Sparkles, Filter, X, MapPin } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import BlurCircle from "../components/BlurCircle";
 
@@ -10,6 +10,27 @@ const API_BASE_URL = "http://localhost:8000/api";
 const Movies = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialQuery = searchParams.get("search") || "";
+  const theaterIdParam = searchParams.get("theater_id");
+  const theaterNameParam = searchParams.get("theater_name");
+  const hallIdParam = searchParams.get("hall_id");
+  const hallNameParam = searchParams.get("hall_name");
+
+  const buildMovieBookingUrl = (movieId) => {
+    const params = new URLSearchParams();
+    if (theaterIdParam) params.set("theater_id", theaterIdParam);
+    if (theaterNameParam) params.set("theater_name", theaterNameParam);
+    if (hallIdParam) params.set("hall_id", hallIdParam);
+    if (hallNameParam) params.set("hall_name", hallNameParam);
+    const q = params.toString();
+    return `/movies/${movieId}${q ? `?${q}` : ""}`;
+  };
+
+  const bookingNavState = {
+    theaterId: theaterIdParam,
+    theaterName: theaterNameParam,
+    hallId: hallIdParam,
+    hallName: hallNameParam,
+  };
 
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -525,6 +546,41 @@ const Movies = () => {
 
       {/* Movies Grid */}
       <div className="max-w-7xl mx-auto">
+        {/* Selected Cinema Filter Banner */}
+        {theaterNameParam && (
+          <div className="mb-8 p-4 sm:p-5 bg-gradient-to-r from-rose-950/40 via-slate-900 to-slate-900 border border-rose-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+            <div className="flex items-center gap-3.5">
+              <div className="p-2.5 bg-rose-600 text-white rounded-xl shadow-lg shadow-rose-600/30 shrink-0">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-rose-400 uppercase tracking-wider block">
+                  Selected Cinema Location
+                </span>
+                <h3 className="text-lg sm:text-xl font-black text-white">
+                  {theaterNameParam} {hallNameParam ? `• ${hallNameParam}` : ""}
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Movie tickets will be scheduled for this specific theater.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                const nextParams = new URLSearchParams(searchParams);
+                nextParams.delete("theater_id");
+                nextParams.delete("theater_name");
+                nextParams.delete("hall_id");
+                nextParams.delete("hall_name");
+                setSearchParams(nextParams);
+              }}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-colors self-start sm:self-auto cursor-pointer"
+            >
+              <X className="w-4 h-4" /> Clear Cinema Filter
+            </button>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center items-center py-20">
             <div className="w-10 h-10 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
@@ -625,7 +681,8 @@ const Movies = () => {
                           {movie.duration_min} mins
                         </div>
                         <Link
-                          to={`/movies/${movie.movie_id}`}
+                          to={buildMovieBookingUrl(movie.movie_id)}
+                          state={bookingNavState}
                           className="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-sm sm:text-base rounded-xl shadow-md shadow-rose-600/20 transition-all hover:scale-105"
                         >
                           Book Tickets &rarr;
@@ -687,7 +744,8 @@ const Movies = () => {
                       {movie.duration_min} mins
                     </div>
                     <Link
-                      to={`/movies/${movie.movie_id}`}
+                      to={buildMovieBookingUrl(movie.movie_id)}
+                      state={bookingNavState}
                       className="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-sm sm:text-base rounded-xl shadow-md shadow-rose-600/20 transition-all hover:scale-105"
                     >
                       Book Tickets &rarr;

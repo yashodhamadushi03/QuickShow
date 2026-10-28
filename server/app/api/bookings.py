@@ -73,22 +73,96 @@ def create_booking(
             db.add(user_obj)
             db.flush()
 
-    # 2. Verify showtime exists (or fallback to latest active showtime)
+    # 2. Verify showtime exists and belongs correctly to the selected theater and hall
+    from app.models.theater import Hall, Theater
+    from app.models.movie import Movie
+    from datetime import datetime, timezone
+
     st = db.query(Showtime).filter(Showtime.showtime_id == booking_in.showtime_id).first()
+
+    # If hall_id is specified in booking request, verify alignment
+    if booking_in.hall_id:
+        if st and st.hall_id != booking_in.hall_id:
+            target_movie_id = booking_in.movie_id or st.movie_id
+            matching_st = db.query(Showtime).filter(
+                Showtime.hall_id == booking_in.hall_id,
+                Showtime.movie_id == target_movie_id
+            ).first()
+            if matching_st:
+                st = matching_st
+            else:
+                hl = db.query(Hall).filter(Hall.hall_id == booking_in.hall_id).first()
+                if hl:
+                    st = Showtime(
+                        movie_id=target_movie_id,
+                        hall_id=hl.hall_id,
+                        start_time=st.start_time if st else datetime.now(timezone.utc),
+                        end_time=st.end_time if st else datetime.now(timezone.utc),
+                        base_price=st.base_price if st else Decimal("1500.00")
+                    )
+                    db.add(st)
+                    db.flush()
+
+    # If theater_id is specified in booking request, verify theater alignment
+    if booking_in.theater_id and st:
+        current_theater_id = st.hall.theater_id if st.hall else None
+        if current_theater_id != booking_in.theater_id:
+            target_movie_id = booking_in.movie_id or st.movie_id
+            theater_st = (
+                db.query(Showtime)
+                .join(Hall, Showtime.hall_id == Hall.hall_id)
+                .filter(
+                    Hall.theater_id == booking_in.theater_id,
+                    Showtime.movie_id == target_movie_id
+                )
+                .first()
+            )
+            if theater_st:
+                st = theater_st
+            else:
+                hl = db.query(Hall).filter(Hall.theater_id == booking_in.theater_id).first()
+                if hl:
+                    st = Showtime(
+                        movie_id=target_movie_id,
+                        hall_id=hl.hall_id,
+                        start_time=st.start_time if st else datetime.now(timezone.utc),
+                        end_time=st.end_time if st else datetime.now(timezone.utc),
+                        base_price=st.base_price if st else Decimal("1500.00")
+                    )
+                    db.add(st)
+                    db.flush()
+
+    # If showtime was not found by ID, look up by theater / hall / movie
+    if not st:
+        query = db.query(Showtime).join(Hall, Showtime.hall_id == Hall.hall_id)
+        if booking_in.theater_id:
+            query = query.filter(Hall.theater_id == booking_in.theater_id)
+        if booking_in.hall_id:
+            query = query.filter(Showtime.hall_id == booking_in.hall_id)
+        if booking_in.movie_id:
+            query = query.filter(Showtime.movie_id == booking_in.movie_id)
+        st = query.first()
+
+    # Fallback to active showtimes
     if not st:
         st = db.query(Showtime).order_by(Showtime.showtime_id.desc()).first() or db.query(Showtime).first()
     
     if not st:
-        from app.models.movie import Movie
-        from app.models.theater import Hall
         mv = db.query(Movie).first()
         hl = db.query(Hall).first()
         if mv and hl:
-            st = Showtime(movie_id=mv.movie_id, hall_id=hl.hall_id, base_price=Decimal("1500.00"))
+            st = Showtime(
+                movie_id=mv.movie_id,
+                hall_id=hl.hall_id,
+                start_time=datetime.now(timezone.utc),
+                end_time=datetime.now(timezone.utc),
+                base_price=Decimal("1500.00")
+            )
             db.add(st)
             db.flush()
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No active showtimes available.")
+
 
     # 3. Retrieve or generate physical seats for st.hall_id
     hall_seats = (

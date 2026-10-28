@@ -11,16 +11,39 @@ const Favourite = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const refreshFavourites = () => {
-      setFavourites(getFavourites());
+    const refreshFavourites = async () => {
+      const local = getFavourites();
+      setFavourites(local);
+      try {
+        const token = localStorage.getItem("token") || "";
+        const email = localStorage.getItem("customer_email") || localStorage.getItem("user_email") || "";
+        const url = email ? `/api/favourites?email=${encodeURIComponent(email)}` : "/api/favourites";
+        const res = await fetch(url, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (res.ok) {
+          const dbFavs = await res.json();
+          if (Array.isArray(dbFavs) && dbFavs.length > 0) {
+            const currentIds = new Set(local.map((m) => String(m.id || m.movie_id || m._id)));
+            const missing = dbFavs.filter((m) => !currentIds.has(String(m.movie_id || m.id)));
+            if (missing.length > 0) {
+              const merged = [...local, ...missing];
+              setFavourites(merged);
+              localStorage.setItem("quickshow_favourites", JSON.stringify(merged));
+            }
+          }
+        }
+      } catch (err) {
+        console.debug("Favourites backend sync note:", err);
+      }
     };
 
     refreshFavourites();
-    window.addEventListener("favouritesUpdated", refreshFavourites);
-    window.addEventListener("storage", refreshFavourites);
+    window.addEventListener("favouritesUpdated", () => setFavourites(getFavourites()));
+    window.addEventListener("storage", () => setFavourites(getFavourites()));
     return () => {
-      window.removeEventListener("favouritesUpdated", refreshFavourites);
-      window.removeEventListener("storage", refreshFavourites);
+      window.removeEventListener("favouritesUpdated", () => setFavourites(getFavourites()));
+      window.removeEventListener("storage", () => setFavourites(getFavourites()));
     };
   }, []);
 
