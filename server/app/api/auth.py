@@ -138,6 +138,26 @@ def sync_user(user_sync: UserSync, db: Session = Depends(get_db)):
 
     db.commit()
     db.refresh(user)
+
+    # Automatically synchronize with profiles table
+    from app.models.profile import Profile
+    from app.core.timezone import get_local_now
+    prof = db.query(Profile).filter(Profile.user_id == user.user_id).first()
+    if not prof:
+        prof = Profile(
+            user_id=user.user_id,
+            phone_number=user.phone,
+            bio="Cinema lover & QuickShow member",
+            city="Colombo",
+            updated_at=get_local_now()
+        )
+        db.add(prof)
+    else:
+        if user.phone:
+            prof.phone_number = user.phone
+        prof.updated_at = get_local_now()
+    db.commit()
+
     return user
 
 
@@ -150,6 +170,7 @@ def update_profile(
 ):
     """
     Update profile details (name, phone) for authenticated user or specified email.
+    Saves to both `users` and `profiles` tables.
     """
     target_user = None
     if email and email.strip():
@@ -166,6 +187,24 @@ def update_profile(
         target_user.name = user_update.name.strip()
     if user_update.phone and user_update.phone.strip():
         target_user.phone = user_update.phone.strip()
+
+    # Synchronize Profile table
+    from app.models.profile import Profile
+    from app.core.timezone import get_local_now
+    prof = db.query(Profile).filter(Profile.user_id == target_user.user_id).first()
+    if not prof:
+        prof = Profile(
+            user_id=target_user.user_id,
+            phone_number=target_user.phone,
+            bio="Cinema lover & QuickShow member",
+            city="Colombo",
+            updated_at=get_local_now()
+        )
+        db.add(prof)
+    else:
+        if target_user.phone:
+            prof.phone_number = target_user.phone
+        prof.updated_at = get_local_now()
 
     db.commit()
     db.refresh(target_user)

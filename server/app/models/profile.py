@@ -10,6 +10,7 @@ class Profile(Base):
 
     profile_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    phone_number = Column(String(25), nullable=True)
     avatar_url = Column(String(500), nullable=True)
     bio = Column(Text, nullable=True)
     city = Column(String(100), nullable=True)

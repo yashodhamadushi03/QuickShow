@@ -3,11 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { Search, Menu, X, TicketPlus, Clock, Film, ShieldCheck, User } from "lucide-react";
 import { useClerk, UserButton, useUser } from "@clerk/clerk-react";
 import AuthModal from "./AuthModal";
+import ProfileModal from "./ProfileModal";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -138,15 +140,30 @@ const Navbar = () => {
             <User className="w-4 h-4" /> Sign In / Admin
           </button>
         ) : (
-          <UserButton>
-            <UserButton.MenuItems>
-              <UserButton.Action
-                label="My Bookings"
-                labelIcon={<TicketPlus width={15} />}
-                onClick={() => navigate("/my-bookings")}
-              />
-            </UserButton.MenuItems>
-          </UserButton>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
+              title="Edit Profile & Phone"
+            >
+              <User className="w-3.5 h-3.5 text-rose-500" />
+              <span>Profile</span>
+            </button>
+            <UserButton>
+              <UserButton.MenuItems>
+                <UserButton.Action
+                  label="My Profile Details"
+                  labelIcon={<User width={15} />}
+                  onClick={() => setShowProfileModal(true)}
+                />
+                <UserButton.Action
+                  label="My Bookings"
+                  labelIcon={<TicketPlus width={15} />}
+                  onClick={() => navigate("/my-bookings")}
+                />
+              </UserButton.MenuItems>
+            </UserButton>
+          </div>
         )}
 
         <Menu
@@ -157,6 +174,9 @@ const Navbar = () => {
 
       {/* DUAL ROLE AUTHENTICATION MODAL */}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+
+      {/* USER PROFILE & CONTACT DETAILS MODAL */}
+      <ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
 
       {/* Interactive Search Overlay Modal */}
       {showSearchModal && (

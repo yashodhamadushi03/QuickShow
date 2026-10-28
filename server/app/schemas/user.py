@@ -45,3 +45,32 @@ class UserUpdate(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[EmailStr] = None
+
+
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    phone_number: Optional[str] = None
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+    city: Optional[str] = None
+    preferred_theater_id: Optional[int] = None
+
+
+class ProfileOut(BaseModel):
+    user_id: int
+    name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    phone_number: Optional[str] = None
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+    city: Optional[str] = None
+    preferred_theater_id: Optional[int] = None
+    role: UserRole
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+

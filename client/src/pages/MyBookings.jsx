@@ -10,11 +10,13 @@ import {
   FlaskConical,
   Sparkles,
   ArrowRight,
-  Film
+  Film,
+  User
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import { FALLBACK_POSTER } from "../assets/assets";
+import ProfileModal from "../components/ProfileModal";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
@@ -22,6 +24,7 @@ const MyBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const { user: clerkUser } = useUser();
 
   const fetchMyBookings = async (showLoader = true) => {
@@ -130,15 +133,25 @@ const MyBookings = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => fetchMyBookings(false)}
-          disabled={isRefreshing}
-          className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-xl text-sm font-semibold transition-all cursor-pointer"
-          title="Refresh digital tickets"
-        >
-          <RefreshCw className={`w-4 h-4 text-rose-500 ${isRefreshing ? "animate-spin" : ""}`} />
-          <span>Refresh</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => setShowProfileModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-xl text-sm font-semibold transition-all cursor-pointer"
+            title="Edit personal profile and contact details"
+          >
+            <User className="w-4 h-4 text-rose-500" />
+            <span>Profile Details</span>
+          </button>
+          <button
+            onClick={() => fetchMyBookings(false)}
+            disabled={isRefreshing}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-xl text-sm font-semibold transition-all cursor-pointer"
+            title="Refresh digital tickets"
+          >
+            <RefreshCw className={`w-4 h-4 text-rose-500 ${isRefreshing ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       <div className="max-w-5xl mx-auto">
@@ -325,6 +338,8 @@ const MyBookings = () => {
           </div>
         )}
       </div>
+      {/* Profile Details Modal */}
+      <ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
     </div>
   );
 };

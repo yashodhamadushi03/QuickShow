@@ -43,7 +43,10 @@ const App = () => {
       user.username ||
       'Customer';
     const phone =
-      user.primaryPhoneNumber?.phoneNumber || user.phoneNumbers?.[0]?.phoneNumber || null;
+      user.primaryPhoneNumber?.phoneNumber ||
+      user.phoneNumbers?.[0]?.phoneNumber ||
+      localStorage.getItem("customer_phone") ||
+      null;
 
     const syncKey = `synced_${user.id}_${user.updatedAt ? new Date(user.updatedAt).getTime() : ''}`;
     if (sessionStorage.getItem(syncKey)) return;
