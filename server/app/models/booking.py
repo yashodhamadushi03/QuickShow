@@ -19,6 +19,9 @@ class Booking(Base):
     showtime_id = Column(Integer, ForeignKey("showtimes.showtime_id", ondelete="CASCADE"), nullable=False)
     total_amount = Column(Numeric(10, 2), nullable=False)
     status = Column(Enum(BookingStatus, values_callable=lambda obj: [e.value for e in obj]), default=BookingStatus.PENDING, nullable=False)
+    customer_name = Column(String(100), nullable=True)
+    customer_email = Column(String(150), nullable=True)
+    customer_phone = Column(String(20), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
@@ -26,6 +29,7 @@ class Booking(Base):
     showtime = relationship("Showtime", back_populates="bookings")
     booking_seats = relationship("BookingSeat", back_populates="booking", cascade="all, delete-orphan")
     payment = relationship("Payment", back_populates="booking", uselist=False, cascade="all, delete-orphan")
+    fb_orders = relationship("FBOrder", back_populates="booking", cascade="all, delete-orphan")
 
 
 class BookingSeat(Base):

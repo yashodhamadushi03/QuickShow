@@ -24,3 +24,5 @@ class User(Base):
 
     # Relationships
     bookings = relationship("Booking", back_populates="user", cascade="all, delete-orphan")
+    fb_orders = relationship("FBOrder", back_populates="user", cascade="all, delete-orphan")
+

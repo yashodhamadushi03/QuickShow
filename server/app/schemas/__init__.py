@@ -6,6 +6,7 @@ from app.schemas.theater import (
 from app.schemas.showtime import ShowtimeCreate, ShowtimeOut, ShowtimeGroupedByTheater
 from app.schemas.booking import BookingCreate, BookingOut, BookingSeatOut
 from app.schemas.payment import PaymentCreate, PaymentOut
+from app.schemas.fb_order import FBOrderCreate, FBOrderOut
 
 __all__ = [
     "UserCreate",
@@ -30,4 +31,7 @@ __all__ = [
     "BookingSeatOut",
     "PaymentCreate",
     "PaymentOut",
+    "FBOrderCreate",
+    "FBOrderOut",
 ]
+

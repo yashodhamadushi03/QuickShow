@@ -15,9 +15,34 @@ CREATE INDEX IF NOT EXISTS idx_bookings_user_created ON bookings(user_id, create
 CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
 CREATE INDEX IF NOT EXISTS idx_payments_booking ON payments(booking_id);
 
+-- Add guest contact columns to bookings if not present
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS customer_name VARCHAR(100) NULL AFTER status;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS customer_email VARCHAR(150) NULL AFTER customer_name;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(20) NULL AFTER customer_email;
+
 -- Composite Unique Constraint to prevent double-booking race conditions
 ALTER TABLE booking_seats 
 ADD CONSTRAINT uq_showtime_seat UNIQUE (showtime_id, seat_id);
+
+-- Create Food & Beverage (F&B) Orders Table
+CREATE TABLE IF NOT EXISTS f_b_orders (
+    order_id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NULL,
+    user_id INT NOT NULL,
+    item_name VARCHAR(100) NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    unit_price DECIMAL(10, 2) NOT NULL,
+    total_price DECIMAL(10, 2) NOT NULL,
+    status ENUM('Pending', 'Confirmed', 'Delivered', 'Cancelled') NOT NULL DEFAULT 'Confirmed',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_fb_orders_booking FOREIGN KEY (booking_id) 
+        REFERENCES bookings (booking_id) ON DELETE CASCADE,
+    CONSTRAINT fk_fb_orders_user FOREIGN KEY (user_id) 
+        REFERENCES users (user_id) ON DELETE CASCADE,
+    INDEX idx_fb_orders_booking (booking_id),
+    INDEX idx_fb_orders_user (user_id),
+    INDEX idx_fb_orders_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 3. Seed / Verify Default Cinema Administrator & Theater Manager Accounts
 -- Password hash for 'admin123' generated with bcrypt

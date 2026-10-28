@@ -104,6 +104,9 @@ CREATE TABLE IF NOT EXISTS bookings (
     showtime_id INT NOT NULL,
     total_amount DECIMAL(10, 2) NOT NULL,
     status ENUM('Pending', 'Confirmed', 'Cancelled') NOT NULL DEFAULT 'Pending',
+    customer_name VARCHAR(100) NULL,
+    customer_email VARCHAR(150) NULL,
+    customer_phone VARCHAR(20) NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_bookings_user FOREIGN KEY (user_id) 
         REFERENCES users (user_id) ON DELETE CASCADE,
@@ -141,6 +144,26 @@ CREATE TABLE IF NOT EXISTS payments (
     CONSTRAINT fk_payments_booking FOREIGN KEY (booking_id) 
         REFERENCES bookings (booking_id) ON DELETE CASCADE,
     INDEX idx_payments_booking (booking_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. Food & Beverage (F&B) Orders Table
+CREATE TABLE IF NOT EXISTS f_b_orders (
+    order_id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NULL,
+    user_id INT NOT NULL,
+    item_name VARCHAR(100) NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    unit_price DECIMAL(10, 2) NOT NULL,
+    total_price DECIMAL(10, 2) NOT NULL,
+    status ENUM('Pending', 'Confirmed', 'Delivered', 'Cancelled') NOT NULL DEFAULT 'Confirmed',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_fb_orders_booking FOREIGN KEY (booking_id) 
+        REFERENCES bookings (booking_id) ON DELETE CASCADE,
+    CONSTRAINT fk_fb_orders_user FOREIGN KEY (user_id) 
+        REFERENCES users (user_id) ON DELETE CASCADE,
+    INDEX idx_fb_orders_booking (booking_id),
+    INDEX idx_fb_orders_user (user_id),
+    INDEX idx_fb_orders_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
