@@ -151,14 +151,21 @@ def sync_user(user_sync: UserSync, db: Session = Depends(get_db)):
             city="Colombo",
             updated_at=get_local_now()
         )
-        db.add(prof)
     else:
         if user.phone:
             prof.phone_number = user.phone
         prof.updated_at = get_local_now()
     db.commit()
 
+    has_phone = bool(
+        (user.phone and user.phone.strip() and user.phone.strip() != "Not Provided") or
+        (prof.phone_number and prof.phone_number.strip() and prof.phone_number.strip() != "Not Provided")
+    )
+    user.is_profile_completed = has_phone
+
     return user
+
+
 
 
 @router.put("/profile", response_model=UserOut)

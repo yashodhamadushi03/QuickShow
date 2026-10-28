@@ -26,12 +26,13 @@ const SignInPage = () => {
   const bookingDate = location.state?.selectedDate;
   const bookingSlot = location.state?.selectedSlot;
 
-  // If already signed in as customer and NOT on admin tab, redirect back immediately
+  // If already signed in as customer and NOT on admin tab, redirect to profile completion / onboarding check
   useEffect(() => {
     if (isLoaded && isSignedIn && activeTab === "customer") {
-      navigate(returnUrl, { replace: true, state: location.state });
+      navigate("/complete-profile", { replace: true, state: location.state });
     }
-  }, [isLoaded, isSignedIn, activeTab, returnUrl, navigate, location.state]);
+  }, [isLoaded, isSignedIn, activeTab, navigate, location.state]);
+
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
@@ -170,8 +171,9 @@ const SignInPage = () => {
               routing="path"
               path="/sign-in"
               signUpUrl="/sign-up"
-              fallbackRedirectUrl={returnUrl}
-              forceRedirectUrl={returnUrl}
+              fallbackRedirectUrl="/complete-profile"
+              forceRedirectUrl="/complete-profile"
+
               appearance={{
                 elements: {
                   rootBox: "w-full",

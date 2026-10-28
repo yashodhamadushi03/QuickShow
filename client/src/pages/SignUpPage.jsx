@@ -40,8 +40,9 @@ const SignUpPage = () => {
           routing="path"
           path="/sign-up"
           signInUrl="/sign-in"
-          fallbackRedirectUrl={returnUrl}
-          forceRedirectUrl={returnUrl}
+          fallbackRedirectUrl="/complete-profile"
+          forceRedirectUrl="/complete-profile"
+
           appearance={{
             elements: {
               rootBox: "w-full",

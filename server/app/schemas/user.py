@@ -24,6 +24,7 @@ class UserOut(BaseModel):
     phone: Optional[str] = None
     role: UserRole
     created_at: datetime
+    is_profile_completed: Optional[bool] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -68,9 +69,11 @@ class ProfileOut(BaseModel):
     avatar_url: Optional[str] = None
     city: Optional[str] = None
     preferred_theater_id: Optional[int] = None
+    is_profile_completed: bool = False
     role: UserRole
     created_at: datetime
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
 

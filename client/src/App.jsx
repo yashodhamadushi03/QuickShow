@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 
 import Home from './pages/Home';
@@ -14,23 +14,28 @@ import Releases from './pages/Releases';
 import AdminDashboard from './pages/AdminDashboard';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
+import CompleteProfilePage from './pages/CompleteProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
 import Chatbot from './components/Chatbot';
 
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import Footer from './components/Footer';
 
 const App = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, isLoaded, isSignedIn } = useUser();
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isAuthRoute =
     location.pathname.startsWith('/sign-in') ||
     location.pathname.startsWith('/login') ||
     location.pathname.startsWith('/sign-up');
+  const isOnboardingRoute =
+    location.pathname.startsWith('/complete-profile') ||
+    location.pathname.startsWith('/onboarding');
 
-  // Automatically synchronize user profile into MySQL database whenever registered or signed in
+  // Automatically synchronize user profile and check onboarding status in MySQL database
   useEffect(() => {
     if (!isLoaded || !isSignedIn || !user) return;
 
@@ -49,31 +54,61 @@ const App = () => {
       null;
 
     const syncKey = `synced_${user.id}_${user.updatedAt ? new Date(user.updatedAt).getTime() : ''}`;
-    if (sessionStorage.getItem(syncKey)) return;
+    if (!sessionStorage.getItem(syncKey)) {
+      fetch('http://localhost:8000/api/auth/sync-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          name,
+          phone,
+        }),
+      })
+        .then((res) => {
+          if (res.ok) {
+            sessionStorage.setItem(syncKey, 'true');
+          }
+        })
+        .catch((err) => console.warn('User profile sync to MySQL:', err));
+    }
 
-    fetch('http://localhost:8000/api/auth/sync-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email,
-        name,
-        phone,
-      }),
-    })
-      .then((res) => {
-        if (res.ok) {
-          sessionStorage.setItem(syncKey, 'true');
+    // Onboarding Check: Ensure user has completed essential profile details (phone number) in MySQL
+    if (isAdminRoute || isAuthRoute || isOnboardingRoute) return;
+
+    const completedKey = `profile_completed_${user.id}`;
+    if (sessionStorage.getItem(completedKey) === 'true') return;
+
+    fetch(`http://localhost:8000/api/users/status?email=${encodeURIComponent(email)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          if (data.is_completed) {
+            sessionStorage.setItem(completedKey, 'true');
+            if (data.phone) {
+              localStorage.setItem('customer_phone', data.phone);
+            }
+          } else if (data.needs_onboarding) {
+            // First-time login or incomplete profile -> redirect to sleek profile completion page
+            navigate('/complete-profile', {
+              replace: true,
+              state: { returnUrl: location.pathname },
+            });
+            toast('Please complete your profile details to continue.', {
+              icon: '👋',
+              id: 'onboarding-notice',
+            });
+          }
         }
       })
-      .catch((err) => console.warn('User profile sync to MySQL:', err));
-  }, [isLoaded, isSignedIn, user?.id, user?.updatedAt]);
-
+      .catch((err) => console.debug('Onboarding check error:', err));
+  }, [isLoaded, isSignedIn, user?.id, user?.updatedAt, location.pathname, isAdminRoute, isAuthRoute, isOnboardingRoute, navigate]);
 
   return (
     <>
       <Toaster position="top-right" />
 
-      {!isAdminRoute && !isAuthRoute && <Navbar />}
+      {!isAdminRoute && !isAuthRoute && !isOnboardingRoute && <Navbar />}
+
 
       <Routes>
         {/* Public Browsing Routes */}
@@ -87,6 +122,11 @@ const App = () => {
         <Route path='/sign-in' element={<SignInPage />} />
         <Route path='/login' element={<SignInPage />} />
         <Route path='/sign-up' element={<SignUpPage />} />
+
+        {/* Member Onboarding & Profile Setup Routes */}
+        <Route path='/complete-profile' element={<CompleteProfilePage />} />
+        <Route path='/onboarding' element={<CompleteProfilePage />} />
+
 
         {/* Protected Customer Routes - Seat Booking & Ticket Checkout */}
         <Route
@@ -168,11 +208,12 @@ const App = () => {
       </Routes>
 
       {/* Floating AI Cinema Assistant Chatbox */}
-      {!isAdminRoute && !isAuthRoute && <Chatbot />}
+      {!isAdminRoute && !isAuthRoute && !isOnboardingRoute && <Chatbot />}
 
-      {!isAdminRoute && !isAuthRoute && <Footer />}
+      {!isAdminRoute && !isAuthRoute && !isOnboardingRoute && <Footer />}
     </>
   );
+
 };
 
 export default App;

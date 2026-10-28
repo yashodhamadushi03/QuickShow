@@ -125,12 +125,16 @@ const AuthModal = ({ isOpen, onClose }) => {
             <button
               onClick={() => {
                 onClose();
-                openSignIn();
+                openSignIn({
+                  fallbackRedirectUrl: "/complete-profile",
+                  forceRedirectUrl: "/complete-profile",
+                });
               }}
               className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               Proceed to Customer Sign In <ArrowRight className="w-4 h-4" />
             </button>
+
           </div>
         )}
 
