@@ -23,6 +23,7 @@ import {
   Sparkles
 } from "lucide-react";
 import toast from "react-hot-toast";
+import MovieManagement from "../components/MovieManagement";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
@@ -142,7 +143,7 @@ const AdminDashboard = () => {
           fetch(`${API_BASE_URL}/admin/occupancy-heatmap`, { headers }).catch(() => ({ ok: false })),
           fetch(`${API_BASE_URL}/admin/waitlist-monitor`, { headers }).catch(() => ({ ok: false })),
           fetch(`${API_BASE_URL}/admin/showtimes`, { headers }).catch(() => ({ ok: false })),
-          fetch(`${API_BASE_URL}/movies`).catch(() => ({ ok: false })),
+          fetch(`${API_BASE_URL}/admin/movies`, { headers }).catch(() => fetch(`${API_BASE_URL}/movies`)),
           fetch(`${API_BASE_URL}/theaters`).catch(() => ({ ok: false })),
         ]);
 
@@ -419,8 +420,18 @@ const AdminDashboard = () => {
       {/* Control Navigation Tabs */}
       <div className="max-w-7xl mx-auto mb-6 flex flex-wrap items-center gap-2 border-b border-slate-800 pb-4">
         <button
+          onClick={() => setActiveTab("movies")}
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === "movies"
+              ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
+              : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+          }`}
+        >
+          <Film className="w-4 h-4" /> Movie Management ({adminMovies.length})
+        </button>
+        <button
           onClick={() => setActiveTab("analytics")}
-          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === "analytics"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
@@ -430,7 +441,7 @@ const AdminDashboard = () => {
         </button>
         <button
           onClick={() => setActiveTab("bookings")}
-          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === "bookings"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
@@ -440,7 +451,7 @@ const AdminDashboard = () => {
         </button>
         <button
           onClick={() => setActiveTab("customers")}
-          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === "customers"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
@@ -450,7 +461,7 @@ const AdminDashboard = () => {
         </button>
         <button
           onClick={() => setActiveTab("occupancy")}
-          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === "occupancy"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
@@ -460,7 +471,7 @@ const AdminDashboard = () => {
         </button>
         <button
           onClick={() => setActiveTab("showtimes")}
-          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === "showtimes"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
@@ -472,6 +483,20 @@ const AdminDashboard = () => {
 
       {/* TAB CONTENT BODY */}
       <div className="max-w-7xl mx-auto">
+        {/* TAB 0: MOVIE MANAGEMENT (CRUD) */}
+        {activeTab === "movies" && (
+          <MovieManagement
+            adminToken={adminToken}
+            apiBaseUrl={API_BASE_URL}
+            onMoviesUpdated={(updatedMovies) => {
+              setAdminMovies(updatedMovies);
+              if (updatedMovies.length > 0 && !newMovieId) {
+                setNewMovieId(updatedMovies[0].movie_id);
+              }
+            }}
+          />
+        )}
+
         {/* TAB 1: ANALYTICS & BRANCH HEATMAPS */}
         {activeTab === "analytics" && (
           <div className="space-y-6">

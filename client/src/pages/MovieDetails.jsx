@@ -6,7 +6,8 @@ import BlurCircle from '../components/BlurCircle';
 import timeFormat  from "../lib/timeFormat";
 import { Heart, PlayCircle } from 'lucide-react';
 import DateSelect from '../components/DateSelect';
-import MovieCard from '../components/MovieCard'
+import MovieCard from '../components/MovieCard';
+import toast from 'react-hot-toast';
 
 const MovieDetails = () => {
   const navigate = useNavigate();

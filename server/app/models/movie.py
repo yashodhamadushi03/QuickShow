@@ -27,3 +27,20 @@ class Movie(Base):
 
     # Relationships
     showtimes = relationship("Showtime", back_populates="movie", cascade="all, delete-orphan")
+
+    @property
+    def synopsis(self):
+        return self.description
+
+    @synopsis.setter
+    def synopsis(self, value):
+        self.description = value
+
+    @property
+    def duration(self):
+        return self.duration_min
+
+    @duration.setter
+    def duration(self, value):
+        self.duration_min = value
+

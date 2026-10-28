@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy import or_
+from typing import List, Optional
 from app.core.database import get_db
 from app.models.user import User
-from app.models.movie import Movie
+from app.models.movie import Movie, MovieStatus
 from app.models.theater import Theater, Hall, Seat
 from app.models.showtime import Showtime
 from app.schemas.movie import MovieCreate, MovieUpdate, MovieOut
@@ -14,7 +15,82 @@ from app.api.deps import get_current_admin
 router = APIRouter(prefix="/admin", tags=["Admin Operations"])
 
 
-# --- Movies Management ---
+# --- Movies Management (CRUD) ---
+
+@router.get("/movies", response_model=List[MovieOut])
+def get_admin_movies(
+    search: Optional[str] = Query(None, description="Search by title, genre, language, or synopsis/description"),
+    genre: Optional[str] = Query(None, description="Filter by genre"),
+    language: Optional[str] = Query(None, description="Filter by language"),
+    status: Optional[MovieStatus] = Query(None, description="Filter by status (Now Showing or Coming Soon)"),
+    sort_by: Optional[str] = Query("release_date", description="Field to sort by: release_date, title, duration_min, created_at, movie_id"),
+    sort_order: Optional[str] = Query("desc", description="Sort order: asc or desc"),
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Admin: List all movies with search, filter, and sort capabilities.
+    """
+    # Normalize query params when invoked directly in Python tests or via FastAPI
+    search = search if isinstance(search, str) else None
+    genre = genre if isinstance(genre, str) else None
+    language = language if isinstance(language, str) else None
+    status = status if isinstance(status, (MovieStatus, str)) else None
+    sort_by = sort_by if isinstance(sort_by, str) else "release_date"
+    sort_order = sort_order if isinstance(sort_order, str) else "desc"
+
+    query = db.query(Movie)
+
+    # Search filter
+    if search and search.strip():
+        search_term = f"%{search.strip()}%"
+        query = query.filter(
+            or_(
+                Movie.title.ilike(search_term),
+                Movie.genre.ilike(search_term),
+                Movie.language.ilike(search_term),
+                Movie.description.ilike(search_term),
+            )
+        )
+
+    # Genre filter
+    if genre and genre.strip() and genre.lower() != "all":
+        query = query.filter(Movie.genre.ilike(f"%{genre.strip()}%"))
+
+    # Language filter
+    if language and language.strip() and language.lower() != "all":
+        query = query.filter(Movie.language.ilike(f"%{language.strip()}%"))
+
+    # Status filter
+    if status:
+        query = query.filter(Movie.status == status)
+
+    # Sorting
+    sort_col_map = {
+        "title": Movie.title,
+        "release_date": Movie.release_date,
+        "duration": Movie.duration_min,
+        "duration_min": Movie.duration_min,
+        "created_at": Movie.created_at,
+        "movie_id": Movie.movie_id,
+        "status": Movie.status,
+    }
+
+    sort_col = sort_col_map.get((sort_by or "release_date").lower(), Movie.release_date)
+
+    if sort_order and sort_order.lower() == "asc":
+        query = query.order_by(sort_col.asc())
+    else:
+        query = query.order_by(sort_col.desc())
+
+    movies = query.all()
+
+    # Populate showtimes_count
+    for m in movies:
+        m.showtimes_count = len(m.showtimes) if m.showtimes else 0
+
+    return movies
+
 
 @router.post("/movies", response_model=MovieOut, status_code=status.HTTP_201_CREATED)
 def create_movie(
@@ -22,11 +98,16 @@ def create_movie(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Admin: Add a new movie (Now Showing or Coming Soon)."""
-    movie = Movie(**movie_in.model_dump())
+    """Admin: Add a new movie record with title, genre, synopsis, release date, duration, language, and poster URL."""
+    movie_dict = movie_in.model_dump(exclude={"showtimes_count"})
+    valid_cols = {c.name for c in Movie.__table__.columns}
+    insert_data = {k: v for k, v in movie_dict.items() if k in valid_cols}
+
+    movie = Movie(**insert_data)
     db.add(movie)
     db.commit()
     db.refresh(movie)
+    movie.showtimes_count = 0
     return movie
 
 
@@ -37,34 +118,76 @@ def update_movie(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Admin: Update an existing movie's details or status."""
+    """Admin: Edit and update existing movie details."""
     movie = db.query(Movie).filter(Movie.movie_id == movie_id).first()
     if not movie:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Movie with ID {movie_id} not found")
+
     update_data = movie_in.model_dump(exclude_unset=True)
+    valid_cols = {c.name for c in Movie.__table__.columns}
     for field, val in update_data.items():
-        setattr(movie, field, val)
-    
+        if field in valid_cols:
+            setattr(movie, field, val)
+
     db.commit()
     db.refresh(movie)
+    movie.showtimes_count = len(movie.showtimes) if movie.showtimes else 0
     return movie
 
 
-@router.delete("/movies/{movie_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/movies/{movie_id}", status_code=status.HTTP_200_OK)
 def delete_movie(
     movie_id: int,
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Admin: Delete a movie."""
+    """Admin: Safely remove a movie record from the database (handling foreign key constraints with showtimes/bookings)."""
+    from app.models.booking import Booking, BookingSeat
+    from app.models.payment import Payment
+
     movie = db.query(Movie).filter(Movie.movie_id == movie_id).first()
     if not movie:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
-    
-    db.delete(movie)
-    db.commit()
-    return None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Movie with ID {movie_id} not found")
+
+    movie_title = movie.title
+    try:
+        # Step 1: Find all showtimes for this movie
+        showtimes = db.query(Showtime).filter(Showtime.movie_id == movie_id).all()
+        showtime_ids = [s.showtime_id for s in showtimes]
+
+        if showtime_ids:
+            # Step 2: Find all bookings for these showtimes
+            bookings = db.query(Booking).filter(Booking.showtime_id.in_(showtime_ids)).all()
+            booking_ids = [b.booking_id for b in bookings]
+
+            if booking_ids:
+                # Step 3: Remove payments associated with these bookings
+                db.query(Payment).filter(Payment.booking_id.in_(booking_ids)).delete(synchronize_session=False)
+                # Step 4: Remove reserved booking seats
+                db.query(BookingSeat).filter(BookingSeat.booking_id.in_(booking_ids)).delete(synchronize_session=False)
+                # Step 5: Remove bookings
+                db.query(Booking).filter(Booking.booking_id.in_(booking_ids)).delete(synchronize_session=False)
+
+            # Clean any remaining booking seats directly tied to showtimes
+            db.query(BookingSeat).filter(BookingSeat.showtime_id.in_(showtime_ids)).delete(synchronize_session=False)
+            # Step 6: Delete all showtimes
+            db.query(Showtime).filter(Showtime.movie_id == movie_id).delete(synchronize_session=False)
+
+        # Step 7: Delete the movie itself
+        db.delete(movie)
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": f"Movie '{movie_title}' and all associated showtime schedules were safely deleted.",
+            "movie_id": movie_id
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete movie '{movie_title}': {str(e)}"
+        )
 
 
 # --- Theaters & Halls Management ---
