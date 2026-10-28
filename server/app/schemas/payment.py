@@ -11,6 +11,10 @@ class PaymentCreate(BaseModel):
     customer_email: Optional[EmailStr] = None
     customer_name: Optional[str] = None
     customer_phone: Optional[str] = None
+    is_sandbox: bool = False
+    card_number: Optional[str] = None
+    card_expiry: Optional[str] = None
+    card_cvv: Optional[str] = None
 
 
 class PaymentOut(BaseModel):
@@ -21,5 +25,7 @@ class PaymentOut(BaseModel):
     status: PaymentStatus
     transaction_reference: str
     created_at: datetime
+    is_sandbox: Optional[bool] = False
+    message: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)

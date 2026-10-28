@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ShieldCheck, Ticket, CheckCircle2, ArrowLeft, CreditCard, Mail, Sparkles, Share2, Wallet } from "lucide-react";
+import { ShieldCheck, Ticket, CheckCircle2, ArrowLeft, CreditCard, Mail, Sparkles, Share2, Wallet, FlaskConical, Phone, Lock, Zap } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useUser } from "@clerk/clerk-react";
 
@@ -30,12 +30,22 @@ const SeatLayout = () => {
   const [selectedSeatIds, setSelectedSeatIds] = useState([]);
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("+94 77 123 4567");
   const [loading, setLoading] = useState(true);
   const [showtime, setShowtime] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingConfirmation, setBookingConfirmation] = useState(null);
 
-  // Pre-fill email from Clerk user if signed in
+  // Sandbox Test Payment States
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isSandboxMode, setIsSandboxMode] = useState(true); // Default to Sandbox Active for Viva Demo!
+  const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242");
+  const [cardHolder, setCardHolder] = useState("Kasun Perera");
+  const [cardExpiry, setCardExpiry] = useState("12/28");
+  const [cardCvv, setCardCvv] = useState("123");
+  const [isAuthorizing, setIsAuthorizing] = useState(false);
+
+  // Pre-fill email and phone from Clerk user if signed in
   useEffect(() => {
     if (clerkUser) {
       if (clerkUser.primaryEmailAddress?.emailAddress) {
@@ -43,6 +53,10 @@ const SeatLayout = () => {
       }
       if (clerkUser.fullName) {
         setCustomerName(clerkUser.fullName);
+        setCardHolder(clerkUser.fullName);
+      }
+      if (clerkUser.primaryPhoneNumber?.phoneNumber) {
+        setCustomerPhone(clerkUser.primaryPhoneNumber.phoneNumber);
       }
     }
   }, [clerkUser]);
@@ -270,19 +284,73 @@ const SeatLayout = () => {
     }, 0);
   };
 
-  const handleBooking = async () => {
-    if (selectedSeatIds.length === 0) {
-      toast.error("Please select at least one seat to proceed.");
-      return;
+  // 1-Click Sandbox Test Card Fillers for Viva Demo
+  const fillTestCard = (type = "visa") => {
+    if (type === "visa") {
+      setCardNumber("4242 4242 4242 4242");
+      setCardHolder(customerName || "Kasun Perera (Viva Demo)");
+      setCardExpiry("12/28");
+      setCardCvv("456");
+      toast.success("Filled Test Visa: 4242 4242 4242 4242", {
+        icon: "💳",
+        duration: 3000,
+      });
+    } else {
+      setCardNumber("5555 5555 5555 4444");
+      setCardHolder(customerName || "Kasun Perera (Viva Demo)");
+      setCardExpiry("10/27");
+      setCardCvv("789");
+      toast.success("Filled Test Mastercard: 5555 5555 5555 4444", {
+        icon: "💳",
+        duration: 3000,
+      });
     }
+  };
 
+  const getCardBrand = (number) => {
+    const clean = (number || "").replace(/\s/g, "");
+    if (clean.startsWith("4")) return { brand: "Visa", badge: "bg-blue-500/20 text-blue-300 border-blue-500/30" };
+    if (clean.startsWith("5")) return { brand: "Mastercard", badge: "bg-orange-500/20 text-orange-300 border-orange-500/30" };
+    if (clean.startsWith("3")) return { brand: "Amex", badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" };
+    return { brand: "Card", badge: "bg-rose-500/20 text-rose-300 border-rose-500/30" };
+  };
+
+  const handleCardNumberChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
+    const formatted = raw.replace(/(\d{4})(?=\d)/g, "$1 ");
+    setCardNumber(formatted);
+  };
+
+  const handleExpiryChange = (e) => {
+    let val = e.target.value.replace(/\D/g, "").slice(0, 4);
+    if (val.length >= 3) {
+      val = `${val.slice(0, 2)}/${val.slice(2, 4)}`;
+    }
+    setCardExpiry(val);
+  };
+
+  const handleBooking = () => {
+    if (selectedSeatIds.length === 0) {
+      return toast.error("Please select at least one seat to proceed.");
+    }
     if (!customerEmail) {
-      toast.error("Please enter your email address to receive your ticket.", {
+      return toast.error("Please enter your email address to receive your ticket.", {
         style: { background: "#1e293b", color: "#fff", border: "1px solid #e11d48" }
       });
-      return;
+    }
+    // Open Sandbox Checkout & Payment Modal
+    setShowPaymentModal(true);
+  };
+
+  const executePayment = async () => {
+    if (!customerEmail) {
+      return toast.error("Please provide a recipient email for your digital ticket.");
+    }
+    if (isSandboxMode && (!cardNumber || cardNumber.replace(/\s/g, "").length < 15)) {
+      return toast.error("Please enter a valid 16-digit card number or click 'Fill Test Card'.");
     }
 
+    setIsAuthorizing(true);
     setIsProcessing(true);
 
     const seatLabels = selectedSeatIds.map((id) => {
@@ -293,6 +361,8 @@ const SeatLayout = () => {
 
     try {
       const token = localStorage.getItem("token") || "";
+
+      // 1. Concurrency-Safe Seat Reservation in Database
       const bookingRes = await fetch(`${API_BASE_URL}/bookings`, {
         method: "POST",
         headers: {
@@ -303,17 +373,19 @@ const SeatLayout = () => {
           showtime_id: showtimeId,
           seat_ids: selectedSeatIds,
           customer_email: customerEmail,
-          customer_name: customerName || "Cinema Fan",
+          customer_name: customerName || cardHolder || "Cinema Fan",
+          customer_phone: customerPhone,
         }),
       });
 
       if (!bookingRes.ok) {
-        const errorData = await bookingRes.json();
+        const errorData = await bookingRes.json().catch(() => ({}));
         throw new Error(errorData.detail || "Seat reservation failed.");
       }
 
       const bookingData = await bookingRes.json();
 
+      // 2. Process Payment with Sandbox Flag and Test Card Pattern
       const paymentRes = await fetch(`${API_BASE_URL}/payments`, {
         method: "POST",
         headers: {
@@ -322,9 +394,14 @@ const SeatLayout = () => {
         },
         body: JSON.stringify({
           booking_id: bookingData.booking_id,
-          payment_method: "Visa / Mastercard / Instant Pay",
+          payment_method: isSandboxMode ? `Sandbox Test (${getCardBrand(cardNumber).brand})` : "Credit / Debit Card",
           customer_email: customerEmail,
-          customer_name: customerName || "Cinema Fan",
+          customer_name: customerName || cardHolder || "Cinema Fan",
+          customer_phone: customerPhone,
+          is_sandbox: isSandboxMode,
+          card_number: cardNumber,
+          card_expiry: cardExpiry,
+          card_cvv: cardCvv,
         }),
       });
 
@@ -336,37 +413,44 @@ const SeatLayout = () => {
           seats: seatLabels,
           total: totalCalc,
           email: customerEmail,
+          phone: customerPhone,
+          isSandbox: paymentData.is_sandbox || isSandboxMode,
+          paymentMethod: paymentData.payment_method,
         });
-        toast.success(`Ticket Confirmed! Ticket pass sent to ${customerEmail}`, {
+
+        setShowPaymentModal(false);
+
+        toast.success(`🎉 Booking Confirmed! Ticket pass dispatched to ${customerEmail}`, {
           icon: "🎟️",
-          duration: 5000,
-          style: { background: "#1e293b", color: "#fff", border: "1px solid #10b981" }
+          duration: 6000,
+          style: { background: "#0f172a", color: "#fff", border: "1px solid #10b981" }
         });
       } else {
-        throw new Error("Payment processing failed.");
+        const payErr = await paymentRes.json().catch(() => ({}));
+        throw new Error(payErr.detail || "Payment processing failed.");
       }
     } catch (err) {
       console.warn("API booking fallback triggered:", err.message);
-      const fallbackTxn = "TXN-LK" + Math.random().toString(36).substring(2, 8).toUpperCase();
-      
-      // Dispatch direct HTML email via API
+      const fallbackTxn = "TXN-SANDBOX-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      // Dispatch direct HTML email via API as fallback
       try {
         await fetch(`${API_BASE_URL}/send-direct-email`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             customer_email: customerEmail,
-            customer_name: customerName || "Cinema Fan",
-            movie_title: showtime?.movie?.title || "Avatar: The Way of Water",
-            theater_name: showtime?.hall?.theater?.name || "Scope Cinemas - Colombo City Centre",
-            hall_name: showtime?.hall?.hall_name || "Screen 1 - Dolby Atmos",
+            customer_name: customerName || cardHolder || "Cinema Fan",
+            movie_title: showtime?.movie?.title || passedMovie?.title || "Avatar: The Way of Water",
+            theater_name: showtime?.hall?.theater?.name || selectedSlot?.theater || "Scope Cinemas - Colombo City Centre",
+            hall_name: showtime?.hall?.hall_name || selectedSlot?.hall || "Screen 1 - Dolby Atmos",
             seats: seatLabels,
             total: totalCalc,
-            txn_ref: fallbackTxn
-          })
+            txn_ref: fallbackTxn,
+          }),
         });
       } catch (emailErr) {
-        console.warn("Direct email dispatch call failed:", emailErr);
+        console.warn("Direct email dispatch backup call failed:", emailErr);
       }
 
       setBookingConfirmation({
@@ -375,12 +459,20 @@ const SeatLayout = () => {
         seats: seatLabels,
         total: totalCalc,
         email: customerEmail,
+        phone: customerPhone,
+        isSandbox: true,
+        paymentMethod: "Sandbox Test Card",
       });
-      toast.success(`Ticket Confirmed! Entrance Passcode sent to ${customerEmail}`, {
+
+      setShowPaymentModal(false);
+
+      toast.success(`🎉 Ticket Confirmed (Sandbox)! Passcode sent to ${customerEmail}`, {
         icon: "🎟️",
-        duration: 5000
+        duration: 6000,
+        style: { background: "#0f172a", color: "#fff", border: "1px solid #10b981" }
       });
     } finally {
+      setIsAuthorizing(false);
       setIsProcessing(false);
     }
   };
@@ -439,9 +531,20 @@ const SeatLayout = () => {
             <CheckCircle2 className="w-10 h-10" />
           </div>
 
+          {bookingConfirmation.isSandbox && (
+            <div className="mb-4 inline-flex items-center gap-1.5 px-3.5 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-300 rounded-full text-xs font-mono font-bold tracking-wide">
+              <FlaskConical className="w-3.5 h-3.5" /> SANDBOX VIVA DEMO TRANSACTION
+            </div>
+          )}
+
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">Booking Confirmed!</h2>
           <p className="text-emerald-400 font-medium text-sm mb-6">
             🎟️ Digital Ticket Pass dispatched to: <strong>{bookingConfirmation.email}</strong>
+            {bookingConfirmation.phone && (
+              <span className="block text-xs text-slate-300 mt-1">
+                📱 SMS Entry Passcode sent to: <strong>{bookingConfirmation.phone}</strong>
+              </span>
+            )}
           </p>
 
           <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-left mb-6 space-y-3">
@@ -452,6 +555,10 @@ const SeatLayout = () => {
             <div className="flex justify-between text-sm sm:text-base">
               <span className="text-slate-400">Seats Reserved</span>
               <span className="font-bold text-white">{bookingConfirmation.seats.join(", ")}</span>
+            </div>
+            <div className="flex justify-between text-sm sm:text-base">
+              <span className="text-slate-400">Payment Gateway</span>
+              <span className="font-semibold text-slate-200">{bookingConfirmation.paymentMethod || "Visa Sandbox"}</span>
             </div>
             <div className="flex justify-between text-sm sm:text-base pt-2 border-t border-slate-800">
               <span className="text-slate-400">Total Amount Paid</span>
@@ -730,29 +837,52 @@ const SeatLayout = () => {
             </div>
           </div>
 
-          {/* Customer Email Input for Ticket Dispatch */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-6">
-            <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
-              <Mail className="w-4 h-4 text-rose-500" /> Customer Email for Digital Ticket Delivery
-            </label>
-            <input
-              type="email"
-              required
-              placeholder="e.g. yourname@gmail.com"
-              value={customerEmail}
-              onChange={(e) => setCustomerEmail(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
-            />
-            <p className="text-xs sm:text-sm text-slate-400 mt-1.5">
-              Your HTML entrance pass and entry QR passcode will be delivered to this email.
-            </p>
+          {/* Customer Contact Details Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+              <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <Mail className="w-4 h-4 text-rose-500" /> Digital Ticket Email
+              </label>
+              <input
+                type="email"
+                required
+                placeholder="e.g. yourname@gmail.com"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                HTML entrance pass delivered here.
+              </p>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+              <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <Phone className="w-4 h-4 text-rose-500" /> Mobile Number for SMS
+              </label>
+              <input
+                type="tel"
+                placeholder="+94 77 123 4567"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                Passcode sent via automated SMS.
+              </p>
+            </div>
           </div>
 
           {/* Checkout Bar */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 shadow-xl">
             <div className="text-center sm:text-left w-full sm:w-auto">
-              <div className="text-xs sm:text-sm uppercase font-bold text-slate-400 mb-0.5">
-                Selected Seats ({selectedSeatIds.length})
+              <div className="text-xs sm:text-sm uppercase font-bold text-slate-400 mb-0.5 flex items-center gap-2">
+                <span>Selected Seats ({selectedSeatIds.length})</span>
+                {isSandboxMode && (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono font-bold">
+                    🧪 Sandbox Active
+                  </span>
+                )}
               </div>
               <div className="text-base sm:text-lg font-bold text-white">
                 {selectedSeatIds.length > 0
@@ -775,24 +905,18 @@ const SeatLayout = () => {
               </div>
 
               <button
-                disabled={selectedSeatIds.length === 0 || isProcessing || !customerEmail}
+                disabled={selectedSeatIds.length === 0}
                 onClick={handleBooking}
-                className={`py-3.5 px-6 sm:px-8 rounded-xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center gap-2 shrink-0 ${
-                  selectedSeatIds.length === 0 || isProcessing || !customerEmail
+                className={`py-3.5 px-6 sm:px-8 rounded-xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center gap-2 shrink-0 cursor-pointer ${
+                  selectedSeatIds.length === 0
                     ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                    : isSandboxMode
+                    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 hover:scale-[1.02]"
                     : "bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 hover:scale-[1.02]"
                 }`}
               >
-                {isProcessing ? (
-                  <>
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="w-4 h-4" /> Reserve & Send Email Pass
-                  </>
-                )}
+                <CreditCard className="w-4 h-4" />
+                <span>Proceed to Checkout</span>
               </button>
             </div>
           </div>
@@ -934,6 +1058,269 @@ const SeatLayout = () => {
                 className="flex-1 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-2xl text-sm shadow-lg shadow-rose-600/30 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-4 h-4 text-amber-300" /> Calculate & Select Best Seats
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    {/* SANDBOX CHECKOUT & PAYMENT MODAL */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-2xl relative my-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-600/20 text-rose-400 border border-rose-500/30 flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-rose-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-white">
+                    QuickShow Ticket Checkout
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Secure 256-bit SSL encrypted reservation gateway
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPaymentModal(false)}
+                className="p-1.5 text-slate-400 hover:text-white bg-slate-950 border border-slate-800 rounded-xl transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* SANDBOX TEST MODE VIVA TOGGLE BANNER */}
+            <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0">
+                    <FlaskConical className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-extrabold text-white">
+                        Sandbox / Viva Demo Mode
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider ${
+                        isSandboxMode ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-slate-800 text-slate-400"
+                      }`}>
+                        {isSandboxMode ? "Active" : "Disabled"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300 mt-0.5">
+                      Bypasses real banking authorization while saving confirmed tickets & dispatching passes.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Switch Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setIsSandboxMode(!isSandboxMode)}
+                  className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-200 shrink-0 ${
+                    isSandboxMode ? "bg-emerald-600" : "bg-slate-700"
+                  }`}
+                  title="Toggle Sandbox Mode"
+                >
+                  <div
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${
+                      isSandboxMode ? "translate-x-6" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Quick Fill Test Patterns for Presentation */}
+              {isSandboxMode && (
+                <div className="mt-3 pt-3 border-t border-amber-500/20 flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-bold text-amber-300/80 uppercase tracking-wider">
+                    ⚡ 1-Click Demo Fill:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => fillTestCard("visa")}
+                    className="px-2.5 py-1 bg-slate-950/80 hover:bg-slate-800 text-blue-300 border border-blue-500/30 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer hover:scale-105"
+                  >
+                    <span>💳 Visa (4242)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fillTestCard("mastercard")}
+                    className="px-2.5 py-1 bg-slate-950/80 hover:bg-slate-800 text-orange-300 border border-orange-500/30 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer hover:scale-105"
+                  >
+                    <span>💳 Mastercard (5555)</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Order Summary Strip */}
+            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-5">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h4 className="text-sm font-bold text-white">
+                    {showtime?.movie?.title || passedMovie?.title || "Movie Reservation"}
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {showtime?.hall?.theater?.name || selectedSlot?.theater || "Scope Cinemas"} &bull; {selectedSlot?.slotName || "Showtime"}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-bold text-slate-400 block">Total Due</span>
+                  <span className="text-lg font-black text-rose-400">
+                    LKR {calculateTotal().toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80 text-xs text-slate-300">
+                <span className="font-semibold text-slate-400">Reserved Seats:</span>
+                <span className="font-mono font-bold text-emerald-400">
+                  {selectedSeatIds.map((id) => {
+                    const s = seats.find((x) => x.seat_id === id);
+                    return `${s?.row_label}${s?.seat_number}`;
+                  }).join(", ")}
+                </span>
+                <span className="text-slate-600 ml-auto">&bull;</span>
+                <span className="text-slate-400">{selectedSeatIds.length} Ticket(s)</span>
+              </div>
+            </div>
+
+            {/* Contact Delivery Inputs */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-rose-400" /> Delivery Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="name@gmail.com"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-rose-400" /> Mobile (for SMS Pass)
+                </label>
+                <input
+                  type="tel"
+                  placeholder="+94 77 123 4567"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Payment Card Details Form */}
+            <div className="space-y-3 mb-5">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                    Card Number
+                  </label>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getCardBrand(cardNumber).badge}`}>
+                    {getCardBrand(cardNumber).brand}
+                  </span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    maxLength={19}
+                    placeholder="4242 4242 4242 4242"
+                    value={cardNumber}
+                    onChange={handleCardNumberChange}
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl pl-3 pr-10 py-2.5 text-xs sm:text-sm font-mono text-white placeholder-slate-600 focus:outline-none transition-colors"
+                  />
+                  <CreditCard className="w-4 h-4 text-slate-500 absolute right-3 top-3 pointer-events-none" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-1">
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    Expires
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={5}
+                    placeholder="MM/YY"
+                    value={cardExpiry}
+                    onChange={handleExpiryChange}
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-3 py-2 text-xs sm:text-sm font-mono text-white placeholder-slate-600 focus:outline-none transition-colors text-center"
+                  />
+                </div>
+
+                <div className="col-span-1">
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    CVV
+                  </label>
+                  <input
+                    type="password"
+                    maxLength={4}
+                    placeholder="123"
+                    value={cardCvv}
+                    onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-3 py-2 text-xs sm:text-sm font-mono text-white placeholder-slate-600 focus:outline-none transition-colors text-center"
+                  />
+                </div>
+
+                <div className="col-span-1">
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    Cardholder
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Name"
+                    value={cardHolder}
+                    onChange={(e) => setCardHolder(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-3 py-2 text-xs sm:text-sm text-white placeholder-slate-600 focus:outline-none transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPaymentModal(false)}
+                className="py-3 px-4 rounded-xl font-bold text-xs sm:text-sm bg-slate-950 border border-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={isAuthorizing || !customerEmail}
+                onClick={executePayment}
+                className={`flex-1 py-3.5 px-6 rounded-xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer ${
+                  isAuthorizing || !customerEmail
+                    ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                    : isSandboxMode
+                    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30 hover:scale-[1.01]"
+                    : "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30 hover:scale-[1.01]"
+                }`}
+              >
+                {isAuthorizing ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>{isSandboxMode ? "Authorizing Sandbox Gateway..." : "Authorizing Payment..."}</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4" />
+                    <span>
+                      Pay LKR {calculateTotal().toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      {isSandboxMode ? " (Sandbox Demo)" : ""}
+                    </span>
+                  </>
+                )}
               </button>
             </div>
           </div>

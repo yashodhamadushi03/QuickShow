@@ -191,12 +191,30 @@ def process_payment(
     if booking.status == BookingStatus.CANCELLED:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot pay for a cancelled booking.")
 
+    # Determine Sandbox / Demo Mode
+    card_raw = (payment_in.card_number or "").replace(" ", "").replace("-", "")
+    is_test_card = any(card_raw.startswith(prefix) for prefix in ["4242", "5555", "4000", "5105", "3782"])
+    is_sandbox = payment_in.is_sandbox or is_test_card or "sandbox" in payment_in.payment_method.lower()
+
     # Generate transaction reference
-    txn_ref = f"TXN-LK{uuid.uuid4().hex[:8].upper()}"
+    if is_sandbox:
+        txn_ref = f"TXN-SANDBOX-{uuid.uuid4().hex[:8].upper()}"
+        payment_method_str = (
+            f"Sandbox Test ({payment_in.payment_method})"
+            if "sandbox" not in payment_in.payment_method.lower()
+            else payment_in.payment_method
+        )
+    else:
+        txn_ref = f"TXN-LK{uuid.uuid4().hex[:8].upper()}"
+        payment_method_str = payment_in.payment_method
+
+    # Truncate payment_method to max 50 chars for database schema
+    payment_method_str = payment_method_str[:50]
+
     payment = Payment(
         booking_id=booking.booking_id,
         amount=booking.total_amount,
-        payment_method=payment_in.payment_method,
+        payment_method=payment_method_str,
         status=PaymentStatus.SUCCESS,
         transaction_reference=txn_ref
     )
@@ -229,7 +247,7 @@ def process_payment(
     recipient_name = payment_in.customer_name or (current_user.name if current_user else "Kasun Perera")
     recipient_phone = payment_in.customer_phone or (current_user.phone if current_user else None)
 
-    # Direct SMTP dispatch first to guarantee immediate transmission
+    # Direct SMTP dispatch to guarantee immediate delivery
     try:
         NotificationService.send_email_ticket(
             user_email=recipient_email,
@@ -245,7 +263,27 @@ def process_payment(
     except Exception as err:
         print("Direct email dispatch warning:", err)
 
-    return payment
+    # Automated SMS ticket dispatch
+    if recipient_phone:
+        try:
+            NotificationService.send_sms_ticket(
+                phone_number=recipient_phone,
+                movie_title=movie_title,
+                showtime_str=start_time_str,
+                seat_labels=seat_labels,
+                transaction_ref=txn_ref
+            )
+        except Exception as sms_err:
+            print("Direct SMS dispatch warning:", sms_err)
+
+    payment_out = PaymentOut.model_validate(payment)
+    payment_out.is_sandbox = is_sandbox
+    payment_out.message = (
+        "Sandbox test payment authorized successfully. Tickets dispatched via Email and SMS."
+        if is_sandbox
+        else "Payment authorized successfully. Tickets dispatched."
+    )
+    return payment_out
 
 
 from pydantic import BaseModel
