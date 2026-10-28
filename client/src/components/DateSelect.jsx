@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import BlurCircle from "./BlurCircle";
 import { Sun, Sunrise, Sunset, Moon, Clock, CheckCircle2, Sparkles, Film } from "lucide-react";
 import toast from "react-hot-toast";
+import { useUser } from "@clerk/clerk-react";
 import { SL_SHOWTIME_SLOTS } from "../assets/assets";
 
 const DateSelect = ({ dateTime, id, movie }) => {
@@ -10,6 +11,7 @@ const DateSelect = ({ dateTime, id, movie }) => {
   const [selectedDate, setSelectedDate] = useState(dates[0] || "");
   const [selectedSlot, setSelectedSlot] = useState(null);
   const navigate = useNavigate();
+  const { isLoaded, isSignedIn } = useUser();
 
   // Keep selected date valid
   useEffect(() => {
@@ -95,13 +97,36 @@ const DateSelect = ({ dateTime, id, movie }) => {
 
     // Pass showtimeId and details cleanly to SeatLayout
     const showIdToUse = selectedSlot.showId || 1;
-    navigate(`/movies/${id}/${selectedDate}`, {
-      state: {
-        selectedDate,
-        selectedSlot,
-        showtimeId: showIdToUse,
-        movie,
-      },
+    const targetUrl = `/movies/${id}/${selectedDate}`;
+    const bookingState = {
+      selectedDate,
+      selectedSlot,
+      showtimeId: showIdToUse,
+      movie,
+    };
+
+    // Smart authentication check: redirect unauthenticated users to Sign In with preserved booking state
+    if (isLoaded && !isSignedIn) {
+      toast("Please sign in to select seats and complete your booking.", {
+        icon: "🔒",
+        duration: 4000,
+        style: {
+          background: "#0f172a",
+          color: "#fca5a5",
+          border: "1px solid #f43f5e",
+        },
+      });
+      navigate(`/sign-in?redirect_url=${encodeURIComponent(targetUrl)}`, {
+        state: {
+          returnUrl: targetUrl,
+          ...bookingState,
+        },
+      });
+      return;
+    }
+
+    navigate(targetUrl, {
+      state: bookingState,
     });
     window.scrollTo(0, 0);
   };
