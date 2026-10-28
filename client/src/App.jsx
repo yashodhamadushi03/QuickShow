@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 
@@ -18,6 +18,7 @@ import CompleteProfilePage from './pages/CompleteProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
 import Chatbot from './components/Chatbot';
+import OnboardingModal from './components/OnboardingModal';
 
 import { Toaster, toast } from 'react-hot-toast';
 import Footer from './components/Footer';
@@ -26,6 +27,8 @@ const App = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isLoaded, isSignedIn } = useUser();
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isAuthRoute =
     location.pathname.startsWith('/sign-in') ||
@@ -88,26 +91,26 @@ const App = () => {
               localStorage.setItem('customer_phone', data.phone);
             }
           } else if (data.needs_onboarding) {
-            // First-time login or incomplete profile -> redirect to sleek profile completion page
-            navigate('/complete-profile', {
-              replace: true,
-              state: { returnUrl: location.pathname },
-            });
-            toast('Please complete your profile details to continue.', {
-              icon: '👋',
-              id: 'onboarding-notice',
-            });
+            // Prominent center modal popup dialog right in the middle of the screen
+            setShowOnboardingModal(true);
           }
         }
       })
       .catch((err) => console.debug('Onboarding check error:', err));
-  }, [isLoaded, isSignedIn, user?.id, user?.updatedAt, location.pathname, isAdminRoute, isAuthRoute, isOnboardingRoute, navigate]);
+  }, [isLoaded, isSignedIn, user?.id, user?.updatedAt, location.pathname, isAdminRoute, isAuthRoute, isOnboardingRoute]);
 
   return (
     <>
       <Toaster position="top-right" />
 
+      {/* Prominent Center Onboarding Modal (Backdrop Overlay) */}
+      <OnboardingModal
+        isOpen={showOnboardingModal}
+        onClose={() => setShowOnboardingModal(false)}
+      />
+
       {!isAdminRoute && !isAuthRoute && !isOnboardingRoute && <Navbar />}
+
 
 
       <Routes>
