@@ -1,18 +1,54 @@
-import { StarIcon } from 'lucide-react'
-import React from 'react'
+import { StarIcon, Heart } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import timeFormat from '../lib/timeFormat';
 import { FALLBACK_BACKDROP } from '../assets/assets';
+import { isMovieFavourite, toggleFavourite } from '../lib/favourites';
+import toast from 'react-hot-toast';
 
 const MovieCard = ({movie}) => {
 
     const navigate = useNavigate();
     const posterSrc = movie.backdrop_path || movie.poster_url || movie.poster_path || FALLBACK_BACKDROP;
+    const [isFav, setIsFav] = useState(false);
+
+    useEffect(() => {
+        setIsFav(isMovieFavourite(movie));
+    }, [movie]);
+
+    useEffect(() => {
+        const handleUpdate = () => {
+            setIsFav(isMovieFavourite(movie));
+        };
+        window.addEventListener("favouritesUpdated", handleUpdate);
+        window.addEventListener("storage", handleUpdate);
+        return () => {
+            window.removeEventListener("favouritesUpdated", handleUpdate);
+            window.removeEventListener("storage", handleUpdate);
+        };
+    }, [movie]);
+
+    const handleHeartClick = (e) => {
+        e.stopPropagation();
+        const nowFav = toggleFavourite(movie);
+        setIsFav(nowFav);
+        if (nowFav) {
+            toast.success(`"${movie.title}" added to Favourites!`, {
+                icon: "❤️",
+                style: { background: "#0f172a", color: "#fff", border: "1px solid #f43f5e" }
+            });
+        } else {
+            toast(`"${movie.title}" removed from Favourites`, {
+                icon: "💔",
+                style: { background: "#0f172a", color: "#fca5a5", border: "1px solid #334155" }
+            });
+        }
+    };
 
     return (
 
         <div className='flex flex-col justify-between p-3.5 bg-slate-900 border border-slate-800 hover:border-rose-500/50 rounded-2xl hover:-translate-y-1.5 transition-all duration-300 w-full sm:w-66 shadow-lg shadow-black/40'>
-          <div className="relative overflow-hidden rounded-xl bg-slate-950 aspect-[16/10]">
+          <div className="relative overflow-hidden rounded-xl bg-slate-950 aspect-[16/10] group">
             <img 
               onClick={() => { navigate(`/movies/${movie.id || movie.movie_id}`); scrollTo(0,0); }}
               src={posterSrc}
@@ -23,6 +59,27 @@ const MovieCard = ({movie}) => {
               alt={movie.title || "Movie Poster"}
               className="w-full h-full object-cover object-center cursor-pointer hover:scale-105 transition-transform duration-500"
             />
+            
+            {/* Quick Heart Favourite Button */}
+            <button
+              type="button"
+              onClick={handleHeartClick}
+              title={isFav ? "Remove from Favourites" : "Add to Favourites"}
+              className={`absolute top-2 right-2 p-2 rounded-full backdrop-blur-md transition-all duration-300 cursor-pointer hover:scale-110 active:scale-90 ${
+                isFav
+                  ? "bg-rose-950/80 border border-rose-500 text-rose-500 shadow-md shadow-rose-500/40"
+                  : "bg-slate-950/60 hover:bg-slate-900/90 border border-slate-700/60 text-slate-300 hover:text-rose-400 opacity-80 group-hover:opacity-100"
+              }`}
+            >
+              <Heart
+                size={16}
+                className={`transition-all duration-300 ${
+                  isFav
+                    ? "text-rose-500 fill-rose-500 drop-shadow-[0_0_6px_rgba(244,63,94,0.9)]"
+                    : "text-slate-300 hover:text-rose-400"
+                }`}
+              />
+            </button>
           </div>
 
           <p className='font-black text-base md:text-lg mt-3 truncate text-white'>{movie.title}</p>

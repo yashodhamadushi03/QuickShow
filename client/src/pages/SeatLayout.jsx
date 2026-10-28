@@ -443,6 +443,37 @@ const SeatLayout = () => {
           paymentMethod: paymentData.payment_method,
         });
 
+        // Save email and recent booking locally for real-time MyBookings sync
+        try {
+          if (customerEmail) localStorage.setItem("customer_email", customerEmail);
+          const cachedPass = {
+            booking_id: bookingData.booking_id,
+            status: "Confirmed",
+            total_amount: String(totalCalc),
+            created_at: new Date().toISOString(),
+            showtime: {
+              movie: showtime?.movie || passedMovie || { title: "Cinema Movie" },
+              hall: showtime?.hall || { hall_name: selectedSlot?.hall || "Screen 1 - Dolby Atmos", theater: { name: selectedSlot?.theater || "Scope Cinemas Multiplex - Colombo City Centre" } },
+              start_time: showtime?.start_time || new Date().toISOString()
+            },
+            booking_seats: selectedSeatIds.map(id => {
+              const s = seats.find(x => x.seat_id === id);
+              return { seat: { row_label: s?.row_label || "A", seat_number: s?.seat_number || id } };
+            }),
+            payment: {
+              transaction_reference: paymentData.transaction_reference,
+              payment_method: paymentData.payment_method,
+              is_sandbox: paymentData.is_sandbox || isSandboxMode
+            }
+          };
+          const existingRecent = JSON.parse(localStorage.getItem("quickshow_recent_bookings") || "[]");
+          const updatedRecent = [cachedPass, ...existingRecent.filter(b => b.booking_id !== bookingData.booking_id)].slice(0, 15);
+          localStorage.setItem("quickshow_recent_bookings", JSON.stringify(updatedRecent));
+          window.dispatchEvent(new Event("bookingCreated"));
+        } catch (storageErr) {
+          console.warn("Storage sync warning:", storageErr);
+        }
+
         setShowPaymentModal(false);
 
         toast.success(`🎉 Booking Confirmed! Ticket pass dispatched to ${customerEmail}`, {
@@ -457,6 +488,7 @@ const SeatLayout = () => {
     } catch (err) {
       console.warn("API booking fallback triggered:", err.message);
       const fallbackTxn = "TXN-SANDBOX-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const fallbackBookingId = Math.floor(Math.random() * 9000) + 1000;
 
       // Dispatch direct HTML email via API as fallback
       try {
@@ -478,8 +510,39 @@ const SeatLayout = () => {
         console.warn("Direct email dispatch backup call failed:", emailErr);
       }
 
+      // Save fallback booking locally for instant MyBookings visibility
+      try {
+        if (customerEmail) localStorage.setItem("customer_email", customerEmail);
+        const fallbackPass = {
+          booking_id: fallbackBookingId,
+          status: "Confirmed",
+          total_amount: String(totalCalc),
+          created_at: new Date().toISOString(),
+          showtime: {
+            movie: showtime?.movie || passedMovie || { title: "Cinema Movie" },
+            hall: showtime?.hall || { hall_name: selectedSlot?.hall || "Screen 1 - Dolby Atmos", theater: { name: selectedSlot?.theater || "Scope Cinemas Multiplex - Colombo City Centre" } },
+            start_time: new Date().toISOString()
+          },
+          booking_seats: selectedSeatIds.map(id => {
+            const s = seats.find(x => x.seat_id === id);
+            return { seat: { row_label: s?.row_label || "A", seat_number: s?.seat_number || id } };
+          }),
+          payment: {
+            transaction_reference: fallbackTxn,
+            payment_method: "Sandbox Test Card",
+            is_sandbox: true
+          }
+        };
+        const existingRecent = JSON.parse(localStorage.getItem("quickshow_recent_bookings") || "[]");
+        const updatedRecent = [fallbackPass, ...existingRecent.filter(b => b.booking_id !== fallbackBookingId)].slice(0, 15);
+        localStorage.setItem("quickshow_recent_bookings", JSON.stringify(updatedRecent));
+        window.dispatchEvent(new Event("bookingCreated"));
+      } catch (storageErr) {
+        console.warn("Storage sync warning:", storageErr);
+      }
+
       setBookingConfirmation({
-        bookingId: Math.floor(Math.random() * 9000) + 1000,
+        bookingId: fallbackBookingId,
         txnRef: fallbackTxn,
         seats: seatLabels,
         total: totalCalc,

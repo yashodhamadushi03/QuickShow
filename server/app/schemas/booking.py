@@ -5,6 +5,7 @@ from typing import List, Optional
 from app.models.booking import BookingStatus
 from app.schemas.theater import SeatOut
 from app.schemas.showtime import ShowtimeOut
+from app.schemas.payment import PaymentOut
 
 
 class BookingCreate(BaseModel):
@@ -37,5 +38,6 @@ class BookingOut(BaseModel):
     created_at: datetime
     showtime: Optional[ShowtimeOut] = None
     booking_seats: List[BookingSeatOut] = []
+    payment: Optional[PaymentOut] = None
 
     model_config = ConfigDict(from_attributes=True)

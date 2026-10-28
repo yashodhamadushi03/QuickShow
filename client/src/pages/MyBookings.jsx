@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Ticket, Calendar, MapPin, Clock, ShieldCheck, CheckCircle2 } from "lucide-react";
+import {
+  Ticket,
+  Calendar,
+  MapPin,
+  Clock,
+  ShieldCheck,
+  CheckCircle2,
+  RefreshCw,
+  FlaskConical,
+  Sparkles,
+  ArrowRight,
+  Film
+} from "lucide-react";
 import { Link } from "react-router-dom";
+import { useUser } from "@clerk/clerk-react";
 import { FALLBACK_POSTER } from "../assets/assets";
 
 const API_BASE_URL = "http://localhost:8000/api";
@@ -8,155 +21,301 @@ const API_BASE_URL = "http://localhost:8000/api";
 const MyBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { user: clerkUser } = useUser();
 
-  const fallbackBookings = [
-    {
-      booking_id: 1001,
-      status: "Confirmed",
-      total_amount: "3000.00",
-      created_at: "2026-10-07T12:00:00Z",
-      showtime: {
-        movie: {
-          title: "Avatar: The Way of Water",
-          poster_url: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800",
-          genre: "Sci-Fi / Action"
-        },
-        hall: {
-          hall_name: "Screen 1 - IMAX",
-          theater: { name: "Scope Cinemas - Colombo City Centre", city: "Colombo" }
-        },
-        start_time: "2026-10-08T18:30:00Z"
-      },
-      booking_seats: [
-        { seat: { row_label: "D", seat_number: 5 } },
-        { seat: { row_label: "D", seat_number: 6 } }
-      ],
-      payment: {
-        transaction_reference: "TXN-LK8F92A1"
-      }
-    }
-  ];
+  const fetchMyBookings = async (showLoader = true) => {
+    if (showLoader) setLoading(true);
+    setIsRefreshing(true);
 
-  useEffect(() => {
-    fetchMyBookings();
-  }, []);
-
-  const fetchMyBookings = async () => {
     try {
       const token = localStorage.getItem("token") || "";
-      const res = await fetch(`${API_BASE_URL}/bookings/my`, {
-        headers: { Authorization: token ? `Bearer ${token}` : "" }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setBookings(data.length > 0 ? data : fallbackBookings);
+      const userEmail =
+        clerkUser?.primaryEmailAddress?.emailAddress ||
+        localStorage.getItem("customer_email") ||
+        "";
+      const queryParam = userEmail ? `?email=${encodeURIComponent(userEmail)}` : "";
+
+      let data = null;
+      // 1. Try GET /api/bookings/my (with email param or token)
+      try {
+        const res = await fetch(`${API_BASE_URL}/bookings/my${queryParam}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          data = await res.json();
+        }
+      } catch (e) {
+        console.warn("Primary endpoint /bookings/my error:", e);
+      }
+
+      // 2. Try secondary endpoint /api/user/bookings
+      if (!data) {
+        try {
+          const res2 = await fetch(`${API_BASE_URL}/user/bookings${queryParam}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (res2.ok) {
+            data = await res2.json();
+          }
+        } catch (e2) {
+          console.warn("Secondary endpoint /user/bookings error:", e2);
+        }
+      }
+
+      // Read local cache of instant bookings
+      let cached = [];
+      try {
+        cached = JSON.parse(localStorage.getItem("quickshow_recent_bookings") || "[]");
+      } catch (err) {
+        cached = [];
+      }
+
+      if (Array.isArray(data) && data.length > 0) {
+        // Merge with any cached bookings not yet returned in DB, ensuring newest is at the top
+        const dbIds = new Set(data.map((b) => b.booking_id));
+        const unmerged = cached.filter((b) => !dbIds.has(b.booking_id));
+        const merged = [...unmerged, ...data];
+        merged.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        setBookings(merged);
+      } else if (cached.length > 0) {
+        cached.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        setBookings(cached);
       } else {
-        setBookings(fallbackBookings);
+        setBookings([]);
       }
     } catch (err) {
-      console.warn("Backend API unavailable, using sample bookings.", err);
-      setBookings(fallbackBookings);
+      console.warn("Backend API unavailable, using cached bookings:", err);
+      try {
+        const cached = JSON.parse(localStorage.getItem("quickshow_recent_bookings") || "[]");
+        setBookings(cached);
+      } catch {
+        setBookings([]);
+      }
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
+  useEffect(() => {
+    fetchMyBookings(true);
+
+    // Listen for new booking events dispatched after checkout
+    const handleNewBooking = () => {
+      fetchMyBookings(false);
+    };
+
+    window.addEventListener("bookingCreated", handleNewBooking);
+    window.addEventListener("storage", handleNewBooking);
+    return () => {
+      window.removeEventListener("bookingCreated", handleNewBooking);
+      window.removeEventListener("storage", handleNewBooking);
+    };
+  }, [clerkUser]);
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white pt-24 pb-16 px-6 md:px-16">
-      <div className="max-w-5xl mx-auto mb-10">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 text-rose-400 text-sm font-medium mb-3 border border-rose-500/20">
-          <Ticket className="w-4 h-4" /> My Digital Tickets
+    <div className="min-h-screen bg-slate-950 text-white pt-24 sm:pt-28 pb-20 px-4 sm:px-8 md:px-16">
+      {/* Page Header */}
+      <div className="max-w-5xl mx-auto mb-8 sm:mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 text-rose-400 text-xs sm:text-sm font-bold mb-3 border border-rose-500/20">
+            <Ticket className="w-4 h-4 text-rose-500" /> My Digital Tickets & Entrance Passes
+          </div>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+            My Movie Bookings
+          </h1>
+          <p className="text-slate-300 text-sm sm:text-base mt-2">
+            Present your verified digital ticket pass code at the cinema multiplex entrance.
+          </p>
         </div>
-        <h1 className="text-4xl md:text-5xl font-black text-white">My Movie Bookings</h1>
-        <p className="text-slate-200 text-base md:text-lg mt-1">
-          Present your digital ticket pass code at the cinema hall entrance.
-        </p>
+
+        <button
+          onClick={() => fetchMyBookings(false)}
+          disabled={isRefreshing}
+          className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-xl text-sm font-semibold transition-all cursor-pointer"
+          title="Refresh digital tickets"
+        >
+          <RefreshCw className={`w-4 h-4 text-rose-500 ${isRefreshing ? "animate-spin" : ""}`} />
+          <span>Refresh</span>
+        </button>
       </div>
 
       <div className="max-w-5xl mx-auto">
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="w-10 h-10 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="flex flex-col justify-center items-center py-28 gap-4">
+            <div className="w-12 h-12 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-slate-400 text-sm font-medium animate-pulse">
+              Retrieving your digital tickets from database...
+            </p>
           </div>
         ) : bookings.length === 0 ? (
-          <div className="text-center py-16 bg-slate-900/60 rounded-2xl border border-slate-800">
-            <Ticket className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-300 text-xl font-bold">You haven't made any ticket reservations yet.</p>
+          /* Empty State */
+          <div className="text-center py-20 px-6 bg-slate-900/60 rounded-3xl border border-slate-800/80 shadow-2xl max-w-lg mx-auto">
+            <div className="w-20 h-20 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <Ticket className="w-10 h-10 text-rose-500 stroke-[1.5]" />
+            </div>
+            <h2 className="text-2xl font-black text-white mb-2">No Ticket Reservations Found</h2>
+            <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-8">
+              You haven't made any cinema ticket reservations yet. Browse our now showing movies and reserve your preferred seats.
+            </p>
             <Link
               to="/movies"
-              className="inline-block mt-4 px-8 py-3 bg-rose-600 hover:bg-rose-500 text-white font-extrabold rounded-xl text-base transition-all"
+              className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-6 bg-rose-600 hover:bg-rose-500 text-white font-extrabold rounded-2xl text-base shadow-xl shadow-rose-600/30 transition-all hover:scale-105 active:scale-95"
             >
-              Browse Movies
+              <Film className="w-5 h-5" /> Browse Now Showing Movies
             </Link>
           </div>
         ) : (
+          /* Real-Time Bookings List */
           <div className="space-y-6">
-            {bookings.map((booking) => {
+            {bookings.map((booking, idx) => {
               const movie = booking.showtime?.movie;
               const hall = booking.showtime?.hall;
               const theater = hall?.theater;
-              const seatsList = booking.booking_seats
-                ?.map((bs) => `${bs.seat?.row_label || ""}${bs.seat?.seat_number || ""}`)
-                .filter(Boolean)
-                .join(", ");
+              const movieTitle = movie?.title || "Cinema Movie";
+              const theaterName =
+                theater?.name ||
+                booking.theater_name ||
+                "Scope Cinemas Multiplex - Colombo City Centre";
+              const hallName = hall?.hall_name || "Screen 1 - Dolby Atmos";
+              const posterUrl = movie?.poster_url || movie?.poster_path || FALLBACK_POSTER;
+
+              // Extract seat labels
+              let seatsList = "";
+              if (Array.isArray(booking.booking_seats) && booking.booking_seats.length > 0) {
+                seatsList = booking.booking_seats
+                  .map((bs) => {
+                    if (bs.seat?.row_label && bs.seat?.seat_number) {
+                      return `${bs.seat.row_label}${bs.seat.seat_number}`;
+                    }
+                    if (bs.seat_id) return `Seat #${bs.seat_id}`;
+                    return "";
+                  })
+                  .filter(Boolean)
+                  .join(", ");
+              }
+              if (!seatsList && Array.isArray(booking.seats)) {
+                seatsList = booking.seats.join(", ");
+              }
+              if (!seatsList) seatsList = "Confirmed Seats";
+
+              const refCode =
+                booking.payment?.transaction_reference ||
+                booking.transaction_reference ||
+                booking.passcode ||
+                `TXN-QSHOW${booking.booking_id}`;
+
+              const isSandbox =
+                booking.payment?.is_sandbox ||
+                booking.is_sandbox ||
+                refCode.includes("SANDBOX");
+
+              const rawAmount = parseFloat(booking.total_amount || 0);
+
+              const formattedDate = booking.showtime?.start_time
+                ? new Date(booking.showtime.start_time).toLocaleString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "Upcoming Screening";
 
               return (
                 <div
-                  key={booking.booking_id}
-                  className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl overflow-hidden shadow-xl flex flex-col md:flex-row"
+                  key={booking.booking_id || idx}
+                  className="bg-slate-900 border border-slate-800 hover:border-slate-700/80 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row transition-all duration-300"
                 >
-                  {/* Poster */}
-                  <div className="md:w-52 bg-slate-950 shrink-0">
+                  {/* Poster Thumbnail */}
+                  <div className="md:w-56 bg-slate-950 shrink-0 relative overflow-hidden">
                     <img
-                      src={movie?.poster_url || FALLBACK_POSTER}
-                      alt={movie?.title || "Movie"}
+                      src={posterUrl}
+                      alt={movieTitle}
                       onError={(e) => {
                         e.currentTarget.onerror = null;
                         e.currentTarget.src = FALLBACK_POSTER;
                       }}
-                      className="w-full h-52 md:h-full object-cover"
+                      className="w-full h-56 md:h-full object-cover object-center"
                     />
+                    {isSandbox && (
+                      <div className="absolute top-3 left-3 bg-amber-500/90 text-slate-950 font-black text-[11px] px-2.5 py-1 rounded-full uppercase tracking-wider backdrop-blur-md flex items-center gap-1 shadow-lg">
+                        <FlaskConical className="w-3 h-3" /> Sandbox Demo
+                      </div>
+                    )}
                   </div>
 
-                  {/* Info */}
+                  {/* Booking Details */}
                   <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between">
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-extrabold text-rose-400 uppercase tracking-wide">
-                          {movie?.genre || "Movie"}
+                      {/* Status Badges */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <span className="text-xs sm:text-sm font-extrabold text-rose-400 uppercase tracking-wider">
+                          {movie?.genre || movie?.genres?.[0]?.name || "Blockbuster Cinema"}
                         </span>
-                        <span className="px-3 py-1 rounded-full text-xs sm:text-sm font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-                          <CheckCircle2 className="w-4 h-4" /> {booking.status}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="px-3 py-1 rounded-full text-xs sm:text-sm font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1.5">
+                            <CheckCircle2 className="w-4 h-4" /> {booking.status || "Confirmed"}
+                          </span>
+                        </div>
                       </div>
 
-                      <h2 className="text-2xl sm:text-3xl font-black text-white mb-4">{movie?.title}</h2>
+                      <h2 className="text-2xl sm:text-3xl font-black text-white mb-4 tracking-tight">
+                        {movieTitle}
+                      </h2>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-base text-slate-200 mb-4">
+                      {/* Info Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-sm sm:text-base text-slate-200 mb-5">
                         <div className="flex items-center gap-2.5">
                           <MapPin className="w-5 h-5 text-rose-500 shrink-0" />
-                          <span>{theater?.name} ({hall?.hall_name})</span>
+                          <span>
+                            <strong className="text-white font-bold">{theaterName}</strong>
+                            <span className="text-slate-400 block text-xs">{hallName}</span>
+                          </span>
                         </div>
                         <div className="flex items-center gap-2.5">
                           <Calendar className="w-5 h-5 text-rose-500 shrink-0" />
-                          <span>{booking.showtime?.start_time ? new Date(booking.showtime.start_time).toLocaleString() : "Upcoming Showtime"}</span>
+                          <span>
+                            <strong className="text-white font-bold">{formattedDate}</strong>
+                            <span className="text-slate-400 block text-xs">Standard Sri Lanka Time</span>
+                          </span>
                         </div>
                         <div className="flex items-center gap-2.5">
                           <Ticket className="w-5 h-5 text-rose-500 shrink-0" />
-                          <span>Seats: <strong className="text-white font-extrabold">{seatsList || "D5, D6"}</strong></span>
+                          <span>
+                            Seats: <strong className="text-white font-extrabold">{seatsList}</strong>
+                          </span>
                         </div>
                         <div className="flex items-center gap-2.5">
                           <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
-                          <span>Total Paid: <strong className="text-emerald-400 font-extrabold">LKR {parseFloat(booking.total_amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong></span>
+                          <span>
+                            Total Paid:{" "}
+                            <strong className="text-emerald-400 font-extrabold">
+                              LKR{" "}
+                              {rawAmount.toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </strong>
+                          </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Entrance Code */}
-                    <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-                      <div className="text-base font-bold text-slate-300">Entrance Passcode</div>
-                      <div className="font-mono text-lg font-black text-rose-400 bg-slate-950 px-5 py-2 rounded-xl border border-slate-800">
-                        {booking.payment?.transaction_reference || `TXN-QSHOW${booking.booking_id}`}
+                    {/* Entrance Code Pass & Footer */}
+                    <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="text-xs uppercase font-extrabold tracking-wider text-slate-400">
+                          Multiplex Entrance Passcode
+                        </div>
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          Show this code at the ticket gate for entry
+                        </div>
+                      </div>
+
+                      <div className="font-mono text-base sm:text-lg font-black text-rose-400 bg-slate-950 px-5 py-2.5 rounded-xl border border-slate-800 tracking-wider shadow-inner">
+                        {refCode}
                       </div>
                     </div>
                   </div>

@@ -26,6 +26,18 @@ class SeatBatchCreate(BaseModel):
     seat_type: str = "Regular"
 
 
+class TheaterBase(BaseModel):
+    name: str
+    city: str
+    address: str
+
+
+class TheaterSimpleOut(TheaterBase):
+    theater_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class HallBase(BaseModel):
     hall_name: str
     total_capacity: int
@@ -39,14 +51,9 @@ class HallOut(HallBase):
     hall_id: int
     theater_id: int
     seats: List[SeatOut] = []
+    theater: Optional[TheaterSimpleOut] = None
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class TheaterBase(BaseModel):
-    name: str
-    city: str
-    address: str
 
 
 class TheaterCreate(TheaterBase):

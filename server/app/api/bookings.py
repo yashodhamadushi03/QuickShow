@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import or_
 from typing import List, Optional
 import uuid
 from decimal import Decimal
@@ -241,18 +242,42 @@ def create_booking(
 
 
 @router.get("/bookings/my", response_model=List[BookingOut])
+@router.get("/user/bookings", response_model=List[BookingOut])
 def get_my_bookings(
+    email: Optional[str] = Query(None, description="Optional customer email to filter personal tickets"),
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Retrieve all bookings of the currently authenticated user."""
-    target_user_id = current_user.user_id if current_user else 1
-    return (
-        db.query(Booking)
-        .filter(Booking.user_id == target_user_id)
-        .order_by(Booking.created_at.desc())
-        .all()
-    )
+    """
+    Retrieve real-time user bookings directly from MySQL:
+    - Filters by authenticated JWT user, or by email query param (e.g. from Clerk or guest checkout).
+    - If neither is provided, falls back to latest bookings ordered by created_at.desc().
+    - Always orders newest bookings first so new reservations immediately appear at the top.
+    """
+    query = db.query(Booking)
+
+    # 1. If email is provided
+    if email and email.strip():
+        clean_email = email.strip().lower()
+        query = query.filter(
+            or_(
+                Booking.customer_email.ilike(clean_email),
+                Booking.user.has(User.email.ilike(clean_email))
+            )
+        )
+    # 2. If authenticated via Bearer token
+    elif current_user:
+        query = query.filter(
+            or_(
+                Booking.user_id == current_user.user_id,
+                Booking.customer_email.ilike(current_user.email)
+            )
+        )
+    # 3. Fallback: return recent confirmed/all bookings so guest/sandbox reservations show up
+    else:
+        pass
+
+    return query.order_by(Booking.created_at.desc()).all()
 
 
 @router.get("/bookings/{booking_id}", response_model=BookingOut)

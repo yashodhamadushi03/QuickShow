@@ -8,11 +8,13 @@ import { Heart, PlayCircle } from 'lucide-react';
 import DateSelect from '../components/DateSelect';
 import MovieCard from '../components/MovieCard';
 import toast from 'react-hot-toast';
+import { isMovieFavourite, toggleFavourite } from '../lib/favourites';
 
 const MovieDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [show, setShow] = useState(null);
+  const [isFav, setIsFav] = useState(false);
 
   const getShow = async () => {
     // 1. Check in dummyShowsData
@@ -73,6 +75,43 @@ const MovieDetails = () => {
     }
   };
 
+  useEffect(() => {
+    if (show?.movie) {
+      setIsFav(isMovieFavourite(show.movie));
+    }
+  }, [show]);
+
+  useEffect(() => {
+    const handleFavUpdate = () => {
+      if (show?.movie) {
+        setIsFav(isMovieFavourite(show.movie));
+      }
+    };
+    window.addEventListener("favouritesUpdated", handleFavUpdate);
+    window.addEventListener("storage", handleFavUpdate);
+    return () => {
+      window.removeEventListener("favouritesUpdated", handleFavUpdate);
+      window.removeEventListener("storage", handleFavUpdate);
+    };
+  }, [show]);
+
+  const handleToggleFavourite = () => {
+    if (!show?.movie) return;
+    const nowFav = toggleFavourite(show.movie);
+    setIsFav(nowFav);
+    if (nowFav) {
+      toast.success(`"${show.movie.title}" added to Favourites!`, {
+        icon: "❤️",
+        style: { background: "#0f172a", color: "#fff", border: "1px solid #f43f5e" }
+      });
+    } else {
+      toast(`"${show.movie.title}" removed from Favourites`, {
+        icon: "💔",
+        style: { background: "#0f172a", color: "#fca5a5", border: "1px solid #334155" }
+      });
+    }
+  };
+
   return show ? (
     <div className="px-6 md:px-16 lg:px-40 pt-28 md:pt-36 pb-20">
       <div className="flex flex-col md:flex-row gap-10 max-w-6xl mx-auto">
@@ -123,10 +162,22 @@ const MovieDetails = () => {
             </button>
             <button
               type="button"
-              onClick={() => toast.success("Added to Favourites!")}
-              className="w-12 h-12 flex items-center justify-center bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full transition-colors cursor-pointer hover:scale-105"
+              onClick={handleToggleFavourite}
+              title={isFav ? "Remove from Favourites" : "Add to Favourites"}
+              className={`w-12 h-12 flex items-center justify-center rounded-full transition-all duration-300 cursor-pointer hover:scale-110 active:scale-95 ${
+                isFav
+                  ? "bg-rose-500/20 border-2 border-rose-500 shadow-lg shadow-rose-500/40 text-rose-500"
+                  : "bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-rose-400"
+              }`}
             >
-              <Heart size={20} className="text-rose-500" />
+              <Heart
+                size={22}
+                className={`transition-all duration-300 ${
+                  isFav
+                    ? "text-rose-500 fill-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.8)] scale-110"
+                    : "text-slate-400 hover:text-rose-400"
+                }`}
+              />
             </button>
           </div>
         </div>
