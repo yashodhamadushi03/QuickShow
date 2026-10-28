@@ -64,8 +64,22 @@ const AdminDashboard = () => {
     if (adminToken) {
       setIsAuthenticated(true);
       fetchDashboardData(adminToken);
+
+      // Auto-poll live bookings & analytics every 8 seconds for real-time synchronization
+      const pollTimer = setInterval(() => {
+        fetchDashboardData(adminToken, false);
+      }, 8000);
+
+      return () => clearInterval(pollTimer);
     }
   }, [adminToken]);
+
+  // Refetch live database feed immediately when switching tabs
+  useEffect(() => {
+    if (adminToken && (activeTab === "bookings" || activeTab === "analytics" || activeTab === "customers")) {
+      fetchDashboardData(adminToken, false);
+    }
+  }, [activeTab]);
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
@@ -129,15 +143,26 @@ const AdminDashboard = () => {
     toast("Logged out of Admin Portal", { icon: "🔒" });
   };
 
-  const fetchDashboardData = async (token) => {
-    setLoading(true);
+  const fetchDashboardData = async (token, showLoader = true) => {
+    if (showLoader) setLoading(true);
     const headers = { Authorization: `Bearer ${token}` };
+
+    // Robust bookings fetch supporting both /admin/live-bookings and /admin/bookings
+    const fetchLiveBookings = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/admin/live-bookings`, { headers });
+        if (res.ok) return res;
+        return await fetch(`${API_BASE_URL}/admin/bookings`, { headers });
+      } catch {
+        return await fetch(`${API_BASE_URL}/admin/bookings`, { headers }).catch(() => ({ ok: false }));
+      }
+    };
 
     try {
       const [analyticsRes, bookingsRes, customersRes, activitiesRes, occupancyRes, waitlistRes, showtimesRes, moviesRes, theatersRes] =
         await Promise.all([
           fetch(`${API_BASE_URL}/admin/analytics`, { headers }).catch(() => ({ ok: false })),
-          fetch(`${API_BASE_URL}/admin/live-bookings`, { headers }).catch(() => ({ ok: false })),
+          fetchLiveBookings(),
           fetch(`${API_BASE_URL}/admin/customers`, { headers }).catch(() => ({ ok: false })),
           fetch(`${API_BASE_URL}/admin/activities`, { headers }).catch(() => ({ ok: false })),
           fetch(`${API_BASE_URL}/admin/occupancy-heatmap`, { headers }).catch(() => ({ ok: false })),
@@ -148,7 +173,7 @@ const AdminDashboard = () => {
         ]);
 
       if (analyticsRes.ok) setAnalytics(await analyticsRes.json());
-      if (bookingsRes.ok) setLiveBookings(await bookingsRes.json());
+      if (bookingsRes && bookingsRes.ok) setLiveBookings(await bookingsRes.json());
       if (customersRes.ok) setCustomers(await customersRes.json());
       if (activitiesRes.ok) setActivities(await activitiesRes.json());
       if (occupancyRes.ok) setOccupancy(await occupancyRes.json());
@@ -169,7 +194,7 @@ const AdminDashboard = () => {
     } catch (err) {
       console.warn("Using sample admin analytics preview.", err);
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 

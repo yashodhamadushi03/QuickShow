@@ -502,6 +502,7 @@ def get_realtime_analytics(
     }
 
 
+@router.get("/bookings")
 @router.get("/live-bookings")
 def get_live_customer_bookings(
     admin: User = Depends(get_current_admin),
@@ -518,20 +519,36 @@ def get_live_customer_bookings(
         theater = hall.theater if hall else None
         user = b.user
         
-        seats = [f"{bs.seat.row_label}{bs.seat.seat_number}" for bs in b.booking_seats if bs.seat]
+        seat_labels = []
+        for bs in b.booking_seats:
+            if bs.seat:
+                seat_labels.append(f"{bs.seat.row_label}{bs.seat.seat_number}")
+            else:
+                seat_labels.append(f"Seat #{bs.seat_id}")
+
         ref = b.payment.transaction_reference if b.payment else f"TXN-LK{b.booking_id}"
+
+        # Resolve customer name and email
+        cust_name = b.customer_name or (user.name if user and user.name else None)
+        if not cust_name:
+            cust_name = b.customer_email.split('@')[0] if b.customer_email else "Customer"
+
+        cust_email = b.customer_email or (user.email if user else "customer@quickshow.lk")
+        cust_phone = b.customer_phone or (user.phone if user else "")
         
         output.append({
             "booking_id": b.booking_id,
-            "customer_name": user.name if user else (b.customer_email.split('@')[0] if b.customer_email else "Customer"),
-            "customer_email": user.email if user else (b.customer_email or "customer@quickshow.lk"),
+            "customer_name": cust_name,
+            "customer_email": cust_email,
+            "customer_phone": cust_phone,
             "movie_title": movie.title if movie else "Cinema Movie",
             "theater_name": theater.name if theater else "Scope Cinemas",
             "hall_name": hall.hall_name if hall else "Main Screen",
-            "seats": seats if seats else ["Reserved"],
+            "seats": seat_labels if seat_labels else ["Reserved"],
             "total_lkr": float(b.total_amount),
             "status": b.status.value if hasattr(b.status, 'value') else str(b.status),
             "passcode": ref,
+            "transaction_reference": ref,
             "created_at": b.created_at.strftime("%Y-%m-%d %H:%M:%S") if b.created_at else "Recently"
         })
         

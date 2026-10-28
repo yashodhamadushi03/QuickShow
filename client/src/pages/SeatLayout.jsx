@@ -94,20 +94,45 @@ const SeatLayout = () => {
 
   const fetchShowtimeAndSeats = async () => {
     try {
-      const stRes = await fetch(`${API_BASE_URL}/showtimes/${showtimeId}`);
+      let activeShowtimeId = showtimeId;
+      let fetchedShowtime = null;
+
+      // 1. Try to fetch requested showtime directly
+      const stRes = await fetch(`${API_BASE_URL}/showtimes/${activeShowtimeId}`);
       if (stRes.ok) {
-        const stData = await stRes.json();
-        setShowtime(stData);
+        fetchedShowtime = await stRes.json();
+      } else {
+        // If showtimeId was not found (e.g. mock ID), look up real showtime for this movie from backend
+        const movieIdCandidate = passedMovie?.movie_id || passedMovie?.id || passedMovie?._id || parseInt(showtimeIdParam);
+        if (movieIdCandidate) {
+          try {
+            const mStRes = await fetch(`${API_BASE_URL}/movies/${movieIdCandidate}/showtimes`);
+            if (mStRes.ok) {
+              const grouped = await mStRes.json();
+              if (grouped.length > 0 && grouped[0].showtimes?.length > 0) {
+                fetchedShowtime = grouped[0].showtimes[0];
+                activeShowtimeId = fetchedShowtime.showtime_id;
+              }
+            }
+          } catch (e) {
+            console.warn("Could not query movie showtimes:", e);
+          }
+        }
+      }
+
+      if (fetchedShowtime) {
+        setShowtime(fetchedShowtime);
       } else {
         setShowtime({
-          showtime_id: showtimeId,
+          showtime_id: activeShowtimeId,
           base_price: 1500.00,
-          movie: { title: "Dune: Part Two" },
+          movie: { title: passedMovie?.title || "Dune: Part Two" },
           hall: { hall_name: "Screen 1 - Dolby Atmos", theater: { name: "Scope Cinemas - Colombo City Centre" } }
         });
       }
 
-      const seatsRes = await fetch(`${API_BASE_URL}/showtimes/${showtimeId}/seats`);
+      // 2. Fetch seats layout for this showtime
+      const seatsRes = await fetch(`${API_BASE_URL}/showtimes/${activeShowtimeId}/seats`);
       if (seatsRes.ok) {
         const seatsData = await seatsRes.json();
         setSeats(seatsData.length > 0 ? seatsData : generateSriLankanSeatMatrix());
@@ -119,7 +144,7 @@ const SeatLayout = () => {
       setShowtime({
         showtime_id: showtimeId,
         base_price: 1500.00,
-        movie: { title: "Dune: Part Two" },
+        movie: { title: passedMovie?.title || "Dune: Part Two" },
         hall: { hall_name: "Screen 1 - Dolby Atmos", theater: { name: "Scope Cinemas - Colombo City Centre" } }
       });
       setSeats(generateSriLankanSeatMatrix());
@@ -370,7 +395,7 @@ const SeatLayout = () => {
           Authorization: token ? `Bearer ${token}` : "",
         },
         body: JSON.stringify({
-          showtime_id: showtimeId,
+          showtime_id: showtime?.showtime_id || showtimeId,
           seat_ids: selectedSeatIds,
           customer_email: customerEmail,
           customer_name: customerName || cardHolder || "Cinema Fan",

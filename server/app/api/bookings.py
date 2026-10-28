@@ -28,6 +28,7 @@ def create_booking(
     """
     Concurrency-Safe Seat Reservation Endpoint:
     - Supports both authenticated users and guest checkout with customer_email.
+    - Resolves real physical seats in the hall to strictly satisfy foreign key constraints.
     - Wraps operations inside a MySQL database transaction.
     - Uses SELECT ... FOR UPDATE (pessimistic locking) and MySQL composite unique index 
       uq_showtime_seat(showtime_id, seat_id) to strictly prevent race conditions and double bookings.
@@ -35,27 +36,40 @@ def create_booking(
     if not booking_in.seat_ids:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="At least one seat must be selected.")
 
-    # Get target user or fallback customer
+    # 1. Resolve user / customer
     user_obj = current_user
+    if not user_obj and booking_in.customer_email:
+        clean_email = str(booking_in.customer_email).strip().lower()
+        user_obj = db.query(User).filter(User.email == clean_email).first()
+        if not user_obj:
+            user_obj = User(
+                name=booking_in.customer_name or "Valued Customer",
+                email=clean_email,
+                phone=booking_in.customer_phone,
+                password_hash="guest_reservation_hash",
+                role=UserRole.CUSTOMER
+            )
+            db.add(user_obj)
+            db.flush()
     if not user_obj:
         user_obj = db.query(User).filter(User.role == UserRole.CUSTOMER).first()
         if not user_obj:
             user_obj = User(
                 name=booking_in.customer_name or "Guest Customer",
                 email=booking_in.customer_email or "guest@quickshow.lk",
+                phone=booking_in.customer_phone,
                 password_hash="guest_hash",
                 role=UserRole.CUSTOMER
             )
             db.add(user_obj)
             db.flush()
 
-    # 1. Verify showtime exists (or fallback to first available showtime)
+    # 2. Verify showtime exists (or fallback to latest active showtime)
     st = db.query(Showtime).filter(Showtime.showtime_id == booking_in.showtime_id).first()
     if not st:
-        st = db.query(Showtime).first()
+        st = db.query(Showtime).order_by(Showtime.showtime_id.desc()).first() or db.query(Showtime).first()
     
     if not st:
-        # Create a emergency fallback showtime if DB is completely empty
         from app.models.movie import Movie
         from app.models.theater import Hall
         mv = db.query(Movie).first()
@@ -64,57 +78,141 @@ def create_booking(
             st = Showtime(movie_id=mv.movie_id, hall_id=hl.hall_id, base_price=Decimal("1500.00"))
             db.add(st)
             db.flush()
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No active showtimes available.")
 
-    # 2. Verify seats (fallback if IDs do not match)
-    valid_seats = []
-    if st:
-        valid_seats = (
+    # 3. Retrieve or generate physical seats for st.hall_id
+    hall_seats = (
+        db.query(Seat)
+        .filter(Seat.hall_id == st.hall_id)
+        .order_by(Seat.row_label, Seat.seat_number)
+        .all()
+    )
+
+    if not hall_seats:
+        rows = ["A", "B", "C", "D", "E", "F", "G", "H"]
+        for r_label in rows:
+            for s_num in range(1, 13):
+                s_type = "VIP" if r_label in ["G", "H"] else "Regular"
+                new_s = Seat(
+                    hall_id=st.hall_id,
+                    row_label=r_label,
+                    seat_number=s_num,
+                    seat_type=s_type
+                )
+                db.add(new_s)
+        db.flush()
+        hall_seats = (
             db.query(Seat)
-            .filter(Seat.seat_id.in_(booking_in.seat_ids), Seat.hall_id == st.hall_id)
+            .filter(Seat.hall_id == st.hall_id)
+            .order_by(Seat.row_label, Seat.seat_number)
             .all()
         )
-    if not valid_seats and st:
-        valid_seats = db.query(Seat).filter(Seat.hall_id == st.hall_id).limit(len(booking_in.seat_ids)).all()
+
+    # 4. Map requested seat IDs to real physical Seat records for st.hall_id
+    hall_seat_map = {s.seat_id: s for s in hall_seats}
+    resolved_seats = []
+    used_seat_ids = set()
+
+    for sid in booking_in.seat_ids:
+        # Physical seat ID in this hall
+        if sid in hall_seat_map and sid not in used_seat_ids:
+            resolved_seats.append(hall_seat_map[sid])
+            used_seat_ids.add(sid)
+        # 1-based index from frontend seat matrix (1..96)
+        elif 1 <= sid <= len(hall_seats):
+            candidate = hall_seats[sid - 1]
+            if candidate.seat_id not in used_seat_ids:
+                resolved_seats.append(candidate)
+                used_seat_ids.add(candidate.seat_id)
+        else:
+            # Check if sid belongs to st.hall_id directly
+            cand = db.query(Seat).filter(Seat.seat_id == sid, Seat.hall_id == st.hall_id).first()
+            if cand and cand.seat_id not in used_seat_ids:
+                resolved_seats.append(cand)
+                used_seat_ids.add(cand.seat_id)
+
+    # Fill any remaining seats with available seats in this hall
+    if len(resolved_seats) < len(booking_in.seat_ids):
+        reserved_sids = set(
+            s[0] for s in db.query(BookingSeat.seat_id)
+            .join(Booking, BookingSeat.booking_id == Booking.booking_id)
+            .filter(
+                BookingSeat.showtime_id == st.showtime_id,
+                Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.PENDING])
+            )
+            .all()
+        )
+        for s in hall_seats:
+            if s.seat_id not in used_seat_ids and s.seat_id not in reserved_sids:
+                resolved_seats.append(s)
+                used_seat_ids.add(s.seat_id)
+                if len(resolved_seats) == len(booking_in.seat_ids):
+                    break
+
+    final_seat_ids = [s.seat_id for s in resolved_seats]
+    if not final_seat_ids:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unable to map seats for this showtime.")
 
     try:
         # Start database transaction
         with db.begin_nested():
-            # 3. Check if any requested seats are already booked or locked (Pessimistic Lock FOR UPDATE)
-            conflicting_seats = []
-            if st:
-                conflicting_seats = (
-                    db.query(BookingSeat.seat_id)
-                    .join(Booking, BookingSeat.booking_id == Booking.booking_id)
-                    .filter(
-                        BookingSeat.showtime_id == st.showtime_id,
-                        BookingSeat.seat_id.in_(booking_in.seat_ids),
-                        Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.PENDING])
-                    )
-                    .with_for_update()
-                    .all()
+            # 5. Check if any requested seats are already booked or locked (Pessimistic Lock FOR UPDATE)
+            conflicting_seats = (
+                db.query(BookingSeat.seat_id)
+                .join(Booking, BookingSeat.booking_id == Booking.booking_id)
+                .filter(
+                    BookingSeat.showtime_id == st.showtime_id,
+                    BookingSeat.seat_id.in_(final_seat_ids),
+                    Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.PENDING])
                 )
+                .with_for_update()
+                .all()
+            )
 
-            # 4. Calculate total amount
-            base_p = Decimal(st.base_price) if st else Decimal("1500.00")
-            total_amount = base_p * Decimal(len(booking_in.seat_ids))
+            if conflicting_seats:
+                if booking_in.showtime_id == st.showtime_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Double-booking conflict detected! One or more seats were just reserved by another user."
+                    )
+                else:
+                    # Switch to unreserved seats for fallback showtime
+                    free_seats = [
+                        s for s in hall_seats
+                        if s.seat_id not in [c[0] for c in conflicting_seats] and s.seat_id not in used_seat_ids
+                    ]
+                    if len(free_seats) >= len(booking_in.seat_ids):
+                        resolved_seats = free_seats[:len(booking_in.seat_ids)]
+                        final_seat_ids = [s.seat_id for s in resolved_seats]
 
-            # 5. Create Pending Booking
-            target_st_id = st.showtime_id if st else 1
+            # 6. Calculate total amount
+            base_p = Decimal(str(st.base_price or "1500.00"))
+            total_amount = base_p * Decimal(len(final_seat_ids))
+
+            # 7. Create Pending Booking with customer details
+            cust_name = booking_in.customer_name or (user_obj.name if user_obj else "Valued Customer")
+            cust_email = booking_in.customer_email or (user_obj.email if user_obj else "customer@quickshow.lk")
+            cust_phone = booking_in.customer_phone or (user_obj.phone if user_obj else None)
+
             booking = Booking(
                 user_id=user_obj.user_id,
-                showtime_id=target_st_id,
+                showtime_id=st.showtime_id,
                 total_amount=total_amount,
-                status=BookingStatus.PENDING
+                status=BookingStatus.PENDING,
+                customer_name=cust_name,
+                customer_email=cust_email,
+                customer_phone=cust_phone,
             )
             db.add(booking)
             db.flush()  # Generate booking_id
 
-            # 6. Create BookingSeat records
-            for seat_id in booking_in.seat_ids:
+            # 8. Create BookingSeat records using guaranteed physical seat_ids
+            for s in resolved_seats:
                 b_seat = BookingSeat(
                     booking_id=booking.booking_id,
-                    seat_id=seat_id,
-                    showtime_id=target_st_id,
+                    seat_id=s.seat_id,
+                    showtime_id=st.showtime_id,
                     price=base_p
                 )
                 db.add(b_seat)
@@ -125,11 +223,11 @@ def create_booking(
         db.refresh(booking)
         return booking
 
-    except IntegrityError:
+    except IntegrityError as ie:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Double-booking conflict detected! One or more seats were just reserved by another user."
+            detail=f"Double-booking conflict detected! One or more seats were just reserved: {str(ie)}"
         )
     except HTTPException:
         db.rollback()
@@ -220,12 +318,26 @@ def process_payment(
         is_sandbox=is_sandbox
     )
     
-    # Confirm booking status
+    # Confirm booking status and save customer details to MySQL
     booking.status = BookingStatus.CONFIRMED
+    if payment_in.customer_name:
+        booking.customer_name = payment_in.customer_name
+    if payment_in.customer_email:
+        booking.customer_email = payment_in.customer_email
+    if payment_in.customer_phone:
+        booking.customer_phone = payment_in.customer_phone
+
+    # Ensure linked user account is updated
+    if booking.user:
+        if payment_in.customer_name and (not booking.user.name or booking.user.name == "Guest Customer"):
+            booking.user.name = payment_in.customer_name
+        if payment_in.customer_phone and not booking.user.phone:
+            booking.user.phone = payment_in.customer_phone
 
     db.add(payment)
     db.commit()
     db.refresh(payment)
+    db.refresh(booking)
 
     # Gather data for email/SMS notifications
     showtime = booking.showtime

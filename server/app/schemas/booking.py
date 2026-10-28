@@ -31,6 +31,9 @@ class BookingOut(BaseModel):
     showtime_id: int
     total_amount: Decimal
     status: BookingStatus
+    customer_name: Optional[str] = None
+    customer_email: Optional[str] = None
+    customer_phone: Optional[str] = None
     created_at: datetime
     showtime: Optional[ShowtimeOut] = None
     booking_seats: List[BookingSeatOut] = []
