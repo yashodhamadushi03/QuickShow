@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
 
 import Home from './pages/Home';
 import Navbar from './components/Navbar';
@@ -22,11 +23,48 @@ import Footer from './components/Footer';
 
 const App = () => {
   const location = useLocation();
+  const { user, isLoaded, isSignedIn } = useUser();
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isAuthRoute =
     location.pathname.startsWith('/sign-in') ||
     location.pathname.startsWith('/login') ||
     location.pathname.startsWith('/sign-up');
+
+  // Automatically synchronize user profile into MySQL database whenever registered or signed in
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !user) return;
+
+    const email = user.primaryEmailAddress?.emailAddress || user.emailAddresses?.[0]?.emailAddress;
+    if (!email) return;
+
+    const name =
+      user.fullName ||
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+      user.username ||
+      'Customer';
+    const phone =
+      user.primaryPhoneNumber?.phoneNumber || user.phoneNumbers?.[0]?.phoneNumber || null;
+
+    const syncKey = `synced_${user.id}_${user.updatedAt ? new Date(user.updatedAt).getTime() : ''}`;
+    if (sessionStorage.getItem(syncKey)) return;
+
+    fetch('http://localhost:8000/api/auth/sync-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        name,
+        phone,
+      }),
+    })
+      .then((res) => {
+        if (res.ok) {
+          sessionStorage.setItem(syncKey, 'true');
+        }
+      })
+      .catch((err) => console.warn('User profile sync to MySQL:', err));
+  }, [isLoaded, isSignedIn, user?.id, user?.updatedAt]);
+
 
   return (
     <>

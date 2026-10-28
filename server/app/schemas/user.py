@@ -32,3 +32,16 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserOut
+
+
+class UserSync(BaseModel):
+    name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    role: Optional[UserRole] = UserRole.CUSTOMER
+
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[EmailStr] = None

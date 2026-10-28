@@ -20,7 +20,12 @@ import {
   Coffee,
   Calendar,
   PlusCircle,
-  Sparkles
+  Sparkles,
+  Mail,
+  Phone,
+  UserCheck,
+  UserPlus,
+  CreditCard
 } from "lucide-react";
 import toast from "react-hot-toast";
 import MovieManagement from "../components/MovieManagement";
@@ -51,6 +56,7 @@ const AdminDashboard = () => {
   const [adminTheaters, setAdminTheaters] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
 
   // Showtime Scheduler Form State
   const [newHallId, setNewHallId] = useState("");
@@ -158,12 +164,23 @@ const AdminDashboard = () => {
       }
     };
 
+    // Robust customer profiles fetch supporting both /admin/users and /admin/customers
+    const fetchCustomerProfiles = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/admin/users`, { headers });
+        if (res.ok) return res;
+        return await fetch(`${API_BASE_URL}/admin/customers`, { headers });
+      } catch {
+        return await fetch(`${API_BASE_URL}/admin/customers`, { headers }).catch(() => ({ ok: false }));
+      }
+    };
+
     try {
       const [analyticsRes, bookingsRes, customersRes, activitiesRes, occupancyRes, waitlistRes, showtimesRes, moviesRes, theatersRes] =
         await Promise.all([
           fetch(`${API_BASE_URL}/admin/analytics`, { headers }).catch(() => ({ ok: false })),
           fetchLiveBookings(),
-          fetch(`${API_BASE_URL}/admin/customers`, { headers }).catch(() => ({ ok: false })),
+          fetchCustomerProfiles(),
           fetch(`${API_BASE_URL}/admin/activities`, { headers }).catch(() => ({ ok: false })),
           fetch(`${API_BASE_URL}/admin/occupancy-heatmap`, { headers }).catch(() => ({ ok: false })),
           fetch(`${API_BASE_URL}/admin/waitlist-monitor`, { headers }).catch(() => ({ ok: false })),
@@ -174,8 +191,11 @@ const AdminDashboard = () => {
 
       if (analyticsRes.ok) setAnalytics(await analyticsRes.json());
       if (bookingsRes && bookingsRes.ok) setLiveBookings(await bookingsRes.json());
-      if (customersRes.ok) setCustomers(await customersRes.json());
-      if (activitiesRes.ok) setActivities(await activitiesRes.json());
+      if (customersRes && customersRes.ok) {
+        const cData = await customersRes.json();
+        setCustomers(Array.isArray(cData) ? cData : []);
+      }
+      if (activitiesRes && activitiesRes.ok) setActivities(await activitiesRes.json());
       if (occupancyRes.ok) setOccupancy(await occupancyRes.json());
       if (waitlistRes.ok) setWaitlist(await waitlistRes.json());
       if (showtimesRes.ok) setScheduledShowtimes(await showtimesRes.json());
@@ -284,6 +304,26 @@ const AdminDashboard = () => {
 
   const displayBookings = liveBookings;
   const displayActivities = activities;
+
+  const filteredCustomers = customers.filter((c) => {
+    if (!customerSearch.trim()) return true;
+    const q = customerSearch.toLowerCase();
+    return (
+      (c.name && c.name.toLowerCase().includes(q)) ||
+      (c.email && c.email.toLowerCase().includes(q)) ||
+      (c.phone && c.phone.toLowerCase().includes(q)) ||
+      (c.role && c.role.toLowerCase().includes(q))
+    );
+  });
+
+  const totalCustomerSpend = customers.reduce(
+    (sum, c) => sum + (Number(c.total_spent_lkr) || 0),
+    0
+  );
+  const totalCustomerBookings = customers.reduce(
+    (sum, c) => sum + (Number(c.total_bookings) || 0),
+    0
+  );
 
 
   // If not authenticated, render Admin Login Security Shield Modal
@@ -649,74 +689,255 @@ const AdminDashboard = () => {
 
         {/* TAB 3: CUSTOMER PROFILES & ACTIVITY LOGS */}
         {activeTab === "customers" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Customer Profiles */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Users className="w-5 h-5 text-rose-500" /> Customer Profiles & Total LKR Spend
-              </h3>
+          <div className="space-y-6">
+            {/* Top Customer KPI Metric Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Registered Accounts</span>
+                  <div className="text-2xl font-black text-white mt-1">{customers.length} Users</div>
+                </div>
+                <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl">
+                  <Users className="w-5 h-5" />
+                </div>
+              </div>
 
-              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                {customers && customers.length > 0 ? (
-                  customers.map((c) => (
-                    <div key={c.user_id} className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
-                      <div>
-                        <div className="font-bold text-white text-base">{c.name}</div>
-                        <div className="text-sm text-slate-300">{c.email}</div>
-                        <div className="text-xs sm:text-sm text-slate-400 font-mono mt-1">{c.phone} &bull; Role: {c.role}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-mono font-extrabold text-emerald-400 text-base">
-                          LKR {c.total_spent_lkr?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                        </div>
-                        <div className="text-xs sm:text-sm text-slate-300">{c.total_bookings} Bookings</div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="py-12 text-center text-slate-400">
-                    <Users className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                    <p className="text-base font-semibold text-white">No Customer Profiles</p>
-                    <p className="text-xs sm:text-sm text-slate-400 mt-1">Registered users will appear here automatically.</p>
+              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Customer Spend</span>
+                  <div className="text-2xl font-black text-emerald-400 mt-1">
+                    LKR {totalCustomerSpend.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
-                )}
+                </div>
+                <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                  <DollarSign className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Lifetime Reservations</span>
+                  <div className="text-2xl font-black text-rose-400 mt-1">{totalCustomerBookings} Bookings</div>
+                </div>
+                <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl">
+                  <Ticket className="w-5 h-5" />
+                </div>
               </div>
             </div>
 
-            {/* Live Activity Logs */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Activity className="w-5 h-5 text-rose-500" /> Customer Engagement Activity Logs
-              </h3>
-
-              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                {displayActivities && displayActivities.length > 0 ? (
-                  displayActivities.map((act, i) => (
-                    <div key={i} className="bg-slate-950 border border-slate-800/80 rounded-2xl p-3.5 flex items-start gap-3">
-                      <div className="p-2 bg-rose-500/10 text-rose-400 rounded-xl mt-0.5">
-                        <Activity className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="font-bold text-white">{act.user_name}</span>
-                          <span className="text-xs sm:text-sm text-slate-400 font-mono">{act.timestamp}</span>
-                        </div>
-                        <p className="text-sm text-slate-300 mt-1">{act.details}</p>
-                        {act.amount_lkr > 0 && (
-                          <span className="text-xs sm:text-sm font-mono font-bold text-emerald-400 mt-1 inline-block">
-                            + LKR {act.amount_lkr?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="py-12 text-center text-slate-400">
-                    <Activity className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                    <p className="text-base font-semibold text-white">No Recent Activity Logs</p>
-                    <p className="text-xs sm:text-sm text-slate-400 mt-1">Live customer activities will be logged here as users book tickets.</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Customer Profiles Panel */}
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                  <div>
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      <Users className="w-5 h-5 text-rose-500" /> Dynamic Customer Profiles
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Live accounts synchronized from MySQL database with calculated LKR spend
+                    </p>
                   </div>
-                )}
+                  <span className="px-3 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-full text-xs font-bold self-start sm:self-auto">
+                    {filteredCustomers.length} of {customers.length} Profiles
+                  </span>
+                </div>
+
+                {/* Search Filter Input */}
+                <div className="relative mb-4">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    placeholder="Search by customer name, email, phone, or role..."
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition-colors"
+                  />
+                  {customerSearch && (
+                    <button
+                      onClick={() => setCustomerSearch("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* Customer List */}
+                <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+                  {filteredCustomers && filteredCustomers.length > 0 ? (
+                    filteredCustomers.map((c) => {
+                      const roleNormalized = (c.role || "customer").toLowerCase();
+                      const isAdmin = roleNormalized === "admin";
+                      const isManager = roleNormalized === "theater_manager";
+                      const initials = (c.name || "C")
+                        .split(" ")
+                        .map((n) => n[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase();
+
+                      return (
+                        <div
+                          key={c.user_id || c.id}
+                          className="bg-slate-950 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-4 transition-all duration-200"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3">
+                              <div
+                                className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-sm border shadow-inner shrink-0 ${
+                                  isAdmin
+                                    ? "bg-rose-500/15 border-rose-500/30 text-rose-400"
+                                    : isManager
+                                    ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
+                                    : "bg-sky-500/15 border-sky-500/30 text-sky-400"
+                                }`}
+                              >
+                                {initials}
+                              </div>
+
+                              <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-bold text-white text-base">{c.name}</span>
+                                  <span
+                                    className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
+                                      isAdmin
+                                        ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                                        : isManager
+                                        ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                                        : "bg-slate-800 text-slate-300 border border-slate-700"
+                                    }`}
+                                  >
+                                    {c.role || "Customer"}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1.5 text-xs text-slate-300 mt-1">
+                                  <Mail className="w-3.5 h-3.5 text-slate-500" />
+                                  <span>{c.email}</span>
+                                </div>
+
+                                {c.phone && (
+                                  <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5 font-mono">
+                                    <Phone className="w-3.5 h-3.5 text-slate-500" />
+                                    <span>{c.phone}</span>
+                                  </div>
+                                )}
+
+                                {c.recent_movie && (
+                                  <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-300 text-xs border border-rose-500/20">
+                                    <Film className="w-3 h-3 text-rose-400" />
+                                    <span>Latest: {c.recent_movie}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="text-right flex flex-col items-end shrink-0">
+                              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Spend</span>
+                              <div className="font-mono font-black text-emerald-400 text-base sm:text-lg">
+                                LKR {(Number(c.total_spent_lkr) || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </div>
+                              <div className="mt-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-300">
+                                <Ticket className="w-3 h-3 text-rose-400" />
+                                {c.total_bookings} {c.total_bookings === 1 ? "Booking" : "Bookings"}
+                              </div>
+                              {c.last_active && (
+                                <span className="text-[10px] text-slate-500 mt-1.5 font-mono">
+                                  Active: {c.last_active}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="py-12 text-center text-slate-400">
+                      <Users className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                      <p className="text-base font-semibold text-white">No Matching Customer Profiles</p>
+                      <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                        {customerSearch ? "Try adjusting your search query." : "Registered users will appear here automatically."}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Live Activity Logs Panel */}
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      <Activity className="w-5 h-5 text-rose-500" /> Live Engagement Activity Logs
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Real-time reservations and customer registrations from database
+                    </p>
+                  </div>
+                  <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-bold">
+                    {displayActivities.length} Live Logs
+                  </span>
+                </div>
+
+                <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+                  {displayActivities && displayActivities.length > 0 ? (
+                    displayActivities.map((act, i) => {
+                      const isRegistration = act.type === "USER_REGISTRATION";
+
+                      return (
+                        <div
+                          key={act.activity_id || i}
+                          className="bg-slate-950 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-3.5 flex items-start gap-3 transition-colors"
+                        >
+                          <div
+                            className={`p-2 rounded-xl mt-0.5 ${
+                              isRegistration
+                                ? "bg-purple-500/15 text-purple-400 border border-purple-500/20"
+                                : "bg-rose-500/15 text-rose-400 border border-rose-500/20"
+                            }`}
+                          >
+                            {isRegistration ? <UserPlus className="w-4 h-4" /> : <Ticket className="w-4 h-4" />}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-center text-sm gap-2">
+                              <span className="font-bold text-white truncate">{act.user_name}</span>
+                              <span className="text-xs text-slate-400 font-mono shrink-0">{act.timestamp}</span>
+                            </div>
+
+                            <p className="text-xs sm:text-sm text-slate-300 mt-1 break-words">{act.details}</p>
+
+                            <div className="flex items-center gap-2 mt-2">
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                  isRegistration
+                                    ? "bg-purple-500/10 text-purple-300 border border-purple-500/20"
+                                    : "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
+                                }`}
+                              >
+                                {isRegistration ? "New Registration" : "Ticket Reserved"}
+                              </span>
+
+                              {act.amount_lkr > 0 && (
+                                <span className="text-xs font-mono font-bold text-emerald-400">
+                                  + LKR {act.amount_lkr?.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="py-12 text-center text-slate-400">
+                      <Activity className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                      <p className="text-base font-semibold text-white">No Recent Activity Logs</p>
+                      <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                        Live customer activities will be logged here as users register or book tickets.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

@@ -632,6 +632,7 @@ def get_waitlist_monitor(
     return output
 
 
+@router.get("/users")
 @router.get("/customers")
 def get_admin_customers(
     admin: User = Depends(get_current_admin),
@@ -640,26 +641,49 @@ def get_admin_customers(
     """Admin: Real customer profiles with calculated booking count and total LKR spend from database."""
     from app.models.booking import Booking, BookingStatus
     from app.models.user import User
+    from sqlalchemy import or_
+    from datetime import datetime
     
-    users = db.query(User).all()
+    users = db.query(User).order_by(User.user_id.desc()).all()
     output = []
     for u in users:
+        # Match bookings by user_id OR customer_email matching user's email
         confirmed_bookings = db.query(Booking).filter(
-            Booking.user_id == u.user_id,
-            Booking.status == BookingStatus.CONFIRMED
+            or_(
+                Booking.user_id == u.user_id,
+                (Booking.customer_email != None) & (Booking.customer_email.ilike(u.email))
+            ),
+            or_(
+                Booking.status == BookingStatus.CONFIRMED,
+                Booking.status == "Confirmed"
+            )
         ).all()
         
-        total_spent = sum([float(b.total_amount) for b in confirmed_bookings])
+        total_spent = sum([float(b.total_amount) for b in confirmed_bookings if b.total_amount is not None])
         role_str = u.role.value if hasattr(u.role, 'value') else str(u.role)
+        
+        booking_dates = [b.created_at for b in confirmed_bookings if b.created_at]
+        last_booking = max(booking_dates, default=None)
+        
+        # Most recent movie booked
+        recent_movie = None
+        if confirmed_bookings:
+            latest_b = max(confirmed_bookings, key=lambda x: x.created_at or datetime.min)
+            if latest_b and latest_b.showtime and latest_b.showtime.movie:
+                recent_movie = latest_b.showtime.movie.title
         
         output.append({
             "user_id": u.user_id,
+            "id": u.user_id,
             "name": u.name or "Customer",
             "email": u.email,
             "phone": u.phone or "+94 77 123 4567",
             "role": role_str,
             "total_bookings": len(confirmed_bookings),
-            "total_spent_lkr": total_spent
+            "total_spent_lkr": round(total_spent, 2),
+            "created_at": u.created_at.strftime("%Y-%m-%d %H:%M:%S") if u.created_at else None,
+            "last_active": last_booking.strftime("%b %d, %Y") if last_booking else (u.created_at.strftime("%b %d, %Y") if u.created_at else "Active"),
+            "recent_movie": recent_movie
         })
         
     return output
@@ -670,14 +694,17 @@ def get_admin_activities(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Admin: Real customer activity logs from database bookings."""
+    """Admin: Real customer activity logs from database bookings and user registrations."""
     from app.models.booking import Booking
+    from app.models.user import User
+    from datetime import datetime
     
-    bookings = db.query(Booking).order_by(Booking.created_at.desc()).limit(25).all()
+    bookings = db.query(Booking).order_by(Booking.created_at.desc()).limit(30).all()
+    recent_users = db.query(User).order_by(User.created_at.desc()).limit(15).all()
     output = []
     
     for b in bookings:
-        user_name = b.user.name if b.user else "Customer"
+        user_name = b.customer_name or (b.user.name if b.user else "Customer")
         movie_title = b.showtime.movie.title if b.showtime and b.showtime.movie else "Cinema Movie"
         theater_name = b.showtime.hall.theater.name if b.showtime and b.showtime.hall and b.showtime.hall.theater else "Scope Cinemas"
         seats = [f"{bs.seat.row_label}{bs.seat.seat_number}" for bs in b.booking_seats if bs.seat]
@@ -685,15 +712,35 @@ def get_admin_activities(
         time_str = b.created_at.strftime("%b %d, %I:%M %p") if b.created_at else "Recently"
         
         output.append({
-            "activity_id": f"ACT-{b.booking_id:04d}",
+            "activity_id": f"ACT-BK-{b.booking_id:04d}",
             "type": "TICKET_RESERVATION",
             "user_name": user_name,
             "details": f"Reserved seats {seats_str} for '{movie_title}' at {theater_name}",
             "timestamp": time_str,
-            "amount_lkr": float(b.total_amount)
+            "amount_lkr": float(b.total_amount) if b.total_amount else 0.0,
+            "_raw_dt": b.created_at or datetime.min
         })
         
-    return output
+    for u in recent_users:
+        if u.created_at:
+            time_str = u.created_at.strftime("%b %d, %I:%M %p")
+            output.append({
+                "activity_id": f"ACT-REG-{u.user_id:04d}",
+                "type": "USER_REGISTRATION",
+                "user_name": u.name or "New Customer",
+                "details": f"New user account registered ({u.email})",
+                "timestamp": time_str,
+                "amount_lkr": 0.0,
+                "_raw_dt": u.created_at
+            })
+            
+    # Sort chronologically descending
+    output.sort(key=lambda x: x["_raw_dt"], reverse=True)
+    for act in output:
+        act.pop("_raw_dt", None)
+        
+    return output[:30]
+
 
 
 

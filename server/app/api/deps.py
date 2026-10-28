@@ -13,25 +13,24 @@ def get_current_user_optional(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme),
     db: Session = Depends(get_db)
 ) -> Optional[User]:
-    """Extract current user if Bearer token present, else return None or default user."""
+    """Extract current user if Bearer token present, else return None."""
     if not credentials:
-        return db.query(User).filter(User.role == UserRole.CUSTOMER).first()
+        return None
     
     token = credentials.credentials
     payload = decode_access_token(token)
     if not payload:
-        return db.query(User).filter(User.role == UserRole.CUSTOMER).first()
+        return None
         
     user_id_str: str = payload.get("sub")
     if not user_id_str:
-        return db.query(User).filter(User.role == UserRole.CUSTOMER).first()
+        return None
     
     try:
         user_id = int(user_id_str)
-        user = db.query(User).filter(User.user_id == user_id).first()
-        return user or db.query(User).filter(User.role == UserRole.CUSTOMER).first()
+        return db.query(User).filter(User.user_id == user_id).first()
     except Exception:
-        return db.query(User).filter(User.role == UserRole.CUSTOMER).first()
+        return None
 
 
 def get_current_user(

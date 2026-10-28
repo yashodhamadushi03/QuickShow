@@ -99,7 +99,73 @@ def admin_login(user_credentials: UserLogin, db: Session = Depends(get_db)):
         )
 
 
+from app.schemas.user import UserCreate, UserLogin, UserOut, Token, UserSync, UserUpdate
+from app.api.deps import get_current_user, get_current_user_optional
+from typing import Optional
+
+
 @router.get("/me", response_model=UserOut)
 def get_me(current_user: User = Depends(get_current_user)):
     """Get profile of current authenticated user."""
     return current_user
+
+
+@router.post("/sync-user", response_model=UserOut, status_code=status.HTTP_200_OK)
+def sync_user(user_sync: UserSync, db: Session = Depends(get_db)):
+    """
+    Sync or auto-register a user profile (e.g. from Clerk authentication or frontend profile update).
+    Saves immediately to MySQL users table.
+    """
+    clean_email = str(user_sync.email).strip().lower()
+    user = db.query(User).filter(User.email == clean_email).first()
+    if not user:
+        user = User(
+            name=user_sync.name or "Valued Customer",
+            email=clean_email,
+            phone=user_sync.phone,
+            password_hash="clerk_oauth_hash",
+            role=user_sync.role or UserRole.CUSTOMER
+        )
+        db.add(user)
+    else:
+        if user_sync.name and user_sync.name.strip():
+            user.name = user_sync.name.strip()
+        if user_sync.phone and user_sync.phone.strip():
+            user.phone = user_sync.phone.strip()
+        if user_sync.role:
+            user.role = user_sync.role
+
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.put("/profile", response_model=UserOut)
+def update_profile(
+    user_update: UserUpdate,
+    email: Optional[str] = None,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """
+    Update profile details (name, phone) for authenticated user or specified email.
+    """
+    target_user = None
+    if email and email.strip():
+        target_user = db.query(User).filter(User.email == email.strip().lower()).first()
+    if not target_user and current_user:
+        target_user = current_user
+    if not target_user and user_update.email:
+        target_user = db.query(User).filter(User.email == str(user_update.email).strip().lower()).first()
+
+    if not target_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User account not found")
+
+    if user_update.name and user_update.name.strip():
+        target_user.name = user_update.name.strip()
+    if user_update.phone and user_update.phone.strip():
+        target_user.phone = user_update.phone.strip()
+
+    db.commit()
+    db.refresh(target_user)
+    return target_user

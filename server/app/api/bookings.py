@@ -37,9 +37,9 @@ def create_booking(
     if not booking_in.seat_ids:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="At least one seat must be selected.")
 
-    # 1. Resolve user / customer
-    user_obj = current_user
-    if not user_obj and booking_in.customer_email:
+    # 1. Resolve user / customer profile
+    user_obj = None
+    if booking_in.customer_email:
         clean_email = str(booking_in.customer_email).strip().lower()
         user_obj = db.query(User).filter(User.email == clean_email).first()
         if not user_obj:
@@ -47,11 +47,19 @@ def create_booking(
                 name=booking_in.customer_name or "Valued Customer",
                 email=clean_email,
                 phone=booking_in.customer_phone,
-                password_hash="guest_reservation_hash",
+                password_hash="customer_reservation_hash",
                 role=UserRole.CUSTOMER
             )
             db.add(user_obj)
             db.flush()
+        else:
+            if booking_in.customer_name and (not user_obj.name or user_obj.name in ["Guest Customer", "Valued Customer"]):
+                user_obj.name = booking_in.customer_name
+            if booking_in.customer_phone and not user_obj.phone:
+                user_obj.phone = booking_in.customer_phone
+            db.flush()
+    elif current_user:
+        user_obj = current_user
     if not user_obj:
         user_obj = db.query(User).filter(User.role == UserRole.CUSTOMER).first()
         if not user_obj:
