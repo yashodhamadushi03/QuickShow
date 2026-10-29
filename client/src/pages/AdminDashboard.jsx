@@ -329,63 +329,63 @@ const AdminDashboard = () => {
   // If not authenticated, render Admin Login Security Shield Modal
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-          <div className="w-16 h-16 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Lock className="w-8 h-8" />
+      <div className="min-h-screen bg-[#09090b] text-white flex items-center justify-center p-4 selection:bg-rose-500/30">
+        <div className="w-full max-w-md bg-zinc-900/70 border border-zinc-800/80 rounded-2xl p-7 sm:p-8 backdrop-blur-md shadow-xl relative overflow-hidden">
+          <div className="w-12 h-12 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl flex items-center justify-center mx-auto mb-5">
+            <Lock className="w-6 h-6" />
           </div>
 
-          <h2 className="text-2xl font-extrabold text-white text-center mb-1">Admin Security Portal</h2>
-          <p className="text-slate-300 text-sm text-center mb-6">
+          <h2 className="text-2xl font-bold tracking-tight text-white text-center mb-1">Admin Security Portal</h2>
+          <p className="text-zinc-400 text-sm text-center mb-6">
             Sign in with Cinema Administrator credentials to access live monitoring and analytics.
           </p>
 
           <form onSubmit={handleAdminLogin} className="space-y-4">
             <div>
-              <label className="block text-xs sm:text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2">Admin Email</label>
+              <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Admin Email</label>
               <input
                 type="email"
                 required
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
                 placeholder="admin@quickshow.lk"
-                className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+                className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors placeholder:text-zinc-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2">Password</label>
+              <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Password</label>
               <input
                 type="password"
                 required
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+                className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors placeholder:text-zinc-500"
               />
             </div>
 
             <button
               type="submit"
               disabled={isLoggingIn}
-              className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+              className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-medium rounded-xl text-sm shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer mt-2"
             >
               {isLoggingIn ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Authenticating...
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Authenticating...</span>
                 </>
               ) : (
                 <>
-                  <ShieldCheck className="w-5 h-5" /> Access Admin Portal
+                  <ShieldCheck className="w-4 h-4" /> <span>Access Admin Portal</span>
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-slate-800 text-center">
-            <p className="text-xs text-slate-400 font-mono">
-              Default Admin: <strong>admin@quickshow.lk</strong> / <strong>admin123</strong>
+          <div className="mt-6 pt-4 border-t border-zinc-800/80 text-center">
+            <p className="text-xs text-zinc-500 font-mono">
+              Default Admin: <strong className="text-zinc-400">admin@quickshow.lk</strong> / <strong className="text-zinc-400">admin123</strong>
             </p>
           </div>
         </div>
@@ -394,155 +394,175 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white pt-24 pb-16 px-4 sm:px-8 lg:px-12">
+    <div className="min-h-screen bg-[#09090b] text-white pt-24 pb-20 px-4 sm:px-8 lg:px-12 selection:bg-rose-500/30">
       {/* Admin Top Banner */}
-      <div className="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+      <div className="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/80 pb-6">
         <div>
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 text-rose-400 text-xs sm:text-sm font-semibold mb-2 border border-rose-500/20">
-            <ShieldCheck className="w-4 h-4" /> Cinema Operations & RBAC Control
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-xs font-semibold mb-2.5 border border-rose-500/20">
+            <ShieldCheck className="w-3.5 h-3.5" /> Cinema Operations & RBAC Control
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
             Customer Activity & Real-Time Analytics Dashboard
           </h1>
-          <p className="text-slate-300 text-sm mt-1">
+          <p className="text-zinc-400 text-sm mt-1 max-w-2xl">
             Live revenue feeds, hall occupancy fill rates, and customer reservation logs across Sri Lanka branches.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={() => fetchDashboardData(adminToken)}
-            className="p-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-slate-300 hover:text-white transition-colors"
+            className="p-2.5 bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-zinc-300 hover:text-white transition-colors cursor-pointer"
             title="Refresh Real-time Feeds"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-rose-500" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-rose-500" : ""}`} />
           </button>
 
           <button
             onClick={handleLogout}
-            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-rose-400 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors"
+            className="px-3.5 py-2.5 bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 text-rose-400 hover:text-rose-300 rounded-xl text-xs sm:text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer"
           >
-            <LogOut className="w-4 h-4" /> Sign Out
+            <LogOut className="w-3.5 h-3.5" /> <span>Sign Out</span>
           </button>
         </div>
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm hover:border-zinc-700/80 transition-all duration-200">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">Total Revenue</span>
-            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
-              <TrendingUp className="w-5 h-5" />
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Total Revenue</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-emerald-400">
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
             LKR {displayAnalytics.total_revenue_lkr?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
           </div>
-          <div className="text-xs sm:text-sm text-slate-400 mt-1.5">Islandwide ticket & F&B sales</div>
+          <div className="text-xs text-zinc-500 mt-1.5">Islandwide ticket & F&B sales</div>
         </div>
 
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm hover:border-zinc-700/80 transition-all duration-200">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">Total Tickets Sold</span>
-            <div className="p-2 bg-rose-500/10 text-rose-400 rounded-lg">
-              <Ticket className="w-5 h-5" />
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Total Tickets Sold</span>
+            <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center">
+              <Ticket className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-white">
-            {displayAnalytics.total_tickets_sold} <span className="text-sm font-normal text-slate-400">Seats</span>
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            {displayAnalytics.total_tickets_sold} <span className="text-sm font-normal text-zinc-400">Seats</span>
           </div>
-          <div className="text-xs sm:text-sm text-emerald-400 font-medium mt-1.5">Confirmed reservations</div>
+          <div className="text-xs text-emerald-400 font-medium mt-1.5">Confirmed reservations</div>
         </div>
 
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm hover:border-zinc-700/80 transition-all duration-200">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">Hall Fill Rate</span>
-            <div className="p-2 bg-sky-500/10 text-sky-400 rounded-lg">
-              <BarChart3 className="w-5 h-5" />
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Hall Fill Rate</span>
+            <div className="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center">
+              <BarChart3 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-sky-400">
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
             {displayAnalytics.average_fill_rate_percent}%
           </div>
-          <div className="text-xs sm:text-sm text-slate-400 mt-1.5">Peak evening showtime average</div>
+          <div className="text-xs text-zinc-500 mt-1.5">Peak evening showtime average</div>
         </div>
 
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm hover:border-zinc-700/80 transition-all duration-200">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider">Active Showtimes</span>
-            <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
-              <Film className="w-5 h-5" />
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Active Showtimes</span>
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center">
+              <Film className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-amber-400">
-            {displayAnalytics.active_showtimes_count || scheduledShowtimes.length} <span className="text-sm font-normal text-slate-400">Slots</span>
+          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            {displayAnalytics.active_showtimes_count || scheduledShowtimes.length} <span className="text-sm font-normal text-zinc-400">Slots</span>
           </div>
-          <div className="text-xs sm:text-sm text-slate-400 mt-1.5">{displayAnalytics.total_theaters_count || adminTheaters.length || 13} Sri Lankan branches</div>
+          <div className="text-xs text-zinc-500 mt-1.5">{displayAnalytics.total_theaters_count || adminTheaters.length || 13} Sri Lankan branches</div>
         </div>
       </div>
 
-      {/* Control Navigation Tabs */}
-      <div className="max-w-7xl mx-auto mb-6 flex flex-wrap items-center gap-2 border-b border-slate-800 pb-4">
+      {/* Control Navigation Tabs - Sleek Segmented Control */}
+      <div className="max-w-7xl mx-auto mb-6 p-1 bg-zinc-900/80 border border-zinc-800/80 rounded-2xl flex flex-wrap gap-1 backdrop-blur-sm">
         <button
           onClick={() => setActiveTab("movies")}
-          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer ${
             activeTab === "movies"
-              ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
-              : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+              ? "bg-rose-600 text-white shadow-sm"
+              : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
           }`}
         >
-          <Film className="w-4 h-4" /> Movie Management ({adminMovies.length})
+          <Film className="w-3.5 h-3.5" /> Movies
+          <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${activeTab === "movies" ? "bg-white/20 text-white" : "bg-zinc-800 text-zinc-400"}`}>
+            {adminMovies.length}
+          </span>
         </button>
+
         <button
           onClick={() => setActiveTab("analytics")}
-          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer ${
             activeTab === "analytics"
-              ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
-              : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+              ? "bg-rose-600 text-white shadow-sm"
+              : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
           }`}
         >
-          <BarChart3 className="w-4 h-4" /> Revenue & Branch Heatmaps
+          <BarChart3 className="w-3.5 h-3.5" /> Branch Heatmaps
         </button>
+
         <button
           onClick={() => setActiveTab("bookings")}
-          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer ${
             activeTab === "bookings"
-              ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
-              : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+              ? "bg-rose-600 text-white shadow-sm"
+              : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
           }`}
         >
-          <Ticket className="w-4 h-4" /> Live Customer Bookings ({displayBookings.length})
+          <Ticket className="w-3.5 h-3.5" /> Live Bookings
+          <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${activeTab === "bookings" ? "bg-white/20 text-white" : "bg-zinc-800 text-zinc-400"}`}>
+            {displayBookings.length}
+          </span>
         </button>
+
         <button
           onClick={() => setActiveTab("customers")}
-          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer ${
             activeTab === "customers"
-              ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
-              : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+              ? "bg-rose-600 text-white shadow-sm"
+              : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
           }`}
         >
-          <Users className="w-4 h-4" /> Customer Profiles & Activity Logs ({customers.length})
+          <Users className="w-3.5 h-3.5" /> Customers & Activity
+          <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${activeTab === "customers" ? "bg-white/20 text-white" : "bg-zinc-800 text-zinc-400"}`}>
+            {customers.length}
+          </span>
         </button>
+
         <button
           onClick={() => setActiveTab("occupancy")}
-          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer ${
             activeTab === "occupancy"
-              ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
-              : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+              ? "bg-rose-600 text-white shadow-sm"
+              : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
           }`}
         >
-          <Activity className="w-4 h-4" /> Occupancy & Waitlist Monitor ({occupancy.length})
+          <Activity className="w-3.5 h-3.5" /> Occupancy & Waitlists
+          <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${activeTab === "occupancy" ? "bg-white/20 text-white" : "bg-zinc-800 text-zinc-400"}`}>
+            {occupancy.length}
+          </span>
         </button>
+
         <button
           onClick={() => setActiveTab("showtimes")}
-          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer ${
             activeTab === "showtimes"
-              ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
-              : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+              ? "bg-rose-600 text-white shadow-sm"
+              : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
           }`}
         >
-          <Calendar className="w-4 h-4" /> Sri Lankan Showtime Engine ({scheduledShowtimes.length})
+          <Calendar className="w-3.5 h-3.5" /> Showtime Engine
+          <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${activeTab === "showtimes" ? "bg-white/20 text-white" : "bg-zinc-800 text-zinc-400"}`}>
+            {scheduledShowtimes.length}
+          </span>
         </button>
       </div>
 
@@ -565,42 +585,49 @@ const AdminDashboard = () => {
         {/* TAB 1: ANALYTICS & BRANCH HEATMAPS */}
         {activeTab === "analytics" && (
           <div className="space-y-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-rose-500" /> Revenue & Occupancy by Sri Lanka Multiplex Branch
-              </h3>
+            <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2 tracking-tight">
+                    <MapPin className="w-4 h-4 text-rose-500" /> Revenue & Occupancy by Sri Lanka Multiplex Branch
+                  </h3>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Live branch performance metrics aggregated across islandwide locations
+                  </p>
+                </div>
+              </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3.5">
                 {displayAnalytics.revenue_by_branch && displayAnalytics.revenue_by_branch.length > 0 ? (
                   displayAnalytics.revenue_by_branch.map((branch, i) => (
-                    <div key={i} className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                        <span className="font-semibold text-sm sm:text-base text-white">
+                    <div key={i} className="bg-zinc-950/70 border border-zinc-800/70 rounded-xl p-4 hover:border-zinc-700/60 transition-colors">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2">
+                        <span className="font-semibold text-sm text-white">
                           {branch.branch} {branch.city ? `(${branch.city})` : ""}
                         </span>
-                        <span className="font-extrabold text-emerald-400 text-sm sm:text-base">
+                        <span className="font-mono font-bold text-emerald-400 text-sm">
                           LKR {(branch.revenue_lkr || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </div>
 
-                      <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800/60">
                         <div
-                          className="bg-gradient-to-r from-rose-500 to-emerald-400 h-full rounded-full transition-all duration-500"
+                          className="bg-rose-500 h-full rounded-full transition-all duration-500"
                           style={{ width: `${Math.min(100, Math.max(branch.occupancy_percent || 0, branch.revenue_lkr > 0 ? 5 : 0))}%` }}
                         ></div>
                       </div>
-                      <div className="flex justify-between text-xs sm:text-sm text-slate-400 mt-2 font-mono">
-                        <span>Occupancy Fill Rate: {branch.occupancy_percent || 0}% ({branch.tickets_sold || 0} tickets sold)</span>
-                        <span className={branch.revenue_lkr > 0 ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                      <div className="flex justify-between text-xs text-zinc-400 mt-2 font-mono">
+                        <span>Fill Rate: {branch.occupancy_percent || 0}% ({branch.tickets_sold || 0} tickets sold)</span>
+                        <span className={branch.revenue_lkr > 0 ? "text-emerald-400 font-medium" : "text-zinc-500"}>
                           {branch.revenue_lkr > 0 ? "Active Box Office" : "Awaiting Bookings"}
                         </span>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="py-12 text-center text-slate-400">
-                    <MapPin className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                    <p className="text-base font-semibold text-white">No Branch Data Available</p>
+                  <div className="py-12 text-center text-zinc-500">
+                    <MapPin className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
+                    <p className="text-sm font-semibold text-white">No Branch Data Available</p>
                   </div>
                 )}
               </div>
@@ -610,37 +637,42 @@ const AdminDashboard = () => {
 
         {/* TAB 2: LIVE CUSTOMER BOOKINGS */}
         {activeTab === "bookings" && (
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 overflow-x-auto">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <Ticket className="w-5 h-5 text-rose-500" /> Live Customer Reservations Feed
-              </h3>
+          <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm overflow-x-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-5">
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2 tracking-tight">
+                  <Ticket className="w-4 h-4 text-rose-500" /> Live Customer Reservations Feed
+                </h3>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Synchronizing every 8 seconds directly with MySQL booking ledger
+                </p>
+              </div>
 
               <div className="relative w-full sm:w-72">
-                <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
                 <input
                   type="text"
                   placeholder="Filter by customer, movie or passcode..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                  className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl pl-9 pr-3.5 py-2 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40 transition-colors"
                 />
               </div>
             </div>
 
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="border-b border-slate-800 text-slate-300 font-semibold uppercase tracking-wider text-xs sm:text-sm">
-                  <th className="py-3.5 px-4">Ref / Passcode</th>
-                  <th className="py-3.5 px-4">Customer</th>
-                  <th className="py-3.5 px-4">Movie</th>
-                  <th className="py-3.5 px-4">Theater & Hall</th>
-                  <th className="py-3.5 px-4">Seats</th>
-                  <th className="py-3.5 px-4">Amount (LKR)</th>
-                  <th className="py-3.5 px-4">Status</th>
+                <tr className="border-b border-zinc-800 text-zinc-400 text-[11px] font-semibold uppercase tracking-wider">
+                  <th className="py-3 px-4">Passcode</th>
+                  <th className="py-3 px-4">Customer</th>
+                  <th className="py-3 px-4">Movie</th>
+                  <th className="py-3 px-4">Theater & Hall</th>
+                  <th className="py-3 px-4">Seats</th>
+                  <th className="py-3 px-4">Amount (LKR)</th>
+                  <th className="py-3 px-4">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-zinc-800/60">
                 {displayBookings
                   .filter((b) =>
                     b.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -649,25 +681,27 @@ const AdminDashboard = () => {
                     b.passcode?.toLowerCase().includes(searchQuery.toLowerCase())
                   )
                   .map((booking, idx) => (
-                    <tr key={idx} className="hover:bg-slate-950/50 transition-colors">
-                      <td className="py-3.5 px-4 font-mono font-bold text-rose-400 text-sm">{booking.passcode}</td>
+                    <tr key={idx} className="hover:bg-zinc-800/30 transition-colors">
+                      <td className="py-3.5 px-4 font-mono font-bold text-rose-400 text-xs sm:text-sm tracking-wide">
+                        {booking.passcode}
+                      </td>
                       <td className="py-3.5 px-4">
                         <div className="font-semibold text-white text-sm">{booking.customer_name}</div>
-                        <div className="text-xs sm:text-sm text-slate-400">{booking.customer_email}</div>
+                        <div className="text-xs text-zinc-500">{booking.customer_email}</div>
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-slate-200 text-sm">{booking.movie_title}</td>
-                      <td className="py-3.5 px-4 text-slate-300 text-sm">
+                      <td className="py-3.5 px-4 font-medium text-zinc-200 text-sm">{booking.movie_title}</td>
+                      <td className="py-3.5 px-4 text-zinc-300 text-xs sm:text-sm">
                         {booking.theater_name}
-                        <div className="text-xs sm:text-sm text-slate-400">{booking.hall_name}</div>
+                        <div className="text-xs text-zinc-500">{booking.hall_name}</div>
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-rose-300 text-sm">
+                      <td className="py-3.5 px-4 font-medium text-rose-300 text-xs sm:text-sm">
                         {Array.isArray(booking.seats) ? booking.seats.join(", ") : booking.seats}
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-emerald-400 text-sm">
+                      <td className="py-3.5 px-4 font-mono font-bold text-emerald-400 text-xs sm:text-sm">
                         LKR {booking.total_lkr?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1.5">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5" /> {booking.status || "Confirmed"}
                         </span>
                       </td>
@@ -675,10 +709,10 @@ const AdminDashboard = () => {
                   ))}
                 {displayBookings.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="py-12 text-center text-slate-400">
-                      <Ticket className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                      <p className="text-base font-semibold text-white">No Live Customer Bookings Found</p>
-                      <p className="text-xs sm:text-sm text-slate-400 mt-1">Confirmed reservations made on QuickShow will stream here in real time.</p>
+                    <td colSpan="7" className="py-12 text-center text-zinc-500">
+                      <Ticket className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
+                      <p className="text-sm font-semibold text-white">No Live Customer Bookings Found</p>
+                      <p className="text-xs text-zinc-500 mt-1">Confirmed reservations made on QuickShow will stream here in real time.</p>
                     </td>
                   </tr>
                 )}
@@ -692,34 +726,34 @@ const AdminDashboard = () => {
           <div className="space-y-6">
             {/* Top Customer KPI Metric Bar */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+              <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm">
                 <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Registered Accounts</span>
-                  <div className="text-2xl font-black text-white mt-1">{customers.length} Users</div>
+                  <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Registered Accounts</span>
+                  <div className="text-2xl font-bold tracking-tight text-white mt-1">{customers.length} Users</div>
                 </div>
-                <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl">
+                <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center">
                   <Users className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+              <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm">
                 <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Customer Spend</span>
-                  <div className="text-2xl font-black text-emerald-400 mt-1">
+                  <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Total Customer Spend</span>
+                  <div className="text-2xl font-bold tracking-tight text-emerald-400 mt-1">
                     LKR {totalCustomerSpend.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
-                <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
                   <DollarSign className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+              <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm">
                 <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Lifetime Reservations</span>
-                  <div className="text-2xl font-black text-rose-400 mt-1">{totalCustomerBookings} Bookings</div>
+                  <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Lifetime Reservations</span>
+                  <div className="text-2xl font-bold tracking-tight text-white mt-1">{totalCustomerBookings} Bookings</div>
                 </div>
-                <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center">
                   <Ticket className="w-5 h-5" />
                 </div>
               </div>
@@ -727,35 +761,35 @@ const AdminDashboard = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Customer Profiles Panel */}
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+              <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                   <div>
-                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                      <Users className="w-5 h-5 text-rose-500" /> Dynamic Customer Profiles
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2 tracking-tight">
+                      <Users className="w-4 h-4 text-rose-500" /> Dynamic Customer Profiles
                     </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-zinc-400 mt-0.5">
                       Live accounts synchronized from MySQL database with calculated LKR spend
                     </p>
                   </div>
-                  <span className="px-3 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-full text-xs font-bold self-start sm:self-auto">
+                  <span className="px-2.5 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-full text-xs font-semibold self-start sm:self-auto">
                     {filteredCustomers.length} of {customers.length} Profiles
                   </span>
                 </div>
 
                 {/* Search Filter Input */}
                 <div className="relative mb-4">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={customerSearch}
                     onChange={(e) => setCustomerSearch(e.target.value)}
                     placeholder="Search by customer name, email, phone, or role..."
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition-colors"
+                    className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40 rounded-xl pl-9 pr-9 py-2 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none transition-colors"
                   />
                   {customerSearch && (
                     <button
                       onClick={() => setCustomerSearch("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs"
                     >
                       Clear
                     </button>
@@ -779,17 +813,17 @@ const AdminDashboard = () => {
                       return (
                         <div
                           key={c.user_id || c.id}
-                          className="bg-slate-950 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-4 transition-all duration-200"
+                          className="bg-zinc-950/70 border border-zinc-800/70 hover:border-zinc-700 rounded-xl p-4 transition-colors"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-start gap-3">
                               <div
-                                className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-sm border shadow-inner shrink-0 ${
+                                className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs border shrink-0 ${
                                   isAdmin
-                                    ? "bg-rose-500/15 border-rose-500/30 text-rose-400"
+                                    ? "bg-rose-500/10 border-rose-500/20 text-rose-400"
                                     : isManager
-                                    ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
-                                    : "bg-sky-500/15 border-sky-500/30 text-sky-400"
+                                    ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                                    : "bg-sky-500/10 border-sky-500/20 text-sky-400"
                                 }`}
                               >
                                 {initials}
@@ -797,34 +831,34 @@ const AdminDashboard = () => {
 
                               <div>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-bold text-white text-base">{c.name}</span>
+                                  <span className="font-semibold text-white text-sm">{c.name}</span>
                                   <span
-                                    className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
+                                    className={`px-1.5 py-0.2 rounded text-[10px] font-semibold uppercase tracking-wider ${
                                       isAdmin
                                         ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
                                         : isManager
                                         ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                                        : "bg-slate-800 text-slate-300 border border-slate-700"
+                                        : "bg-zinc-800 text-zinc-300 border border-zinc-700/60"
                                     }`}
                                   >
                                     {c.role || "Customer"}
                                   </span>
                                 </div>
 
-                                <div className="flex items-center gap-1.5 text-xs text-slate-300 mt-1">
-                                  <Mail className="w-3.5 h-3.5 text-slate-500" />
+                                <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
+                                  <Mail className="w-3 h-3 text-zinc-500" />
                                   <span>{c.email}</span>
                                 </div>
 
                                 {c.phone && (
-                                  <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5 font-mono">
-                                    <Phone className="w-3.5 h-3.5 text-slate-500" />
+                                  <div className="flex items-center gap-1.5 text-xs text-zinc-500 mt-0.5 font-mono">
+                                    <Phone className="w-3 h-3 text-zinc-500" />
                                     <span>{c.phone}</span>
                                   </div>
                                 )}
 
                                 {c.recent_movie && (
-                                  <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-300 text-xs border border-rose-500/20">
+                                  <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-300 text-[11px] border border-rose-500/20">
                                     <Film className="w-3 h-3 text-rose-400" />
                                     <span>Latest: {c.recent_movie}</span>
                                   </div>
@@ -833,22 +867,17 @@ const AdminDashboard = () => {
                             </div>
 
                             <div className="text-right flex flex-col items-end shrink-0">
-                              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Spend</span>
-                              <div className="font-mono font-black text-emerald-400 text-base sm:text-lg">
+                              <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Total Spend</span>
+                              <div className="font-mono font-bold text-emerald-400 text-sm sm:text-base">
                                 LKR {(Number(c.total_spent_lkr) || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </div>
-                              <div className="mt-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-300">
+                              <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-900 border border-zinc-800 text-zinc-400">
                                 <Ticket className="w-3 h-3 text-rose-400" />
                                 {c.total_bookings} {c.total_bookings === 1 ? "Booking" : "Bookings"}
                               </div>
                               {c.created_at && (
-                                <span className="text-[10px] text-slate-500 mt-1 font-mono">
+                                <span className="text-[10px] text-zinc-500 mt-1 font-mono">
                                   Joined: {c.created_at}
-                                </span>
-                              )}
-                              {c.last_active && (
-                                <span className="text-[10px] text-rose-400/90 font-mono">
-                                  Active: {c.last_active_relative || c.last_active}
                                 </span>
                               )}
                             </div>
@@ -857,10 +886,10 @@ const AdminDashboard = () => {
                       );
                     })
                   ) : (
-                    <div className="py-12 text-center text-slate-400">
-                      <Users className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                      <p className="text-base font-semibold text-white">No Matching Customer Profiles</p>
-                      <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                    <div className="py-12 text-center text-zinc-500">
+                      <Users className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
+                      <p className="text-sm font-semibold text-white">No Matching Customer Profiles</p>
+                      <p className="text-xs text-zinc-500 mt-1">
                         {customerSearch ? "Try adjusting your search query." : "Registered users will appear here automatically."}
                       </p>
                     </div>
@@ -869,17 +898,17 @@ const AdminDashboard = () => {
               </div>
 
               {/* Live Activity Logs Panel */}
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+              <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-5">
                   <div>
-                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                      <Activity className="w-5 h-5 text-rose-500" /> Live Engagement Activity Logs
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2 tracking-tight">
+                      <Activity className="w-4 h-4 text-rose-500" /> Live Engagement Activity Logs
                     </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-zinc-400 mt-0.5">
                       Real-time reservations and customer registrations from database
                     </p>
                   </div>
-                  <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-bold">
+                  <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-semibold">
                     {displayActivities.length} Live Logs
                   </span>
                 </div>
@@ -892,43 +921,43 @@ const AdminDashboard = () => {
                       return (
                         <div
                           key={act.activity_id || i}
-                          className="bg-slate-950 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-3.5 flex items-start gap-3 transition-colors"
+                          className="bg-zinc-950/70 border border-zinc-800/70 hover:border-zinc-700 rounded-xl p-3.5 flex items-start gap-3 transition-colors"
                         >
                           <div
-                            className={`p-2 rounded-xl mt-0.5 ${
+                            className={`p-2 rounded-xl mt-0.5 shrink-0 ${
                               isRegistration
-                                ? "bg-purple-500/15 text-purple-400 border border-purple-500/20"
-                                : "bg-rose-500/15 text-rose-400 border border-rose-500/20"
+                                ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                                : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
                             }`}
                           >
-                            {isRegistration ? <UserPlus className="w-4 h-4" /> : <Ticket className="w-4 h-4" />}
+                            {isRegistration ? <UserPlus className="w-3.5 h-3.5" /> : <Ticket className="w-3.5 h-3.5" />}
                           </div>
 
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start text-sm gap-2">
                               <div className="min-w-0">
-                                <span className="font-bold text-white truncate block">{act.user_name}</span>
+                                <span className="font-semibold text-white truncate block text-sm">{act.user_name}</span>
                                 {act.user_email && (
-                                  <span className="text-[11px] text-slate-500 font-normal truncate block">
+                                  <span className="text-xs text-zinc-500 font-normal truncate block">
                                     {act.user_email}
                                   </span>
                                 )}
                               </div>
                               <div className="text-right shrink-0">
-                                <span className="text-xs text-rose-400 font-semibold block">
+                                <span className="text-xs text-rose-400/90 font-medium block">
                                   {act.timestamp_relative || act.timestamp}
                                 </span>
-                                <span className="text-[10px] text-slate-500 font-mono block">
+                                <span className="text-[10px] text-zinc-500 font-mono block">
                                   {act.timestamp}
                                 </span>
                               </div>
                             </div>
 
-                            <p className="text-xs sm:text-sm text-slate-300 mt-1 break-words">{act.details}</p>
+                            <p className="text-xs text-zinc-300 mt-1 break-words">{act.details}</p>
 
                             <div className="flex items-center gap-2 mt-2">
                               <span
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
                                   isRegistration
                                     ? "bg-purple-500/10 text-purple-300 border border-purple-500/20"
                                     : "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
@@ -948,10 +977,10 @@ const AdminDashboard = () => {
                       );
                     })
                   ) : (
-                    <div className="py-12 text-center text-slate-400">
-                      <Activity className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                      <p className="text-base font-semibold text-white">No Recent Activity Logs</p>
-                      <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                    <div className="py-12 text-center text-zinc-500">
+                      <Activity className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
+                      <p className="text-sm font-semibold text-white">No Recent Activity Logs</p>
+                      <p className="text-xs text-zinc-500 mt-1">
                         Live customer activities will be logged here as users register or book tickets.
                       </p>
                     </div>
@@ -965,61 +994,61 @@ const AdminDashboard = () => {
         {/* TAB 4: OCCUPANCY & WAITLIST MONITOR */}
         {activeTab === "occupancy" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Activity className="w-5 h-5 text-rose-500" /> Real-Time Hall Seat Fill Rates
+            <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 tracking-tight">
+                <Activity className="w-4 h-4 text-rose-500" /> Real-Time Hall Seat Fill Rates
               </h3>
 
-              <div className="space-y-4 max-h-[460px] overflow-y-auto pr-1">
+              <div className="space-y-3.5 max-h-[460px] overflow-y-auto pr-1">
                 {occupancy && occupancy.length > 0 ? (
                   occupancy.map((h, idx) => (
-                    <div key={idx} className="bg-slate-950 border border-slate-800 rounded-2xl p-4">
-                      <div className="flex justify-between text-sm sm:text-base mb-1">
-                        <span className="font-bold text-white">{h.hall_name}</span>
+                    <div key={idx} className="bg-zinc-950/70 border border-zinc-800/70 rounded-xl p-4">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="font-semibold text-white">{h.hall_name}</span>
                         <span className="font-mono text-rose-400 font-bold">{h.fill_rate_percent}% Filled ({h.booked_seats || 0}/{h.capacity})</span>
                       </div>
-                      <div className="text-xs sm:text-sm text-slate-300 mb-2">{h.theater}</div>
-                      <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
-                        <div className="bg-rose-600 h-full rounded-full transition-all duration-300" style={{ width: `${Math.min(100, h.fill_rate_percent)}%` }}></div>
+                      <div className="text-xs text-zinc-400 mb-2">{h.theater}</div>
+                      <div className="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800/60">
+                        <div className="bg-rose-500 h-full rounded-full transition-all duration-300" style={{ width: `${Math.min(100, h.fill_rate_percent)}%` }}></div>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="py-12 text-center text-slate-400">
-                    <Activity className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                    <p className="text-base font-semibold text-white">No Hall Occupancy Data</p>
+                  <div className="py-12 text-center text-zinc-500">
+                    <Activity className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
+                    <p className="text-sm font-semibold text-white">No Hall Occupancy Data</p>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-rose-500" /> Sold-Out Showtime Waitlists
+            <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 tracking-tight">
+                <AlertCircle className="w-4 h-4 text-rose-500" /> Sold-Out Showtime Waitlists
               </h3>
 
-              <div className="space-y-4 max-h-[460px] overflow-y-auto pr-1">
+              <div className="space-y-3.5 max-h-[460px] overflow-y-auto pr-1">
                 {waitlist && waitlist.length > 0 ? (
                   waitlist.map((w, idx) => (
-                    <div key={idx} className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+                    <div key={idx} className="bg-zinc-950/70 border border-zinc-800/70 rounded-xl p-4 flex items-center justify-between">
                       <div>
-                        <div className="font-bold text-white text-sm sm:text-base">{w.movie_title}</div>
-                        <div className="text-xs sm:text-sm text-slate-300">{w.theater}</div>
-                        <div className="text-xs sm:text-sm text-slate-400 mt-1 font-mono">{w.showtime}</div>
+                        <div className="font-semibold text-white text-sm">{w.movie_title}</div>
+                        <div className="text-xs text-zinc-400">{w.theater}</div>
+                        <div className="text-xs text-zinc-500 mt-1 font-mono">{w.showtime}</div>
                       </div>
                       <div className="text-right">
-                        <span className="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-xs sm:text-sm font-bold inline-block mb-1">
+                        <span className="px-2.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-xs font-medium inline-block mb-1">
                           {w.waitlist_users_count} Waiting
                         </span>
-                        <div className="text-xs sm:text-sm text-emerald-400 font-mono">Auto Re-allocation Active</div>
+                        <div className="text-xs text-emerald-400 font-mono">Auto Re-allocation Active</div>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="py-12 text-center text-slate-400">
+                  <div className="py-12 text-center text-zinc-500">
                     <CheckCircle2 className="w-10 h-10 text-emerald-500/60 mx-auto mb-3" />
-                    <p className="text-base font-semibold text-white">All Showtimes Have Available Seating</p>
-                    <p className="text-xs sm:text-sm text-slate-400 mt-1">No sold-out waitlists at this time.</p>
+                    <p className="text-sm font-semibold text-white">All Showtimes Have Available Seating</p>
+                    <p className="text-xs text-zinc-500 mt-1">No sold-out waitlists at this time.</p>
                   </div>
                 )}
               </div>
@@ -1030,65 +1059,65 @@ const AdminDashboard = () => {
         {/* TAB 5: SRI LANKAN NON-CLASHING SHOWTIME ENGINE */}
         {activeTab === "showtimes" && (
           <div className="space-y-6">
-            {/* Standard SL Slots Banner */}
-            <div className="bg-gradient-to-r from-slate-900 via-rose-950/20 to-slate-900 border border-rose-500/30 rounded-3xl p-6 shadow-xl">
+            {/* Standard SL Slots Engine Banner */}
+            <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-xs sm:text-sm font-bold border border-rose-500/20 mb-2">
-                    <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" /> Official Sri Lankan Cinema Showtime Engine
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-xs font-semibold mb-2 border border-rose-500/20">
+                    <Clock className="w-3.5 h-3.5" /> Cinema Showtime Constraint Engine
                   </div>
-                  <h3 className="text-2xl font-black text-white">Non-Clashing Showtime Scheduling Constraint</h3>
-                  <p className="text-slate-300 text-sm mt-1 max-w-3xl">
+                  <h3 className="text-2xl font-bold text-white tracking-tight">Non-Clashing Showtime Scheduling Engine</h3>
+                  <p className="text-zinc-400 text-sm mt-1 max-w-3xl">
                     Standard Sri Lankan cinema showtime slots are enforced per hall/screen. Backend validation strictly prevents
-                    overlapping intervals in the exact same hall (<code className="text-rose-400 font-mono">HTTP 409 Conflict</code>).
+                    overlapping intervals in the exact same hall (<code className="text-rose-400 font-mono text-xs">HTTP 409 Conflict</code>).
                   </p>
                 </div>
               </div>
 
-              {/* 5 Standard Slots Badges */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-6">
+              {/* 5 Standard Slots Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mt-6">
                 {[
-                  { name: "Morning Show", time: "10:00 AM", slotTime: "10:00", desc: "First screening of the day" },
-                  { name: "Matinee Show", time: "01:00 PM", slotTime: "13:00", desc: "Midday matinee screening" },
-                  { name: "First Show", time: "04:00 PM", slotTime: "16:00", desc: "Early evening prime show" },
-                  { name: "Second Show", time: "07:15 PM", slotTime: "19:15", desc: "Peak prime evening blockbuster" },
-                  { name: "Night Show", time: "10:15 PM", slotTime: "22:15", desc: "Late night movie screening" },
+                  { name: "Morning Show", time: "10:00 AM", slotTime: "10:00", desc: "First screening" },
+                  { name: "Matinee Show", time: "01:00 PM", slotTime: "13:00", desc: "Midday matinee" },
+                  { name: "First Show", time: "04:00 PM", slotTime: "16:00", desc: "Early evening prime" },
+                  { name: "Second Show", time: "07:15 PM", slotTime: "19:15", desc: "Peak prime evening" },
+                  { name: "Night Show", time: "10:15 PM", slotTime: "22:15", desc: "Late night movie" },
                 ].map((slot, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setNewSlotTime(slot.slotTime)}
-                    className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                    className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
                       newSlotTime === slot.slotTime
-                        ? "bg-rose-600 border-rose-500 text-white shadow-lg shadow-rose-600/30 scale-102"
-                        : "bg-slate-950 border-slate-800 text-slate-300 hover:border-rose-500/50 hover:bg-slate-900"
+                        ? "bg-rose-600 border-rose-500 text-white shadow-sm"
+                        : "bg-zinc-950/80 border-zinc-800/80 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900/60"
                     }`}
                   >
-                    <div className="text-xs uppercase font-bold tracking-wider opacity-80">{slot.name}</div>
-                    <div className="text-lg font-black text-white mt-1">{slot.time}</div>
-                    <div className="text-[11px] text-slate-300 mt-1">{slot.desc}</div>
+                    <div className="text-[10px] uppercase font-semibold tracking-wider opacity-80">{slot.name}</div>
+                    <div className="text-base font-bold text-white mt-0.5">{slot.time}</div>
+                    <div className="text-[11px] text-zinc-400 mt-0.5">{slot.desc}</div>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Interactive Scheduler Form */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
-              <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-rose-500" /> Schedule Hall Showtime (With Interval Clash Protection)
+            <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
+              <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2 tracking-tight">
+                <PlusCircle className="w-4 h-4 text-rose-500" /> Schedule Hall Showtime (Interval Clash Protected)
               </h3>
-              <p className="text-sm text-slate-300 mb-6">
+              <p className="text-xs text-zinc-400 mb-5">
                 Select a hall and movie. If an overlapping showtime already exists in that hall, the backend will catch and reject the clash.
               </p>
 
-              <form onSubmit={handleCreateShowtime} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <form onSubmit={handleCreateShowtime} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Screening Hall</label>
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">Screening Hall</label>
                   <select
                     value={newHallId}
                     onChange={(e) => setNewHallId(e.target.value)}
                     required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-rose-500"
+                    className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40"
                   >
                     <option value="">Select Hall...</option>
                     {adminTheaters.map((t) => (
@@ -1104,12 +1133,12 @@ const AdminDashboard = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Movie</label>
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">Movie</label>
                   <select
                     value={newMovieId}
                     onChange={(e) => setNewMovieId(e.target.value)}
                     required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-rose-500"
+                    className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40"
                   >
                     <option value="">Select Movie...</option>
                     {adminMovies.map((m) => (
@@ -1121,23 +1150,23 @@ const AdminDashboard = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Date</label>
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">Date</label>
                   <input
                     type="date"
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
                     required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-rose-500"
+                    className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Sri Lankan Slot</label>
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">Sri Lankan Slot</label>
                   <select
                     value={newSlotTime}
                     onChange={(e) => setNewSlotTime(e.target.value)}
                     required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-rose-500"
+                    className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40"
                   >
                     <option value="10:00">Morning Show (10:00 AM)</option>
                     <option value="13:00">Matinee Show (01:00 PM)</option>
@@ -1148,7 +1177,7 @@ const AdminDashboard = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Base Price (LKR)</label>
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">Base Price (LKR)</label>
                   <div className="flex gap-2">
                     <input
                       type="number"
@@ -1157,12 +1186,12 @@ const AdminDashboard = () => {
                       onChange={(e) => setNewBasePrice(e.target.value)}
                       required
                       placeholder="1500.00"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:border-rose-500"
+                      className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40"
                     />
                     <button
                       type="submit"
                       disabled={isScheduling}
-                      className="px-5 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-rose-600/30 whitespace-nowrap cursor-pointer flex items-center justify-center gap-1.5"
+                      className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-medium rounded-xl text-xs sm:text-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap"
                     >
                       {isScheduling ? "Verifying..." : "+ Schedule"}
                     </button>
@@ -1172,17 +1201,17 @@ const AdminDashboard = () => {
             </div>
 
             {/* Live Scheduled Showtimes Table */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
                 <div>
-                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-rose-500" /> Active Islandwide Showtimes Feed
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2 tracking-tight">
+                    <Clock className="w-4 h-4 text-rose-500" /> Active Islandwide Showtimes Feed
                   </h3>
-                  <p className="text-sm text-slate-300">All slots verified 100% clash-free by scheduling constraint engine.</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">All slots verified clash-free by scheduling constraint engine.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" /> 0 Clashes Detected ({scheduledShowtimes.length > 0 ? scheduledShowtimes.length : 475} Verified Slots)
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> 0 Clashes Detected ({scheduledShowtimes.length > 0 ? scheduledShowtimes.length : 475} Verified Slots)
                   </span>
                 </div>
               </div>
@@ -1190,7 +1219,7 @@ const AdminDashboard = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400">
+                    <tr className="border-b border-zinc-800 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                       <th className="py-3 px-4">Movie</th>
                       <th className="py-3 px-4">Hall & Location</th>
                       <th className="py-3 px-4">Show Slot</th>
@@ -1201,7 +1230,7 @@ const AdminDashboard = () => {
                       <th className="py-3 px-4 text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-zinc-800/60">
                     {(scheduledShowtimes.length > 0 ? scheduledShowtimes.slice(0, 15) : [
                       {
                         showtime_id: 1,
@@ -1255,32 +1284,32 @@ const AdminDashboard = () => {
                       else if (sHour === 22) slotBadge = "Night Show";
 
                       return (
-                        <tr key={st.showtime_id} className="hover:bg-slate-800/40 transition-colors">
-                          <td className="py-3.5 px-4 font-bold text-white">{st.movie?.title || "Movie Title"}</td>
-                          <td className="py-3.5 px-4 text-slate-300">{st.hall?.hall_name || "Screen 1"}</td>
-                          <td className="py-3.5 px-4">
-                            <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                        <tr key={st.showtime_id} className="hover:bg-zinc-800/30 transition-colors">
+                          <td className="py-3 px-4 font-semibold text-white">{st.movie?.title || "Movie Title"}</td>
+                          <td className="py-3 px-4 text-zinc-300 text-xs sm:text-sm">{st.hall?.hall_name || "Screen 1"}</td>
+                          <td className="py-3 px-4">
+                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
                               {slotBadge}
                             </span>
                           </td>
-                          <td className="py-3.5 px-4 font-mono text-slate-300">
+                          <td className="py-3 px-4 font-mono text-zinc-300 text-xs">
                             {sDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" })}
                           </td>
-                          <td className="py-3.5 px-4 font-mono text-slate-400">
+                          <td className="py-3 px-4 font-mono text-zinc-500 text-xs">
                             {eDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" })}
                           </td>
-                          <td className="py-3.5 px-4 font-mono text-emerald-400 font-bold">
+                          <td className="py-3 px-4 font-mono text-emerald-400 font-bold text-xs sm:text-sm">
                             LKR {parseFloat(st.base_price).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                           </td>
-                          <td className="py-3.5 px-4">
-                            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Non-Clashing ✓
+                          <td className="py-3 px-4">
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400">
+                              <CheckCircle2 className="w-3 h-3" /> Verified ✓
                             </span>
                           </td>
-                          <td className="py-3.5 px-4 text-right">
+                          <td className="py-3 px-4 text-right">
                             <button
                               onClick={() => handleDeleteShowtime(st.showtime_id)}
-                              className="text-xs text-rose-400 hover:text-rose-300 font-semibold p-1 hover:bg-rose-500/10 rounded transition-colors"
+                              className="text-xs text-rose-400 hover:text-rose-300 font-medium px-2 py-1 hover:bg-rose-500/10 rounded-md transition-colors cursor-pointer"
                               title="Cancel Showtime"
                             >
                               Cancel

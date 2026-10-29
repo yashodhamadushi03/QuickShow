@@ -254,33 +254,33 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
   return (
     <div className="space-y-6">
       {/* Top Header Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+      <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-xs font-semibold mb-2 border border-rose-500/20">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-xs font-semibold mb-2.5 border border-rose-500/20">
               <Film className="w-3.5 h-3.5" /> Cinema Catalog Management
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               Movie Repertoire & Schedule Control
             </h2>
-            <p className="text-slate-400 text-sm mt-1 max-w-2xl">
-              Create, update, and manage all cinema listings. Changes update the public schedule and booking engine in real time.
+            <p className="text-zinc-400 text-sm mt-1 max-w-2xl">
+              Create, update, and manage all cinema listings. Changes synchronize immediately with the public schedule and booking engine.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={fetchMovies}
-              className="p-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-xl transition-all cursor-pointer flex items-center gap-2 text-sm font-semibold"
+              className="px-3.5 py-2.5 bg-zinc-950/80 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-colors cursor-pointer flex items-center gap-2 text-xs sm:text-sm font-medium"
               title="Refresh Catalog"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-rose-500" : ""}`} />
-              <span className="hidden sm:inline">Refresh</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-rose-500" : ""}`} />
+              <span>Refresh</span>
             </button>
 
             <button
               onClick={openCreateModal}
-              className="px-5 py-3 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-rose-600/30 flex items-center gap-2 cursor-pointer active:scale-95"
+              className="px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-medium rounded-xl text-xs sm:text-sm transition-colors flex items-center gap-2 cursor-pointer shadow-sm active:scale-98"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" /> Add New Movie
             </button>
@@ -288,66 +288,66 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
         </div>
 
         {/* Catalog KPI Badges */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-slate-800/80">
-          <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-4">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Total Movies</span>
-            <div className="text-2xl font-black text-white">{totalCount}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 mt-6 pt-6 border-t border-zinc-800/80">
+          <div className="bg-zinc-950/70 border border-zinc-800/70 rounded-xl p-4">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1">Total Movies</span>
+            <div className="text-2xl font-bold tracking-tight text-white">{totalCount}</div>
           </div>
-          <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-4">
-            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block mb-1">Now Showing</span>
-            <div className="text-2xl font-black text-emerald-400">{nowShowingCount}</div>
+          <div className="bg-zinc-950/70 border border-zinc-800/70 rounded-xl p-4">
+            <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider block mb-1">Now Showing</span>
+            <div className="text-2xl font-bold tracking-tight text-emerald-400">{nowShowingCount}</div>
           </div>
-          <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-4 col-span-2 sm:col-span-1">
-            <span className="text-xs font-bold text-amber-400 uppercase tracking-wider block mb-1">Coming Soon</span>
-            <div className="text-2xl font-black text-amber-400">{comingSoonCount}</div>
+          <div className="bg-zinc-950/70 border border-zinc-800/70 rounded-xl p-4 col-span-2 sm:col-span-1">
+            <span className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider block mb-1">Coming Soon</span>
+            <div className="text-2xl font-bold tracking-tight text-amber-400">{comingSoonCount}</div>
           </div>
         </div>
       </div>
 
       {/* Search, Filter, and Sort Toolbar */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+      <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-3.5 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         {/* Search Input */}
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by title, genre, synopsis, language..."
-            className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none transition-colors placeholder:text-slate-500"
+            className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40 rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm text-white focus:outline-none transition-colors placeholder:text-zinc-500"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
         {/* Filter Controls */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Status Filter */}
-          <div className="relative min-w-[140px]">
+          <div className="relative min-w-[130px]">
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-rose-500 appearance-none pr-8 cursor-pointer"
+              className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-zinc-300 focus:outline-none focus:border-rose-500 appearance-none pr-8 cursor-pointer"
             >
               <option value="all">All Statuses</option>
               <option value="Now Showing">Now Showing</option>
               <option value="Coming Soon">Coming Soon</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {/* Genre Filter */}
-          <div className="relative min-w-[130px]">
+          <div className="relative min-w-[120px]">
             <select
               value={selectedGenre}
               onChange={(e) => setSelectedGenre(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-rose-500 appearance-none pr-8 cursor-pointer"
+              className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-zinc-300 focus:outline-none focus:border-rose-500 appearance-none pr-8 cursor-pointer"
             >
               <option value="all">All Genres</option>
               <option value="Action">Action</option>
@@ -359,11 +359,11 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
               <option value="Animation">Animation</option>
               <option value="Horror">Horror</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {/* Sort By */}
-          <div className="relative min-w-[150px]">
+          <div className="relative min-w-[140px]">
             <select
               value={`${sortBy}-${sortOrder}`}
               onChange={(e) => {
@@ -371,7 +371,7 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                 setSortBy(sb);
                 setSortOrder(so);
               }}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-rose-500 appearance-none pr-8 cursor-pointer"
+              className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-zinc-300 focus:outline-none focus:border-rose-500 appearance-none pr-8 cursor-pointer"
             >
               <option value="release_date-desc">Release Date (Newest)</option>
               <option value="release_date-asc">Release Date (Oldest)</option>
@@ -380,17 +380,17 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
               <option value="duration_min-desc">Duration (Longest)</option>
               <option value="duration_min-asc">Duration (Shortest)</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
       </div>
 
       {/* Movie Interactive Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
+      <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400">
+              <tr className="border-b border-zinc-800 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                 <th className="py-3 px-4">Poster & Movie Title</th>
                 <th className="py-3 px-4">Genre</th>
                 <th className="py-3 px-4">Duration</th>
@@ -401,7 +401,7 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-zinc-800/60">
               {movies.length > 0 ? (
                 movies.map((movie) => {
                   const durationMin = movie.duration_min || movie.duration || 120;
@@ -411,11 +411,11 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                   const isNowShowing = movie.status === "Now Showing";
 
                   return (
-                    <tr key={movie.movie_id} className="hover:bg-slate-800/40 transition-colors group">
+                    <tr key={movie.movie_id} className="hover:bg-zinc-800/30 transition-colors group">
                       {/* Movie Thumbnail + Title + Rating */}
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3.5 min-w-[240px]">
-                          <div className="w-12 h-16 rounded-lg bg-slate-950 border border-slate-800 overflow-hidden shrink-0 shadow">
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3 min-w-[220px]">
+                          <div className="w-10 h-14 rounded-lg bg-zinc-950 border border-zinc-800 overflow-hidden shrink-0">
                             <img
                               src={movie.poster_url || DEFAULT_POSTER}
                               alt={movie.title}
@@ -423,18 +423,18 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                                 e.target.onerror = null;
                                 e.target.src = DEFAULT_POSTER;
                               }}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                           </div>
                           <div>
-                            <div className="font-bold text-white text-base leading-snug group-hover:text-rose-400 transition-colors">
+                            <div className="font-semibold text-white text-sm leading-snug group-hover:text-rose-400 transition-colors">
                               {movie.title}
                             </div>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-800 text-zinc-300 border border-zinc-700/60">
                                 {movie.rating || "PG-13"}
                               </span>
-                              <span className="text-xs text-slate-400 truncate max-w-[160px]" title={movie.synopsis || movie.description}>
+                              <span className="text-xs text-zinc-500 truncate max-w-[150px]" title={movie.synopsis || movie.description}>
                                 {movie.synopsis || movie.description || "No synopsis available"}
                               </span>
                             </div>
@@ -443,41 +443,40 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                       </td>
 
                       {/* Genre */}
-                      <td className="py-4 px-4 text-slate-300 whitespace-nowrap">
-                        <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-950 border border-slate-800 text-slate-300">
+                      <td className="py-3.5 px-4 text-zinc-300 whitespace-nowrap">
+                        <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-zinc-950 border border-zinc-800/80 text-zinc-300">
                           {movie.genre}
                         </span>
                       </td>
 
                       {/* Duration */}
-                      <td className="py-4 px-4 font-mono text-slate-300 whitespace-nowrap">
+                      <td className="py-3.5 px-4 font-mono text-zinc-300 whitespace-nowrap">
                         <div className="flex items-center gap-1.5 text-xs">
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <Clock className="w-3.5 h-3.5 text-zinc-500" />
                           <span>{durationStr}</span>
-                          <span className="text-slate-500">({durationMin}m)</span>
                         </div>
                       </td>
 
                       {/* Language */}
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-300">
-                          <Globe className="w-3.5 h-3.5 text-slate-400" />
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-300">
+                          <Globe className="w-3.5 h-3.5 text-zinc-500" />
                           {movie.language}
                         </div>
                       </td>
 
                       {/* Release Date */}
-                      <td className="py-4 px-4 font-mono text-xs text-slate-300 whitespace-nowrap">
+                      <td className="py-3.5 px-4 font-mono text-xs text-zinc-400 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          <Calendar className="w-3.5 h-3.5 text-zinc-500" />
                           {movie.release_date || "TBD"}
                         </div>
                       </td>
 
                       {/* Status */}
-                      <td className="py-4 px-4 whitespace-nowrap">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                             isNowShowing
                               ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                               : "bg-amber-500/10 text-amber-400 border-amber-500/20"
@@ -489,29 +488,29 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                       </td>
 
                       {/* Showtimes Count */}
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-slate-950 border border-slate-800 text-slate-300">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="px-2 py-0.5 rounded-md text-xs font-mono font-medium bg-zinc-950 border border-zinc-800/80 text-zinc-400">
                           {movie.showtimes_count ?? movie.showtimes?.length ?? 0} slots
                         </span>
                       </td>
 
                       {/* Actions */}
-                      <td className="py-4 px-4 text-right whitespace-nowrap">
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="inline-flex items-center gap-1.5">
                           <button
                             onClick={() => openEditModal(movie)}
-                            className="p-2 text-slate-300 hover:text-white bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl transition-all cursor-pointer"
+                            className="p-1.5 text-zinc-400 hover:text-white bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded-lg transition-colors cursor-pointer"
                             title="Edit Movie"
                           >
-                            <Edit3 className="w-4 h-4 text-sky-400" />
+                            <Edit3 className="w-3.5 h-3.5 text-sky-400" />
                           </button>
 
                           <button
                             onClick={() => setMovieToDelete(movie)}
-                            className="p-2 text-slate-300 hover:text-rose-400 bg-slate-950 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/30 rounded-xl transition-all cursor-pointer"
+                            className="p-1.5 text-zinc-400 hover:text-rose-400 bg-zinc-950 hover:bg-rose-500/10 border border-zinc-800 hover:border-rose-500/30 rounded-lg transition-colors cursor-pointer"
                             title="Delete Movie"
                           >
-                            <Trash2 className="w-4 h-4 text-rose-500" />
+                            <Trash2 className="w-3.5 h-3.5 text-rose-400" />
                           </button>
                         </div>
                       </td>
@@ -520,18 +519,18 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                 })
               ) : (
                 <tr>
-                  <td colSpan="8" className="text-center py-12 text-slate-400">
+                  <td colSpan="8" className="text-center py-12 text-zinc-500">
                     <div className="max-w-sm mx-auto flex flex-col items-center">
-                      <Film className="w-12 h-12 text-slate-600 mb-3" />
-                      <p className="text-base font-semibold text-white">No Movies Found</p>
-                      <p className="text-xs text-slate-400 mt-1">
+                      <Film className="w-10 h-10 text-zinc-600 mb-3" />
+                      <p className="text-sm font-semibold text-white">No Movies Found</p>
+                      <p className="text-xs text-zinc-500 mt-1">
                         {search || selectedGenre !== "all" || selectedStatus !== "all"
                           ? "Try adjusting your search criteria or clearing filters."
                           : "Start building your cinema schedule by adding your first movie."}
                       </p>
                       <button
                         onClick={openCreateModal}
-                        className="mt-4 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition-colors"
+                        className="mt-4 px-3.5 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium rounded-xl transition-colors cursor-pointer"
                       >
                         + Add Movie Now
                       </button>
@@ -547,25 +546,25 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
       {/* CREATE & EDIT MOVIE MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8 relative animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-7 relative animate-in fade-in zoom-in-95 duration-200">
             {/* Close Button */}
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-white bg-slate-950 hover:bg-slate-800 rounded-full transition-colors cursor-pointer"
+              className="absolute top-5 right-5 p-1.5 text-zinc-400 hover:text-white bg-zinc-950 hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
             {/* Modal Title */}
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center shrink-0">
-                {modalMode === "create" ? <Plus className="w-6 h-6" /> : <Edit3 className="w-6 h-6" />}
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+                {modalMode === "create" ? <Plus className="w-5 h-5" /> : <Edit3 className="w-5 h-5" />}
               </div>
               <div>
-                <h3 className="text-xl sm:text-2xl font-black text-white">
+                <h3 className="text-xl font-bold text-white tracking-tight">
                   {modalMode === "create" ? "Add New Movie" : `Edit Movie: ${formData.title || "Movie"}`}
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-400">
+                <p className="text-xs text-zinc-400">
                   {modalMode === "create"
                     ? "Enter movie details to add to catalog and schedule showtimes."
                     : "Update cinema information and metadata."}
@@ -578,7 +577,7 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
               {/* Title & Genre */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
                     Movie Title *
                   </label>
                   <input
@@ -587,12 +586,12 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="e.g. Avatar: Fire and Ash"
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+                    className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
                     Genre *
                   </label>
                   <input
@@ -601,29 +600,29 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                     value={formData.genre}
                     onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
                     placeholder="e.g. Sci-Fi, Action, Adventure"
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+                    className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors"
                   />
                 </div>
               </div>
 
               {/* Synopsis / Description */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
                   Synopsis / Storyline
                 </label>
                 <textarea
                   rows="3"
                   value={formData.synopsis}
                   onChange={(e) => setFormData({ ...formData, synopsis: e.target.value })}
-                  placeholder="Provide a compelling synopsis of the movie plot..."
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors resize-none"
+                  placeholder="Provide a concise synopsis of the movie plot..."
+                  className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors resize-none"
                 ></textarea>
               </div>
 
               {/* Duration, Language, Rating */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
                     Duration (Minutes) *
                   </label>
                   <input
@@ -634,12 +633,12 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                     value={formData.duration}
                     onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                     placeholder="150"
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+                    className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
                     Language *
                   </label>
                   <input
@@ -648,18 +647,18 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                     value={formData.language}
                     onChange={(e) => setFormData({ ...formData, language: e.target.value })}
                     placeholder="English / Sinhala / Tamil"
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+                    className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
                     Age Rating
                   </label>
                   <select
                     value={formData.rating}
                     onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+                    className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-rose-500 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors"
                   >
                     <option value="G">G - General Audiences</option>
                     <option value="PG">PG - Parental Guidance</option>
@@ -674,25 +673,25 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
               {/* Release Date & Status */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
                     Release Date
                   </label>
                   <input
                     type="date"
                     value={formData.release_date}
                     onChange={(e) => setFormData({ ...formData, release_date: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+                    className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-rose-500 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
                     Display Status *
                   </label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+                    className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-rose-500 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors"
                   >
                     <option value="Now Showing">Now Showing (Active in Theaters)</option>
                     <option value="Coming Soon">Coming Soon (Upcoming Premiere)</option>
@@ -702,7 +701,7 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
 
               {/* Poster URL with Live Preview */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
                   Poster Image URL
                 </label>
                 <div className="flex gap-3 items-center">
@@ -711,10 +710,10 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                     value={formData.poster_url}
                     onChange={(e) => setFormData({ ...formData, poster_url: e.target.value })}
                     placeholder="https://images.unsplash.com/... or hosted poster link"
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+                    className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-rose-500 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors"
                   />
                   {formData.poster_url && (
-                    <div className="w-12 h-14 rounded-lg bg-slate-950 border border-slate-800 overflow-hidden shrink-0 shadow">
+                    <div className="w-10 h-14 rounded-lg bg-zinc-950 border border-zinc-800 overflow-hidden shrink-0 shadow-sm">
                       <img
                         src={formData.poster_url}
                         alt="Preview"
@@ -727,28 +726,28 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                     </div>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-[11px] text-zinc-500 mt-1">
                   Leave empty to use high-resolution cinema backdrop default.
                 </p>
               </div>
 
               {/* Modal Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800 mt-6">
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-zinc-800 mt-6">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+                  className="px-4 py-2.5 bg-zinc-950/80 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white rounded-xl text-xs sm:text-sm font-medium transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-rose-600/30 flex items-center gap-2 cursor-pointer"
+                  className="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-medium rounded-xl text-xs sm:text-sm transition-colors flex items-center gap-2 cursor-pointer shadow-sm"
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       <span>Saving Movie...</span>
                     </>
                   ) : modalMode === "create" ? (
@@ -772,20 +771,20 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
       {/* DELETE CONFIRMATION POPUP MODAL */}
       {movieToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md shadow-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-7 h-7" />
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md shadow-2xl p-6 sm:p-7 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-6 h-6" />
             </div>
 
-            <h3 className="text-xl font-black text-white text-center mb-1">
+            <h3 className="text-xl font-bold text-white text-center mb-1 tracking-tight">
               Confirm Movie Deletion
             </h3>
-            <p className="text-slate-300 text-sm text-center mb-4">
+            <p className="text-zinc-400 text-sm text-center mb-4">
               Are you sure you want to delete <strong className="text-white">"{movieToDelete.title}"</strong>?
             </p>
 
-            <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-3.5 mb-6 flex items-center gap-3">
-              <div className="w-12 h-16 rounded-lg bg-slate-900 overflow-hidden shrink-0">
+            <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl p-3.5 mb-5 flex items-center gap-3">
+              <div className="w-10 h-14 rounded-lg bg-zinc-900 overflow-hidden shrink-0">
                 <img
                   src={movieToDelete.poster_url || DEFAULT_POSTER}
                   alt={movieToDelete.title}
@@ -796,8 +795,8 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="text-left text-xs text-slate-400">
-                <div className="font-bold text-white text-sm truncate">{movieToDelete.title}</div>
+              <div className="text-left text-xs text-zinc-400">
+                <div className="font-semibold text-white text-sm truncate">{movieToDelete.title}</div>
                 <div>{movieToDelete.genre} • {movieToDelete.duration_min || movieToDelete.duration} mins</div>
                 <div className="text-rose-400 mt-1 font-medium">
                   Safely cleans up attached showtime schedules & bookings.
@@ -805,11 +804,11 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => setMovieToDelete(null)}
-                className="flex-1 py-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+                className="flex-1 py-2.5 bg-zinc-950/80 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white rounded-xl text-xs sm:text-sm font-medium transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -817,16 +816,16 @@ const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api",
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2 cursor-pointer"
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-medium rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
               >
                 {isDeleting ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Deleting...
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Deleting...</span>
                   </>
                 ) : (
                   <>
-                    <Trash2 className="w-4 h-4" /> Confirm Delete
+                    <Trash2 className="w-3.5 h-3.5" /> <span>Confirm Delete</span>
                   </>
                 )}
               </button>
