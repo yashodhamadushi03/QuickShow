@@ -32,6 +32,56 @@ import MovieManagement from "../components/MovieManagement";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
+// Precise 12-hour AM/PM and Sri Lankan cinema slot formatter immune to timezone skews
+export const formatShowtimeSlot = (timeVal) => {
+  if (!timeVal) return { timeStr: "--:--", slotName: "Custom Slot", hours: 0, minutes: 0 };
+
+  let hours = 0;
+  let minutes = 0;
+
+  if (typeof timeVal === "string") {
+    const match = timeVal.match(/[T\s](\d{1,2}):(\d{2})/);
+    if (match) {
+      hours = parseInt(match[1], 10);
+      minutes = parseInt(match[2], 10);
+    } else {
+      const d = new Date(timeVal);
+      hours = d.getHours();
+      minutes = d.getMinutes();
+    }
+  } else if (timeVal instanceof Date) {
+    hours = timeVal.getHours();
+    minutes = timeVal.getMinutes();
+  }
+
+  const period = hours >= 12 ? "PM" : "AM";
+  const displayHours = hours % 12 === 0 ? 12 : hours % 12;
+  const timeStr = `${String(displayHours).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${period}`;
+
+  // Sri Lankan cinema standard slot categorisation
+  let slotName = "Custom Slot";
+  if (hours === 10 && minutes === 0) slotName = "Morning Show";
+  else if (hours === 13 && minutes === 0) slotName = "Matinee Show";
+  else if (hours === 16 && minutes === 0) slotName = "First Show";
+  else if (hours === 19 && minutes === 15) slotName = "Second Show";
+  else if (hours === 22 && (minutes === 15 || minutes === 20)) slotName = "Night Show";
+  else if (hours >= 10 && hours < 13) slotName = "Morning Slot";
+  else if (hours >= 13 && hours < 16) slotName = "Matinee Slot";
+  else if (hours >= 16 && hours < 19) slotName = "First Slot";
+  else if (hours >= 19 && hours < 22) slotName = "Second Slot";
+  else if (hours >= 22 || hours < 2) slotName = "Night Slot";
+
+  return { timeStr, slotName, hours, minutes };
+};
+
+const formatDuration = (mins) => {
+  if (!mins) return "N/A";
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return `${m}m`;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+};
+
 const AdminDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminToken, setAdminToken] = useState(localStorage.getItem("admin_token") || "");
@@ -229,11 +279,17 @@ const AdminDashboard = () => {
 
     try {
       const selectedMovie = adminMovies.find((m) => m.movie_id === parseInt(newMovieId));
-      const durationMin = selectedMovie ? selectedMovie.duration_min : 150;
+      // Calculate accurate end time strictly based on movie's actual duration
+      const durationMin = selectedMovie?.duration_min ? selectedMovie.duration_min : 120;
 
       const [hours, minutes] = newSlotTime.split(":").map(Number);
-      const startDateTime = new Date(`${newDate}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00Z`);
-      const endDateTime = new Date(startDateTime.getTime() + Math.min(durationMin, 165) * 60000);
+      const [yr, mo, dy] = newDate.split("-").map(Number);
+      const startDateTime = new Date(yr, mo - 1, dy, hours, minutes, 0);
+      const endDateTime = new Date(startDateTime.getTime() + durationMin * 60000);
+
+      const pad = (n) => String(n).padStart(2, "0");
+      const startIso = `${startDateTime.getFullYear()}-${pad(startDateTime.getMonth() + 1)}-${pad(startDateTime.getDate())}T${pad(startDateTime.getHours())}:${pad(startDateTime.getMinutes())}:00`;
+      const endIso = `${endDateTime.getFullYear()}-${pad(endDateTime.getMonth() + 1)}-${pad(endDateTime.getDate())}T${pad(endDateTime.getHours())}:${pad(endDateTime.getMinutes())}:00`;
 
       const res = await fetch(`${API_BASE_URL}/admin/showtimes`, {
         method: "POST",
@@ -244,8 +300,8 @@ const AdminDashboard = () => {
         body: JSON.stringify({
           movie_id: parseInt(newMovieId),
           hall_id: parseInt(newHallId),
-          start_time: startDateTime.toISOString(),
-          end_time: endDateTime.toISOString(),
+          start_time: startIso,
+          end_time: endIso,
           base_price: parseFloat(newBasePrice) || 1500.00,
         }),
       });
@@ -253,11 +309,13 @@ const AdminDashboard = () => {
       if (res.ok) {
         const created = await res.json();
         setScheduledShowtimes((prev) => [created, ...prev]);
-        toast.success(`✓ Showtime scheduled without conflict! (${newSlotTime})`, {
+        const startInfo = formatShowtimeSlot(startIso);
+        const endInfo = formatShowtimeSlot(endIso);
+        toast.success(`✓ Showtime scheduled: ${startInfo.slotName} (${startInfo.timeStr} - ${endInfo.timeStr})`, {
           icon: "🎬",
           style: { background: "#0f172a", color: "#fff", border: "1px solid #10b981" },
         });
-        fetchDashboardData(adminToken);
+        fetchDashboardData(adminToken, false);
       } else {
         const errData = await res.json().catch(() => ({}));
         if (res.status === 409) {
@@ -1197,6 +1255,45 @@ const AdminDashboard = () => {
                     </button>
                   </div>
                 </div>
+
+                {/* Real-time Showtime Calculation & Runtime Window Preview */}
+                {(() => {
+                  const selMovie = adminMovies.find((m) => m.movie_id === parseInt(newMovieId));
+                  const durMin = selMovie?.duration_min || 120;
+                  const [sH, sM] = (newSlotTime || "10:00").split(":").map(Number);
+                  const totalEndMin = sH * 60 + sM + durMin;
+                  const eH = Math.floor(totalEndMin / 60) % 24;
+                  const eM = totalEndMin % 60;
+                  const endPeriod = eH >= 12 ? "PM" : "AM";
+                  const dispEH = eH % 12 === 0 ? 12 : eH % 12;
+                  const previewEndStr = `${String(dispEH).padStart(2, "0")}:${String(eM).padStart(2, "0")} ${endPeriod}`;
+                  const previewStart = formatShowtimeSlot(`2000-01-01T${newSlotTime}:00`);
+
+                  return (
+                    <div className="sm:col-span-2 lg:col-span-5 bg-zinc-950/70 border border-zinc-800/80 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-zinc-400 font-medium">Selected Feature:</span>
+                        <span className="font-semibold text-white">{selMovie?.title || "Choose a movie above"}</span>
+                        {selMovie?.duration_min ? (
+                          <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-mono text-[11px] border border-zinc-700/60">
+                            ⏱ {selMovie.duration_min} mins runtime ({formatDuration(selMovie.duration_min)})
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-zinc-400">Calculated Screening Window:</span>
+                        <div className="flex items-center gap-1.5 font-mono">
+                          <span className="font-bold text-rose-400">{previewStart.timeStr}</span>
+                          <span className="text-zinc-500">→</span>
+                          <span className="font-bold text-emerald-400">{previewEndStr}</span>
+                        </div>
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                          {previewStart.slotName}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </form>
             </div>
 
@@ -1220,7 +1317,7 @@ const AdminDashboard = () => {
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-zinc-800 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                      <th className="py-3 px-4">Movie</th>
+                      <th className="py-3 px-4">Movie & Runtime</th>
                       <th className="py-3 px-4">Hall & Location</th>
                       <th className="py-3 px-4">Show Slot</th>
                       <th className="py-3 px-4">Start Time</th>
@@ -1234,69 +1331,69 @@ const AdminDashboard = () => {
                     {(scheduledShowtimes.length > 0 ? scheduledShowtimes.slice(0, 15) : [
                       {
                         showtime_id: 1,
-                        movie: { title: "Avatar: The Way of Water" },
+                        movie: { title: "Avatar: The Way of Water", duration_min: 192 },
                         hall: { hall_name: "Screen 1 - Dolby Atmos" },
-                        start_time: "2026-10-19T10:00:00Z",
-                        end_time: "2026-10-19T12:45:00Z",
+                        start_time: "2026-10-19T10:00:00",
+                        end_time: "2026-10-19T13:12:00",
                         base_price: "1500.00"
                       },
                       {
                         showtime_id: 2,
-                        movie: { title: "Dune: Part Two" },
+                        movie: { title: "Dune: Part Two", duration_min: 166 },
                         hall: { hall_name: "Screen 1 - Dolby Atmos" },
-                        start_time: "2026-10-19T13:00:00Z",
-                        end_time: "2026-10-19T15:45:00Z",
+                        start_time: "2026-10-19T13:00:00",
+                        end_time: "2026-10-19T15:46:00",
                         base_price: "1500.00"
                       },
                       {
                         showtime_id: 3,
-                        movie: { title: "Kandak Sema" },
+                        movie: { title: "Kandak Sema", duration_min: 135 },
                         hall: { hall_name: "Screen 1 - Dolby Atmos" },
-                        start_time: "2026-10-19T16:00:00Z",
-                        end_time: "2026-10-19T18:15:00Z",
+                        start_time: "2026-10-19T16:00:00",
+                        end_time: "2026-10-19T18:15:00",
                         base_price: "1500.00"
                       },
                       {
                         showtime_id: 4,
-                        movie: { title: "GOAT" },
+                        movie: { title: "GOAT", duration_min: 179 },
                         hall: { hall_name: "Screen 1 - Dolby Atmos" },
-                        start_time: "2026-10-19T19:15:00Z",
-                        end_time: "2026-10-19T22:00:00Z",
+                        start_time: "2026-10-19T19:15:00",
+                        end_time: "2026-10-19T22:14:00",
                         base_price: "1500.00"
                       },
                       {
                         showtime_id: 5,
-                        movie: { title: "Leo: Bloody Sweet" },
+                        movie: { title: "Leo: Bloody Sweet", duration_min: 164 },
                         hall: { hall_name: "Screen 1 - Dolby Atmos" },
-                        start_time: "2026-10-19T22:15:00Z",
-                        end_time: "2026-10-20T00:45:00Z",
+                        start_time: "2026-10-19T22:15:00",
+                        end_time: "2026-10-20T00:59:00",
                         base_price: "1500.00"
                       }
                     ]).map((st) => {
-                      const sDate = new Date(st.start_time);
-                      const eDate = new Date(st.end_time);
-                      const sHour = sDate.getUTCHours();
-                      let slotBadge = "Custom Slot";
-                      if (sHour === 10) slotBadge = "Morning Show";
-                      else if (sHour === 13) slotBadge = "Matinee Show";
-                      else if (sHour === 16) slotBadge = "First Show";
-                      else if (sHour === 19) slotBadge = "Second Show";
-                      else if (sHour === 22) slotBadge = "Night Show";
+                      const startInfo = formatShowtimeSlot(st.start_time);
+                      const endInfo = formatShowtimeSlot(st.end_time);
 
                       return (
                         <tr key={st.showtime_id} className="hover:bg-zinc-800/30 transition-colors">
-                          <td className="py-3 px-4 font-semibold text-white">{st.movie?.title || "Movie Title"}</td>
+                          <td className="py-3 px-4">
+                            <div className="font-semibold text-white">{st.movie?.title || "Movie Title"}</div>
+                            {st.movie?.duration_min ? (
+                              <div className="text-[11px] text-zinc-400 font-mono">
+                                {st.movie.duration_min} mins ({formatDuration(st.movie.duration_min)})
+                              </div>
+                            ) : null}
+                          </td>
                           <td className="py-3 px-4 text-zinc-300 text-xs sm:text-sm">{st.hall?.hall_name || "Screen 1"}</td>
                           <td className="py-3 px-4">
                             <span className="px-2 py-0.5 rounded text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                              {slotBadge}
+                              {startInfo.slotName}
                             </span>
                           </td>
-                          <td className="py-3 px-4 font-mono text-zinc-300 text-xs">
-                            {sDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" })}
+                          <td className="py-3 px-4 font-mono text-zinc-200 text-xs font-semibold">
+                            {startInfo.timeStr}
                           </td>
-                          <td className="py-3 px-4 font-mono text-zinc-500 text-xs">
-                            {eDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" })}
+                          <td className="py-3 px-4 font-mono text-zinc-400 text-xs">
+                            {endInfo.timeStr}
                           </td>
                           <td className="py-3 px-4 font-mono text-emerald-400 font-bold text-xs sm:text-sm">
                             LKR {parseFloat(st.base_price).toLocaleString("en-US", { minimumFractionDigits: 2 })}

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List, Optional
+from datetime import datetime, timedelta
 from app.core.database import get_db
 from app.models.user import User
 from app.models.movie import Movie, MovieStatus
@@ -305,13 +306,8 @@ def create_showtime(
     Admin: Create a showtime for a movie in a specific hall.
     Enforces Sri Lankan non-clashing scheduling constraint:
     No two movies can occupy the exact same hall at overlapping time intervals.
+    Automatically calculates end time accurately based on the movie's actual duration.
     """
-    if st_in.end_time <= st_in.start_time:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Showtime end time must be later than start time."
-        )
-
     movie = db.query(Movie).filter(Movie.movie_id == st_in.movie_id).first()
     if not movie:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
@@ -320,12 +316,21 @@ def create_showtime(
     if not hall:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Hall not found")
 
+    # Strip tzinfo to ensure naive comparison with MySQL DATETIME
+    start_time = st_in.start_time.replace(tzinfo=None) if st_in.start_time.tzinfo else st_in.start_time
+    end_time = st_in.end_time.replace(tzinfo=None) if st_in.end_time.tzinfo else st_in.end_time
+
+    # Accurately calculate end time based on the movie's actual duration if missing or invalid
+    movie_duration = movie.duration_min or 120
+    if not end_time or end_time <= start_time:
+        end_time = start_time + timedelta(minutes=movie_duration)
+
     # Strict Scheduling Constraint: Interval overlap check for the same hall_id
     # Overlap condition: existing.start_time < new.end_time AND existing.end_time > new.start_time
     clashing_showtime = db.query(Showtime).filter(
         Showtime.hall_id == st_in.hall_id,
-        Showtime.start_time < st_in.end_time,
-        Showtime.end_time > st_in.start_time
+        Showtime.start_time < end_time,
+        Showtime.end_time > start_time
     ).first()
 
     if clashing_showtime:
@@ -339,7 +344,13 @@ def create_showtime(
             )
         )
     
-    st = Showtime(**st_in.model_dump())
+    st = Showtime(
+        movie_id=st_in.movie_id,
+        hall_id=st_in.hall_id,
+        start_time=start_time,
+        end_time=end_time,
+        base_price=st_in.base_price
+    )
     db.add(st)
     db.commit()
     db.refresh(st)
