@@ -8,7 +8,6 @@ from app.core.config import settings
 logger = logging.getLogger("quickshow.notifications")
 logging.basicConfig(level=logging.INFO)
 
-
 class NotificationService:
     @staticmethod
     def send_email_ticket(
@@ -91,8 +90,6 @@ class NotificationService:
         </body>
         </html>
         """
-
-        # SMTP Configuration with hardcoded fallback defaults
         smtp_host = getattr(settings, "SMTP_HOST", "smtp.gmail.com") or "smtp.gmail.com"
         smtp_port = getattr(settings, "SMTP_PORT", 587) or 587
         smtp_user = getattr(settings, "SMTP_USER", "yashodhamadushi03@gmail.com") or "yashodhamadushi03@gmail.com"
@@ -104,8 +101,6 @@ class NotificationService:
         msg["From"] = f"QuickShow LK <{emails_from}>"
         msg["To"] = user_email
         msg.attach(MIMEText(html_content, "html"))
-
-        # Try Port 587 TLS first
         try:
             with smtplib.SMTP(smtp_host, smtp_port, timeout=12) as server:
                 server.starttls()
@@ -115,7 +110,6 @@ class NotificationService:
             return True
         except Exception as tls_err:
             logger.warning(f"Port 587 TLS dispatch warning: {tls_err}. Retrying via Port 465 SSL...")
-            # Fallback to Port 465 SSL
             try:
                 with smtplib.SMTP_SSL(smtp_host, 465, timeout=12) as server_ssl:
                     server_ssl.login(smtp_user, smtp_password)
@@ -124,8 +118,6 @@ class NotificationService:
                 return True
             except Exception as ssl_err:
                 logger.error(f"Failed to send email via SMTP (TLS & SSL): {ssl_err}")
-        
-        # Fallback console log output for development/preview
         logger.info(
             f"\n[EMAIL NOTIFICATION DISPATCH SIMULATION]\n"
             f"To: {user_email}\n"
@@ -178,8 +170,6 @@ class NotificationService:
                 return True
             except Exception as err:
                 logger.error(f"Failed to send SMS via Twilio: {str(err)}")
-
-        # Fallback console log output for development/preview
         logger.info(
             f"\n[SMS NOTIFICATION DISPATCH SIMULATION]\n"
             f"To: {phone_number}\n"

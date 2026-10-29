@@ -5,12 +5,10 @@ import enum
 from app.core.database import Base
 from app.core.timezone import get_local_now
 
-
 class PaymentStatus(str, enum.Enum):
     SUCCESS = "Success"
     FAILED = "Failed"
     PENDING = "Pending"
-
 
 class Payment(Base):
     __tablename__ = "payments"
@@ -23,6 +21,4 @@ class Payment(Base):
     transaction_reference = Column(String(100), unique=True, nullable=False)
     is_sandbox = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=get_local_now, nullable=False)
-
-    # Relationships
     booking = relationship("Booking", back_populates="payment")

@@ -5,13 +5,11 @@ import enum
 from app.core.database import Base
 from app.core.timezone import get_local_now
 
-
 class FBOrderStatus(str, enum.Enum):
     PENDING = "Pending"
     CONFIRMED = "Confirmed"
     DELIVERED = "Delivered"
     CANCELLED = "Cancelled"
-
 
 class FBOrder(Base):
     """
@@ -29,7 +27,5 @@ class FBOrder(Base):
     total_price = Column(Numeric(10, 2), nullable=False)
     status = Column(Enum(FBOrderStatus, values_callable=lambda obj: [e.value for e in obj]), default=FBOrderStatus.CONFIRMED, nullable=False, index=True)
     created_at = Column(DateTime, default=get_local_now, nullable=False)
-
-    # Relationships
     booking = relationship("Booking", back_populates="fb_orders")
     user = relationship("User", back_populates="fb_orders")

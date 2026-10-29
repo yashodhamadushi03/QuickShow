@@ -1,4 +1,3 @@
-// Utilities for managing user Favourite Movies with strict per-user scoping & cross-tab synchronization
 
 export const getActiveUserEmail = () => {
   try {
@@ -75,8 +74,6 @@ export const addFavourite = (movie, email) => {
     try {
       localStorage.setItem(getFavouritesStorageKey(activeEmail), JSON.stringify(updated));
       window.dispatchEvent(new Event("favouritesUpdated"));
-
-      // Asynchronously synchronize with MySQL backend database
       const token = localStorage.getItem("token") || "";
       const numericId = parseInt(targetId, 10);
       if (!isNaN(numericId)) {
@@ -113,8 +110,6 @@ export const removeFavourite = (movieOrId, email) => {
   try {
     localStorage.setItem(getFavouritesStorageKey(activeEmail), JSON.stringify(updated));
     window.dispatchEvent(new Event("favouritesUpdated"));
-
-    // Asynchronously synchronize removal with MySQL backend database
     const token = localStorage.getItem("token") || "";
     const numericId = parseInt(targetId, 10);
     if (!isNaN(numericId)) {

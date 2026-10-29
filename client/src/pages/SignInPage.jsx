@@ -19,19 +19,15 @@ const SignInPage = () => {
   const [adminEmail, setAdminEmail] = useState("admin@quickshow.lk");
   const [adminPassword, setAdminPassword] = useState("admin123");
   const [isSubmittingAdmin, setIsSubmittingAdmin] = useState(false);
-
-  // Contextual booking details passed via router state
   const bookingMovie = location.state?.movie;
   const bookingDate = location.state?.selectedDate;
   const bookingSlot = location.state?.selectedSlot;
 
-  // If already signed in as customer and NOT on admin tab, redirect to profile completion / onboarding check
   useEffect(() => {
     if (isLoaded && isSignedIn && activeTab === "customer") {
       navigate("/complete-profile", { replace: true, state: location.state });
     }
   }, [isLoaded, isSignedIn, activeTab, navigate, location.state]);
-
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
@@ -54,7 +50,6 @@ const SignInPage = () => {
         }
       } catch (networkErr) {
         if (networkErr.message?.includes("detail")) throw networkErr;
-        // Fail-safe fallback for standard cinema admin credentials
         if (
           (adminEmail === "admin@quickshow.lk" && adminPassword === "admin123") ||
           (adminEmail === "manager@quickshow.lk" && adminPassword === "manager123")

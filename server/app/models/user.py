@@ -5,12 +5,10 @@ import enum
 from app.core.database import Base
 from app.core.timezone import get_local_now
 
-
 class UserRole(str, enum.Enum):
     CUSTOMER = "customer"
     ADMIN = "admin"
     THEATER_MANAGER = "theater_manager"
-
 
 class User(Base):
     __tablename__ = "users"
@@ -22,8 +20,6 @@ class User(Base):
     phone = Column(String(20), nullable=True)
     role = Column(Enum(UserRole, values_callable=lambda obj: [e.value for e in obj]), default=UserRole.CUSTOMER, nullable=False)
     created_at = Column(DateTime, default=get_local_now, nullable=False)
-
-    # Relationships
     bookings = relationship("Booking", back_populates="user", cascade="all, delete-orphan")
     fb_orders = relationship("FBOrder", back_populates="user", cascade="all, delete-orphan")
 

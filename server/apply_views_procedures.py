@@ -1,7 +1,3 @@
-"""
-Script to create and populate MySQL Views, Stored Procedures, and Functions
-in quickshow_db for QuickShow Cinema Reservation Platform.
-"""
 from sqlalchemy import text
 from app.core.database import engine
 
@@ -9,8 +5,6 @@ def apply_database_routines():
     print("=" * 70)
     print(" CREATING MYSQL VIEWS, STORED PROCEDURES & FUNCTIONS IN QUICKSHOW_DB")
     print("=" * 70)
-
-    # 1. VIEW: vw_active_bookings
     view_active_bookings_sql = """
     CREATE OR REPLACE VIEW `vw_active_bookings` AS
     SELECT 
@@ -45,8 +39,6 @@ def apply_database_routines():
     JOIN theaters t ON h.theater_id = t.theater_id
     LEFT JOIN payments p ON b.booking_id = p.booking_id;
     """
-
-    # 2. VIEW: vw_movie_analytics
     view_movie_analytics_sql = """
     CREATE OR REPLACE VIEW `vw_movie_analytics` AS
     SELECT 
@@ -73,8 +65,6 @@ def apply_database_routines():
         m.status,
         m.rating;
     """
-
-    # 3. STORED PROCEDURE: sp_get_user_bookings
     drop_sp_user_bookings = "DROP PROCEDURE IF EXISTS `sp_get_user_bookings`;"
     sp_user_bookings_sql = """
     CREATE PROCEDURE `sp_get_user_bookings`(IN p_user_id INT)
@@ -130,8 +120,6 @@ def apply_database_routines():
         ORDER BY b.created_at DESC;
     END;
     """
-
-    # 4. STORED PROCEDURE: sp_get_theater_showtimes
     drop_sp_theater_showtimes = "DROP PROCEDURE IF EXISTS `sp_get_theater_showtimes`;"
     sp_theater_showtimes_sql = """
     CREATE PROCEDURE `sp_get_theater_showtimes`(IN p_theater_id INT)
@@ -162,8 +150,6 @@ def apply_database_routines():
         ORDER BY st.start_time ASC;
     END;
     """
-
-    # 5. STORED FUNCTION: fn_calculate_user_spend
     drop_fn_user_spend = "DROP FUNCTION IF EXISTS `fn_calculate_user_spend`;"
     fn_user_spend_sql = """
     CREATE FUNCTION `fn_calculate_user_spend`(p_user_id INT) 

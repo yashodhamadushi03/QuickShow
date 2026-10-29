@@ -43,8 +43,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-
-  // 1. Fetch available theaters for dropdown
   useEffect(() => {
     if (!isOpen) return;
     fetch(`${API_BASE_URL}/theaters`)
@@ -59,8 +57,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
       })
       .catch((err) => console.debug("Error fetching theaters:", err));
   }, [isOpen]);
-
-  // 2. Pre-populate from Clerk / Google OAuth
   useEffect(() => {
     if (!isOpen || !clerkUser) return;
 
@@ -80,8 +76,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
     setEmail(activeEmail);
     if (clerkName) setName(clerkName);
     if (clerkAvatar) setAvatarUrl(clerkAvatar);
-
-    // Fetch existing details if any
     if (activeEmail) {
       fetch(`${API_BASE_URL}/users/profile?email=${encodeURIComponent(activeEmail)}`)
         .then((res) => (res.ok ? res.json() : null))
@@ -103,8 +97,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
   }, [isOpen, clerkUser]);
 
   if (!isOpen) return null;
-
-  // 3. Form Submission
   const handleSaveAndContinue = async (e) => {
     e.preventDefault();
     setErrorMsg("");
@@ -134,14 +126,11 @@ const OnboardingModal = ({ isOpen, onClose }) => {
     };
 
     try {
-      // Primary call: POST /api/users/profile
       let res = await fetch(`${API_BASE_URL}/users/profile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
-      // Fallback call: PUT /api/users/profile
       if (!res.ok) {
         res = await fetch(`${API_BASE_URL}/users/profile`, {
           method: "PUT",
@@ -152,8 +141,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
 
       if (res.ok) {
         const savedData = await res.json();
-
-        // Update local session caches
         localStorage.setItem("customer_name", savedData.name || name);
         localStorage.setItem("customer_phone", cleanPhone);
         if (clerkUser?.id) {
@@ -165,8 +152,6 @@ const OnboardingModal = ({ isOpen, onClose }) => {
           icon: "🎉",
           duration: 3500,
         });
-
-        // Close modal and smoothly redirect to Home Page (/)
         if (onClose) onClose();
         navigate("/", { replace: true });
       } else {

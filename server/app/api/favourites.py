@@ -11,11 +11,9 @@ from app.api.deps import get_current_user_optional
 
 router = APIRouter(prefix="/favourites", tags=["Favourites"])
 
-
 class FavouriteCreate(BaseModel):
     movie_id: int
     email: Optional[str] = None
-
 
 @router.get("", response_model=List[MovieOut])
 def get_user_favourites(
@@ -33,8 +31,6 @@ def get_user_favourites(
     elif email and email.strip():
         clean_email = email.strip().lower()
         target_user = db.query(User).filter(User.email == clean_email).first()
-
-    # Strict isolation: if user is not authenticated or not found, return empty list
     if not target_user:
         return []
 
@@ -45,7 +41,6 @@ def get_user_favourites(
 
     movies = db.query(Movie).filter(Movie.movie_id.in_(movie_ids)).all()
     return movies
-
 
 @router.get("/ids", response_model=List[int])
 def get_user_favourite_ids(
@@ -66,7 +61,6 @@ def get_user_favourite_ids(
 
     favs = db.query(Favourite.movie_id).filter(Favourite.user_id == target_user.user_id).all()
     return [f[0] for f in favs]
-
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 def add_favourite(
@@ -110,7 +104,6 @@ def add_favourite(
         db.commit()
 
     return {"status": "success", "message": f"Movie '{movie.title}' added to favourites", "movie_id": fav_in.movie_id}
-
 
 @router.delete("/{movie_id}", status_code=status.HTTP_200_OK)
 def remove_favourite(

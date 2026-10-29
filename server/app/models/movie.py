@@ -5,11 +5,9 @@ import enum
 from app.core.database import Base
 from app.core.timezone import get_local_now
 
-
 class MovieStatus(str, enum.Enum):
     NOW_SHOWING = "Now Showing"
     COMING_SOON = "Coming Soon"
-
 
 class Movie(Base):
     __tablename__ = "movies"
@@ -25,8 +23,6 @@ class Movie(Base):
     release_date = Column(Date, nullable=True)
     status = Column(Enum(MovieStatus, values_callable=lambda obj: [e.value for e in obj]), default=MovieStatus.NOW_SHOWING, nullable=False, index=True)
     created_at = Column(DateTime, default=get_local_now, nullable=False)
-
-    # Relationships
     showtimes = relationship("Showtime", back_populates="movie", cascade="all, delete-orphan")
 
     @property

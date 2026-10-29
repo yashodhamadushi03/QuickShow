@@ -15,14 +15,12 @@ from app.models.movie import Movie, MovieStatus
 from app.models.theater import Theater, Hall, Seat
 from app.models.showtime import Showtime
 
-
 def seed_database():
     print("🎬 Seeding Expanded QuickShow Movie Catalog & Islandwide Sri Lankan Theaters...")
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
     try:
-        # 1. Default Accounts
         admin_email = "admin@quickshow.lk"
         customer_email = "user@quickshow.lk"
 
@@ -39,10 +37,7 @@ def seed_database():
             print("  ✓ Created Admin User: admin@quickshow.lk")
 
         db.flush()
-
-        # 2. Expanded Movies Collection (English, Sinhala, Tamil, Hindi across all categories)
         movies_data = [
-            # NOW SHOWING - Diverse Categories
             {
                 "title": "Avatar: The Way of Water",
                 "description": "Jake Sully lives with his newfound family on Pandora. When a familiar threat returns, he works with Neytiri and the Metkayina clan to protect their home.",
@@ -175,8 +170,6 @@ def seed_database():
                 "release_date": date(2024, 8, 15),
                 "status": MovieStatus.NOW_SHOWING
             },
-
-            # COMING SOON - High Anticipation Releases
             {
                 "title": "Devara: Part 1",
                 "description": "An epic action saga set against coastal lands, depicting ancestral bloodlines, seafaring contraband, and legendary courage.",
@@ -259,8 +252,6 @@ def seed_database():
         
         db.flush()
         print(f"  ✓ Seeded {len(movie_objs)} Multi-Genre Movies (Sinhala, Tamil, Hollywood, Romance, Sci-Fi, Comedy, Thriller)")
-
-        # 3. Islandwide Sri Lankan Theater Network
         theaters_data = [
             {
                 "name": "Scope Cinemas Multiplex - Colombo City Centre",
@@ -351,12 +342,6 @@ def seed_database():
                     db.add(h)
                     db.flush()
                     halls_created.append(h)
-
-                    # Matrix Grid: Rows A-H (8 rows) x Seats 1-12 (96 total seats)
-                    # Front Rows (A, B) = Lower priority standard front view
-                    # Rows (C, D) = Standard Mid view
-                    # Rows (E, F) = Optimal center-back viewing angle & acoustic sweet-spot
-                    # Back Rows (G, H) = VIP Recliner Luxury Tier
                     rows = ["A", "B", "C", "D", "E", "F", "G", "H"]
                     for row in rows:
                         for num in range(1, 13):
@@ -367,14 +352,6 @@ def seed_database():
                     halls_created.append(existing_h)
 
         db.flush()
-
-        # 4. Sri Lankan Non-Clashing Showtime Engine (Official 5 Slots per Day)
-        # Standard Sri Lankan cinema showtime slots for each hall/screen:
-        # - Morning Show: 10:00 AM
-        # - Matinee Show: 1:00 PM
-        # - First Show: 4:00 PM
-        # - Second Show: 7:15 PM
-        # - Night Show: 10:15 PM
         sl_showtime_slots = [
             (10, 0, "Morning Show"),
             (13, 0, "Matinee Show"),
@@ -385,21 +362,16 @@ def seed_database():
 
         now = datetime.now(timezone.utc)
         now_showing_movies = [m for m in movie_objs if m.status == MovieStatus.NOW_SHOWING]
-
-        # Clear existing showtimes to guarantee zero leftover clashing records
         db.query(Showtime).delete()
         db.flush()
 
         showtime_count = 0
         clash_prevented_count = 0
-
-        # Generate non-overlapping showtimes for the next 5 days
         for day_offset in range(0, 5):
             current_date = now.date() + timedelta(days=day_offset)
 
             for h_idx, h in enumerate(halls_created):
                 for slot_idx, (hour, minute, slot_name) in enumerate(sl_showtime_slots):
-                    # Deterministically distribute movies across halls and slots
                     movie_index = (h_idx * 3 + day_offset * 2 + slot_idx) % len(now_showing_movies)
                     m = now_showing_movies[movie_index]
 
@@ -407,14 +379,8 @@ def seed_database():
                         current_date.year, current_date.month, current_date.day,
                         hour, minute, tzinfo=timezone.utc
                     )
-
-                    # Runtime constraint: Ensure duration fits cleanly within slot interval with cleaning buffer
-                    # Maximum allowable running time before next show slot is 165 minutes
                     runtime_minutes = min(m.duration_min, 165)
                     end_time = start_time + timedelta(minutes=runtime_minutes)
-
-                    # Strict Scheduling Constraint Check:
-                    # No two movies can occupy the exact same hall_id at overlapping time intervals
                     existing_clash = db.query(Showtime).filter(
                         Showtime.hall_id == h.hall_id,
                         Showtime.start_time < end_time,
@@ -452,7 +418,6 @@ def seed_database():
         print(f"❌ Database seeding failed: {e}")
     finally:
         db.close()
-
 
 if __name__ == "__main__":
     seed_database()

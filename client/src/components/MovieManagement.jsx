@@ -26,26 +26,18 @@ const DEFAULT_POSTER = "https://images.unsplash.com/photo-1489599849927-2ee91ced
 const MovieManagement = ({ adminToken, apiBaseUrl = API_BASE_URL, onMoviesUpdated }) => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // Search, filter, and sort state
   const [search, setSearch] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedLanguage, setSelectedLanguage] = useState("all");
   const [sortBy, setSortBy] = useState("release_date");
   const [sortOrder, setSortOrder] = useState("desc");
-
-  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create"); // "create" | "edit"
   const [editingMovieId, setEditingMovieId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Delete confirmation modal state
   const [movieToDelete, setMovieToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  // Form fields
   const [formData, setFormData] = useState({
     title: "",
     genre: "Action",
@@ -57,8 +49,6 @@ const MovieManagement = ({ adminToken, apiBaseUrl = API_BASE_URL, onMoviesUpdate
     rating: "PG-13",
     status: "Now Showing"
   });
-
-  // Fetch movies with admin endpoint
   const fetchMovies = async () => {
     setLoading(true);
     try {
@@ -82,7 +72,6 @@ const MovieManagement = ({ adminToken, apiBaseUrl = API_BASE_URL, onMoviesUpdate
         setMovies(data);
         if (onMoviesUpdated) onMoviesUpdated(data);
       } else {
-        // Fallback to public movies endpoint if admin endpoint returns error
         const pubRes = await fetch(`${apiBaseUrl}/movies`);
         if (pubRes.ok) {
           const pubData = await pubRes.json();
@@ -100,8 +89,6 @@ const MovieManagement = ({ adminToken, apiBaseUrl = API_BASE_URL, onMoviesUpdate
   useEffect(() => {
     fetchMovies();
   }, [search, selectedGenre, selectedStatus, selectedLanguage, sortBy, sortOrder]);
-
-  // Handle open Add Modal
   const openCreateModal = () => {
     setModalMode("create");
     setEditingMovieId(null);
@@ -118,8 +105,6 @@ const MovieManagement = ({ adminToken, apiBaseUrl = API_BASE_URL, onMoviesUpdate
     });
     setIsModalOpen(true);
   };
-
-  // Handle open Edit Modal
   const openEditModal = (movie) => {
     setModalMode("edit");
     setEditingMovieId(movie.movie_id);
@@ -136,8 +121,6 @@ const MovieManagement = ({ adminToken, apiBaseUrl = API_BASE_URL, onMoviesUpdate
     });
     setIsModalOpen(true);
   };
-
-  // Form submit handler (Create or Update)
   const handleFormSubmit = async (e) => {
     e.preventDefault();
 
@@ -188,7 +171,6 @@ const MovieManagement = ({ adminToken, apiBaseUrl = API_BASE_URL, onMoviesUpdate
           toast.error(errData.detail || "Failed to create movie record");
         }
       } else {
-        // Edit mode
         const res = await fetch(`${apiBaseUrl}/admin/movies/${editingMovieId}`, {
           method: "PUT",
           headers: {
@@ -216,8 +198,6 @@ const MovieManagement = ({ adminToken, apiBaseUrl = API_BASE_URL, onMoviesUpdate
       setIsSubmitting(false);
     }
   };
-
-  // Delete movie handler with safe foreign key cascade
   const handleConfirmDelete = async () => {
     if (!movieToDelete) return;
     setIsDeleting(true);
@@ -246,8 +226,6 @@ const MovieManagement = ({ adminToken, apiBaseUrl = API_BASE_URL, onMoviesUpdate
       setIsDeleting(false);
     }
   };
-
-  // Helper stats
   const totalCount = movies.length;
   const nowShowingCount = useMemo(() => movies.filter((m) => m.status === "Now Showing").length, [movies]);
   const comingSoonCount = useMemo(() => movies.filter((m) => m.status === "Coming Soon").length, [movies]);

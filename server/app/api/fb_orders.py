@@ -11,8 +11,6 @@ from app.schemas.fb_order import FBOrderCreate, FBOrderOut
 from app.api.deps import get_current_user_optional, get_current_admin
 
 router = APIRouter(prefix="", tags=["Food & Beverage (Concessions)"])
-
-# Standard Sri Lankan Multiplex Concession Menu Catalog
 STANDARD_FB_MENU = [
     {
         "id": "FB-01",
@@ -80,12 +78,10 @@ STANDARD_FB_MENU = [
     }
 ]
 
-
 @router.get("/f-b/menu")
 def get_concession_menu():
     """Returns the official cinema Food & Beverage (F&B) menu catalog."""
     return STANDARD_FB_MENU
-
 
 @router.get("/f-b/orders", response_model=List[FBOrderOut])
 def get_user_fb_orders(
@@ -96,7 +92,6 @@ def get_user_fb_orders(
     user_id = current_user.user_id if current_user else 1
     return db.query(FBOrder).filter(FBOrder.user_id == user_id).order_by(FBOrder.created_at.desc()).all()
 
-
 @router.post("/f-b/orders", response_model=FBOrderOut, status_code=status.HTTP_201_CREATED)
 def create_fb_order(
     order_in: FBOrderCreate,
@@ -105,8 +100,6 @@ def create_fb_order(
 ):
     """Place a new Food & Beverage concession order."""
     user_id = current_user.user_id if current_user else 1
-
-    # If booking_id provided, verify booking exists
     if order_in.booking_id:
         booking = db.query(Booking).filter(Booking.booking_id == order_in.booking_id).first()
         if not booking:
@@ -128,9 +121,6 @@ def create_fb_order(
     db.refresh(order)
     return order
 
-
-# --- Admin F&B Management Endpoints ---
-
 @router.get("/admin/f-b/orders", response_model=List[FBOrderOut])
 def get_admin_fb_orders(
     status_filter: Optional[FBOrderStatus] = Query(None, description="Filter by order status"),
@@ -142,7 +132,6 @@ def get_admin_fb_orders(
     if status_filter:
         query = query.filter(FBOrder.status == status_filter)
     return query.order_by(FBOrder.created_at.desc()).all()
-
 
 @router.put("/admin/f-b/orders/{order_id}", response_model=FBOrderOut)
 def update_admin_fb_order_status(
@@ -159,7 +148,6 @@ def update_admin_fb_order_status(
     db.commit()
     db.refresh(order)
     return order
-
 
 @router.delete("/admin/f-b/orders/{order_id}", status_code=status.HTTP_200_OK)
 def delete_admin_fb_order(

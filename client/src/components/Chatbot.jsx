@@ -63,8 +63,6 @@ const Chatbot = () => {
 
     setMessages((prev) => [...prev, userMsg]);
     if (!textToSend) setInputMessage("");
-
-    // Simulate AI bot response delay
     setTimeout(() => {
       const replyText = generateBotReply(text);
       const botMsg = {

@@ -36,14 +36,10 @@ const MovieDetails = () => {
       .catch((e) => console.warn("Failed to load theaters in MovieDetails:", e));
   }, []);
 
-
   const getShow = async () => {
-    // 1. Check in dummyShowsData
     let movie = dummyShowsData.find(
       (show) => String(show._id) === String(id) || String(show.id) === String(id)
     );
-
-    // 2. If not in dummy data, try fetching from backend API
     if (!movie) {
       try {
         const res = await fetch(`${API_BASE_URL}/movies/${id}`);
@@ -67,8 +63,6 @@ const MovieDetails = () => {
         console.warn("Backend movie fetch failed, using fallback:", err);
       }
     }
-
-    // 3. Fallback to default movie if still not found
     if (!movie) {
       const fallback = dummyShowsData[0];
       movie = {
@@ -252,7 +246,6 @@ const MovieDetails = () => {
         initialHallName={passedHallName}
         theaters={theaters}
       />
-
 
       <p className="text-2xl sm:text-3xl font-black text-white mt-20 mb-6">
         You May Also Like

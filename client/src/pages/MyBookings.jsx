@@ -35,8 +35,6 @@ const MyBookings = () => {
 
   const fetchMyBookings = async (showLoader = true) => {
     if (!isClerkLoaded) return;
-
-    // Strict Isolation: If no authenticated user email exists, display zero bookings
     if (!userEmail) {
       setBookings([]);
       setLoading(false);
@@ -52,7 +50,6 @@ const MyBookings = () => {
       const queryParam = `?email=${encodeURIComponent(userEmail)}`;
 
       let data = null;
-      // 1. Primary endpoint: GET /api/bookings/my?email=...
       try {
         const res = await fetch(`${API_BASE_URL}/bookings/my${queryParam}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -63,8 +60,6 @@ const MyBookings = () => {
       } catch (e) {
         console.warn("Primary endpoint /bookings/my error:", e);
       }
-
-      // 2. Secondary endpoint: GET /api/user/bookings?email=...
       if (!data) {
         try {
           const res2 = await fetch(`${API_BASE_URL}/user/bookings${queryParam}`, {
@@ -77,8 +72,6 @@ const MyBookings = () => {
           console.warn("Secondary endpoint /user/bookings error:", e2);
         }
       }
-
-      // Read user-scoped local cache of instant bookings
       let cached = [];
       try {
         const userRecentKey = `quickshow_recent_bookings_${userEmail}`;
@@ -86,7 +79,6 @@ const MyBookings = () => {
         if (rawUserRecent) {
           cached = JSON.parse(rawUserRecent);
         }
-        // Strict safety check: ensure cached items strictly belong to current user
         cached = (Array.isArray(cached) ? cached : []).filter(
           (b) => !b.customer_email || b.customer_email.toLowerCase() === userEmail
         );
@@ -95,7 +87,6 @@ const MyBookings = () => {
       }
 
       if (Array.isArray(data) && data.length > 0) {
-        // Enforce strict filtering on returned records to guarantee no cross-user pollution
         const userSpecificDbData = data.filter(
           (b) => !b.customer_email || b.customer_email.toLowerCase() === userEmail
         );
@@ -190,7 +181,7 @@ const MyBookings = () => {
             </p>
           </div>
         ) : bookings.length === 0 ? (
-          /* Empty State */
+          
           <div className="text-center py-20 px-6 bg-slate-900/60 rounded-3xl border border-slate-800/80 shadow-2xl max-w-lg mx-auto">
             <div className="w-20 h-20 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
               <Ticket className="w-10 h-10 text-rose-500 stroke-[1.5]" />
@@ -207,7 +198,7 @@ const MyBookings = () => {
             </Link>
           </div>
         ) : (
-          /* Real-Time Bookings List */
+          
           <div className="space-y-6">
             {bookings.map((booking, idx) => {
               const movie = booking.showtime?.movie;
@@ -220,8 +211,6 @@ const MyBookings = () => {
                 "Scope Cinemas Multiplex - Colombo City Centre";
               const hallName = hall?.hall_name || "Screen 1 - Dolby Atmos";
               const posterUrl = movie?.poster_url || movie?.poster_path || FALLBACK_POSTER;
-
-              // Extract seat labels
               let seatsList = "";
               if (Array.isArray(booking.booking_seats) && booking.booking_seats.length > 0) {
                 seatsList = booking.booking_seats

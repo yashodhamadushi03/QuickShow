@@ -127,7 +127,7 @@ const Favourite = () => {
             ))}
           </div>
         ) : (
-          /* Empty State */
+          
           <div className="py-20 px-6 max-w-md mx-auto text-center bg-slate-900/60 border border-slate-800/80 rounded-3xl shadow-2xl backdrop-blur-sm my-8">
             <div className="w-20 h-20 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner shadow-rose-500/20">
               <Heart className="w-10 h-10 text-rose-500 stroke-[1.5]" />

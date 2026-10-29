@@ -143,8 +143,6 @@ export const dummyShowsData = [
         "runtime": 178,
     }
 ];
-
-// Dynamic Date Generator relative to real-world current date
 const getDynamicDateString = (offsetDays) => {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
@@ -153,8 +151,6 @@ const getDynamicDateString = (offsetDays) => {
   const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
-
-// Generate 7 consecutive days of complete Sri Lankan 5-slot cinema schedules
 export const dummyDateTimeData = (() => {
   const data = {};
   for (let offset = 0; offset < 7; offset++) {

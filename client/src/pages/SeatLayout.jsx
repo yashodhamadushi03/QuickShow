@@ -40,8 +40,6 @@ const SeatLayout = () => {
   const [showtime, setShowtime] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingConfirmation, setBookingConfirmation] = useState(null);
-
-  // Sandbox Test Payment States
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isSandboxMode, setIsSandboxMode] = useState(true); // Default to Sandbox Active for Viva Demo!
   const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242");
@@ -49,8 +47,6 @@ const SeatLayout = () => {
   const [cardExpiry, setCardExpiry] = useState("12/28");
   const [cardCvv, setCardCvv] = useState("123");
   const [isAuthorizing, setIsAuthorizing] = useState(false);
-
-  // Pre-fill email and phone from Clerk user if signed in
   useEffect(() => {
     if (clerkUser) {
       if (clerkUser.primaryEmailAddress?.emailAddress) {
@@ -65,8 +61,6 @@ const SeatLayout = () => {
       }
     }
   }, [clerkUser]);
-
-  // Generate Matrix Grid: Rows A-H (8 rows) x Seats 1-12 (96 total seats!)
   const generateSriLankanSeatMatrix = () => {
     const rows = ["A", "B", "C", "D", "E", "F", "G", "H"];
     const seatsPerRow = 12;
@@ -101,8 +95,6 @@ const SeatLayout = () => {
     try {
       let activeShowtimeId = showtimeId;
       let fetchedShowtime = null;
-
-      // 1. Try to fetch requested showtime directly
       const stRes = await fetch(`${API_BASE_URL}/showtimes/${activeShowtimeId}`);
       if (stRes.ok) {
         const candidate = await stRes.json();
@@ -110,8 +102,6 @@ const SeatLayout = () => {
           fetchedShowtime = candidate;
         }
       }
-
-      // 2. If no matching showtime for this theater yet, look up showtimes for this movie & theater from backend
       if (!fetchedShowtime) {
         const movieIdCandidate = passedMovie?.movie_id || passedMovie?.id || passedMovie?._id || parseInt(showtimeIdParam);
         if (movieIdCandidate) {
@@ -167,8 +157,6 @@ const SeatLayout = () => {
           }
         });
       }
-
-      // 3. Fetch seats layout for this showtime
       const seatsRes = await fetch(`${API_BASE_URL}/showtimes/${activeShowtimeId}/seats`);
       if (seatsRes.ok) {
         const seatsData = await seatsRes.json();
@@ -201,14 +189,7 @@ const SeatLayout = () => {
   const [partySize, setPartySize] = useState(2);
   const [aiPreference, setAiPreference] = useState("acoustic");
   const [aiRecommendationInfo, setAiRecommendationInfo] = useState(null);
-
-  // Real-World Hall Seating Intelligence & Smart Seat Optimizer Algorithm
   const recommendBestSeats = (count = partySize, pref = aiPreference) => {
-    // Row weighting tiers:
-    // Back Rows E, F: Optimal viewing angles and acoustic sweet spots (zero neck strain)
-    // Rows G, H: VIP luxury recliners / rear elevated vantage point
-    // Rows C, D: Standard mid rows
-    // Rows A, B: Front rows closest to screen (designated lower priority)
     let targetRowLabels = ["E", "F", "G", "H"];
     let prefTitle = "Dolby Atmos Acoustic Sweet-Spot (Rows E & F)";
     let explanationText = `Positioned at the prime center-back tier (optimal viewing angle & acoustic sweet-spot) with zero neck strain.`;
@@ -236,8 +217,6 @@ const SeatLayout = () => {
       toast.error("No available seats left for this showtime!");
       return;
     }
-
-    // Rate an individual seat
     const rateSeat = (s) => {
       const row = (s.row_label || "").toUpperCase();
       let rowScore = 8;
@@ -245,14 +224,10 @@ const SeatLayout = () => {
       else if (row === "G" || row === "H") rowScore = 18;
       else if (row === "C" || row === "D") rowScore = 10;
       else if (row === "A" || row === "B") rowScore = 2; // Front rows lower priority
-
-      // Center proximity score (seats 6 and 7 are center)
       const centerScore = 10 - Math.abs(6.5 - s.seat_number);
       const vipBonus = s.seat_type === "VIP" ? 3 : 0;
       return rowScore + centerScore + vipBonus;
     };
-
-    // Group available seats by row
     const rowsMap = {};
     available.forEach((s) => {
       if (!rowsMap[s.row_label]) rowsMap[s.row_label] = [];
@@ -261,8 +236,6 @@ const SeatLayout = () => {
 
     let bestBlock = null;
     let bestBlockScore = -999;
-
-    // Search target rows first, then all remaining rows
     const searchOrder = [
       ...targetRowLabels,
       ...["E", "F", "G", "H", "D", "C", "B", "A"].filter((r) => !targetRowLabels.includes(r))
@@ -285,8 +258,6 @@ const SeatLayout = () => {
           }
         }
       }
-
-      // Evaluate every contiguous candidate window of size `count`
       for (let i = 0; i <= rSeats.length - count; i++) {
         const subset = rSeats.slice(i, i + count);
         const isContiguous = subset.every((s, idx) => idx === 0 || s.seat_number === subset[idx - 1].seat_number + 1);
@@ -307,7 +278,6 @@ const SeatLayout = () => {
       selectedIds = bestBlock.map((s) => s.seat_id);
       selectedSeatNames = bestBlock.map((s) => `${s.row_label}${s.seat_number}`);
     } else {
-      // Fallback: Pick top rated individual available seats (prioritizing E-H center)
       const sortedAvailable = [...available].sort((a, b) => rateSeat(b) - rateSeat(a));
       const fallbackSubset = sortedAvailable.slice(0, count);
       selectedIds = fallbackSubset.map((s) => s.seat_id);
@@ -352,8 +322,6 @@ const SeatLayout = () => {
       return total + (seat ? getSeatPrice(seat) : 1500.00);
     }, 0);
   };
-
-  // 1-Click Sandbox Test Card Fillers for Viva Demo
   const fillTestCard = (type = "visa") => {
     const activeHolder = customerName || (clerkUser?.fullName) || "Verified Customer";
     if (type === "visa") {
@@ -408,7 +376,6 @@ const SeatLayout = () => {
         style: { background: "#1e293b", color: "#fff", border: "1px solid #e11d48" }
       });
     }
-    // Open Sandbox Checkout & Payment Modal
     setShowPaymentModal(true);
   };
 
@@ -431,8 +398,6 @@ const SeatLayout = () => {
 
     try {
       const token = localStorage.getItem("token") || "";
-
-      // 1. Concurrency-Safe Seat Reservation in Database
       const bookingRes = await fetch(`${API_BASE_URL}/bookings`, {
         method: "POST",
         headers: {
@@ -457,8 +422,6 @@ const SeatLayout = () => {
       }
 
       const bookingData = await bookingRes.json();
-
-      // 2. Process Payment with Sandbox Flag and Test Card Pattern
       const paymentRes = await fetch(`${API_BASE_URL}/payments`, {
         method: "POST",
         headers: {
@@ -495,8 +458,6 @@ const SeatLayout = () => {
           isSandbox: paymentData.is_sandbox || isSandboxMode,
           paymentMethod: paymentData.payment_method,
         });
-
-        // Save email and recent booking locally for real-time MyBookings sync
         try {
           const cleanEmail = (customerEmail || "").trim().toLowerCase();
           if (cleanEmail) localStorage.setItem("customer_email", cleanEmail);
@@ -553,8 +514,6 @@ const SeatLayout = () => {
       console.warn("API booking fallback triggered:", err.message);
       const fallbackTxn = "TXN-SANDBOX-" + Math.random().toString(36).substring(2, 8).toUpperCase();
       const fallbackBookingId = Math.floor(Math.random() * 9000) + 1000;
-
-      // Dispatch direct HTML email via API as fallback
       try {
         await fetch(`${API_BASE_URL}/send-direct-email`, {
           method: "POST",
@@ -573,8 +532,6 @@ const SeatLayout = () => {
       } catch (emailErr) {
         console.warn("Direct email dispatch backup call failed:", emailErr);
       }
-
-      // Save fallback booking locally for instant MyBookings visibility
       try {
         const cleanEmail = (customerEmail || "").trim().toLowerCase();
         if (cleanEmail) localStorage.setItem("customer_email", cleanEmail);
@@ -681,7 +638,7 @@ const SeatLayout = () => {
           <div className="w-10 h-10 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : bookingConfirmation ? (
-        /* Confirmation Screen & Digital Passes */
+        
         <div className="max-w-lg mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 text-center shadow-2xl">
           <div className="w-16 h-16 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-10 h-10" />
@@ -767,7 +724,7 @@ const SeatLayout = () => {
           </div>
         </div>
       ) : (
-        /* Interactive Seat Matrix */
+        
         <div className="max-w-4xl mx-auto">
           {/* AI SMART SEAT OPTIMIZER WIDGET BAR */}
           <div className="mb-6 bg-slate-900/90 border border-rose-500/30 rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden">

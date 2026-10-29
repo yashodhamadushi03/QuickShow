@@ -15,9 +15,6 @@ from app.api.deps import get_current_admin
 
 router = APIRouter(prefix="/admin", tags=["Admin Operations"])
 
-
-# --- Movies Management (CRUD) ---
-
 @router.get("/movies", response_model=List[MovieOut])
 def get_admin_movies(
     search: Optional[str] = Query(None, description="Search by title, genre, language, or synopsis/description"),
@@ -32,7 +29,6 @@ def get_admin_movies(
     """
     Admin: List all movies with search, filter, and sort capabilities.
     """
-    # Normalize query params when invoked directly in Python tests or via FastAPI
     search = search if isinstance(search, str) else None
     genre = genre if isinstance(genre, str) else None
     language = language if isinstance(language, str) else None
@@ -41,8 +37,6 @@ def get_admin_movies(
     sort_order = sort_order if isinstance(sort_order, str) else "desc"
 
     query = db.query(Movie)
-
-    # Search filter
     if search and search.strip():
         search_term = f"%{search.strip()}%"
         query = query.filter(
@@ -53,20 +47,12 @@ def get_admin_movies(
                 Movie.description.ilike(search_term),
             )
         )
-
-    # Genre filter
     if genre and genre.strip() and genre.lower() != "all":
         query = query.filter(Movie.genre.ilike(f"%{genre.strip()}%"))
-
-    # Language filter
     if language and language.strip() and language.lower() != "all":
         query = query.filter(Movie.language.ilike(f"%{language.strip()}%"))
-
-    # Status filter
     if status:
         query = query.filter(Movie.status == status)
-
-    # Sorting
     sort_col_map = {
         "title": Movie.title,
         "release_date": Movie.release_date,
@@ -85,13 +71,10 @@ def get_admin_movies(
         query = query.order_by(sort_col.desc())
 
     movies = query.all()
-
-    # Populate showtimes_count
     for m in movies:
         m.showtimes_count = len(m.showtimes) if m.showtimes else 0
 
     return movies
-
 
 @router.post("/movies", response_model=MovieOut, status_code=status.HTTP_201_CREATED)
 def create_movie(
@@ -110,7 +93,6 @@ def create_movie(
     db.refresh(movie)
     movie.showtimes_count = 0
     return movie
-
 
 @router.put("/movies/{movie_id}", response_model=MovieOut)
 def update_movie(
@@ -135,7 +117,6 @@ def update_movie(
     movie.showtimes_count = len(movie.showtimes) if movie.showtimes else 0
     return movie
 
-
 @router.delete("/movies/{movie_id}", status_code=status.HTTP_200_OK)
 def delete_movie(
     movie_id: int,
@@ -152,29 +133,19 @@ def delete_movie(
 
     movie_title = movie.title
     try:
-        # Step 1: Find all showtimes for this movie
         showtimes = db.query(Showtime).filter(Showtime.movie_id == movie_id).all()
         showtime_ids = [s.showtime_id for s in showtimes]
 
         if showtime_ids:
-            # Step 2: Find all bookings for these showtimes
             bookings = db.query(Booking).filter(Booking.showtime_id.in_(showtime_ids)).all()
             booking_ids = [b.booking_id for b in bookings]
 
             if booking_ids:
-                # Step 3: Remove payments associated with these bookings
                 db.query(Payment).filter(Payment.booking_id.in_(booking_ids)).delete(synchronize_session=False)
-                # Step 4: Remove reserved booking seats
                 db.query(BookingSeat).filter(BookingSeat.booking_id.in_(booking_ids)).delete(synchronize_session=False)
-                # Step 5: Remove bookings
                 db.query(Booking).filter(Booking.booking_id.in_(booking_ids)).delete(synchronize_session=False)
-
-            # Clean any remaining booking seats directly tied to showtimes
             db.query(BookingSeat).filter(BookingSeat.showtime_id.in_(showtime_ids)).delete(synchronize_session=False)
-            # Step 6: Delete all showtimes
             db.query(Showtime).filter(Showtime.movie_id == movie_id).delete(synchronize_session=False)
-
-        # Step 7: Delete the movie itself
         db.delete(movie)
         db.commit()
 
@@ -190,9 +161,6 @@ def delete_movie(
             detail=f"Failed to delete movie '{movie_title}': {str(e)}"
         )
 
-
-# --- Theaters & Halls Management ---
-
 @router.post("/theaters", response_model=TheaterOut, status_code=status.HTTP_201_CREATED)
 def create_theater(
     theater_in: TheaterCreate,
@@ -205,7 +173,6 @@ def create_theater(
     db.commit()
     db.refresh(theater)
     return theater
-
 
 @router.post("/theaters/{theater_id}/halls", response_model=HallOut, status_code=status.HTTP_201_CREATED)
 def create_hall(
@@ -225,7 +192,6 @@ def create_hall(
     db.refresh(hall)
     return hall
 
-
 @router.post("/halls/{hall_id}/seats/batch", response_model=List[SeatOut], status_code=status.HTTP_201_CREATED)
 def generate_seat_grid(
     hall_id: int,
@@ -241,7 +207,6 @@ def generate_seat_grid(
     created_seats = []
     for row in batch_in.rows:
         for num in range(1, batch_in.seats_per_row + 1):
-            # Check if seat exists
             existing = db.query(Seat).filter(
                 Seat.hall_id == hall_id,
                 Seat.row_label == row,
@@ -258,8 +223,6 @@ def generate_seat_grid(
                 )
                 db.add(seat)
                 created_seats.append(seat)
-    
-    # Update total capacity of hall
     db.flush()
     total_count = db.query(Seat).filter(Seat.hall_id == hall_id).count()
     hall.total_capacity = total_count
@@ -269,9 +232,6 @@ def generate_seat_grid(
         db.refresh(s)
     return created_seats
 
-
-# --- Showtimes Management ---
-
 SL_SHOWTIME_SLOTS = [
     {"slot_name": "Morning Show", "time": "10:00 AM", "hour": 10, "minute": 0},
     {"slot_name": "Matinee Show", "time": "01:00 PM", "hour": 13, "minute": 0},
@@ -280,12 +240,10 @@ SL_SHOWTIME_SLOTS = [
     {"slot_name": "Night Show", "time": "10:15 PM", "hour": 22, "minute": 15},
 ]
 
-
 @router.get("/showtimes/slots")
 def get_sri_lankan_showtime_slots():
     """Returns the official standard Sri Lankan cinema showtime slots."""
     return SL_SHOWTIME_SLOTS
-
 
 @router.get("/showtimes", response_model=List[ShowtimeOut])
 def get_all_showtimes(
@@ -294,7 +252,6 @@ def get_all_showtimes(
 ):
     """Admin: Fetch all scheduled showtimes across all halls."""
     return db.query(Showtime).order_by(Showtime.start_time.asc()).all()
-
 
 @router.post("/showtimes", response_model=ShowtimeOut, status_code=status.HTTP_201_CREATED)
 def create_showtime(
@@ -315,18 +272,11 @@ def create_showtime(
     hall = db.query(Hall).filter(Hall.hall_id == st_in.hall_id).first()
     if not hall:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Hall not found")
-
-    # Strip tzinfo to ensure naive comparison with MySQL DATETIME
     start_time = st_in.start_time.replace(tzinfo=None) if st_in.start_time.tzinfo else st_in.start_time
     end_time = st_in.end_time.replace(tzinfo=None) if st_in.end_time.tzinfo else st_in.end_time
-
-    # Accurately calculate end time based on the movie's actual duration if missing or invalid
     movie_duration = movie.duration_min or 120
     if not end_time or end_time <= start_time:
         end_time = start_time + timedelta(minutes=movie_duration)
-
-    # Strict Scheduling Constraint: Interval overlap check for the same hall_id
-    # Overlap condition: existing.start_time < new.end_time AND existing.end_time > new.start_time
     clashing_showtime = db.query(Showtime).filter(
         Showtime.hall_id == st_in.hall_id,
         Showtime.start_time < end_time,
@@ -356,7 +306,6 @@ def create_showtime(
     db.refresh(st)
     return st
 
-
 @router.delete("/showtimes/{showtime_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_showtime(
     showtime_id: int,
@@ -371,9 +320,6 @@ def delete_showtime(
     db.delete(st)
     db.commit()
     return None
-
-
-# --- Customer Activity Monitoring & Real-Time Analytics Dashboard ---
 
 @router.get("/customers")
 def get_customer_profiles(
@@ -402,7 +348,6 @@ def get_customer_profiles(
     
     return customer_data
 
-
 @router.get("/activities")
 def get_customer_activities(
     admin: User = Depends(get_current_admin),
@@ -430,7 +375,6 @@ def get_customer_activities(
         
     return activities
 
-
 @router.get("/analytics")
 def get_realtime_analytics(
     admin: User = Depends(get_current_admin),
@@ -440,31 +384,22 @@ def get_realtime_analytics(
     from app.models.booking import Booking, BookingSeat, BookingStatus
     from app.models.theater import Theater, Hall, Seat
     from app.models.showtime import Showtime
-    
-    # 1. Real Bookings & Revenue
     confirmed_bookings = db.query(Booking).filter(Booking.status == BookingStatus.CONFIRMED).all()
     total_revenue_lkr = sum([float(b.total_amount) for b in confirmed_bookings])
-    
-    # 2. Real Tickets Sold
     total_tickets_sold = (
         db.query(BookingSeat)
         .join(Booking, BookingSeat.booking_id == Booking.booking_id)
         .filter(Booking.status == BookingStatus.CONFIRMED)
         .count()
     )
-    
-    # 3. Real Active Showtimes Count
     active_showtimes_count = db.query(Showtime).count()
     total_theaters_count = db.query(Theater).count()
-    
-    # 4. Real Revenue & Occupancy by Branch
     revenue_by_branch = []
     total_capacity_all = 0
     total_booked_all = 0
 
     all_theaters = db.query(Theater).order_by(Theater.name).all()
     for theater in all_theaters:
-        # Confirmed bookings in this theater
         th_bookings = (
             db.query(Booking)
             .join(Showtime, Booking.showtime_id == Showtime.showtime_id)
@@ -474,8 +409,6 @@ def get_realtime_analytics(
         )
         branch_rev = sum([float(b.total_amount) for b in th_bookings])
         branch_tickets = sum([len(b.booking_seats) for b in th_bookings])
-        
-        # Hall capacity in this theater
         hall_capacity_sum = sum([h.total_capacity or 96 for h in theater.halls]) or 96
         total_capacity_all += hall_capacity_sum
         total_booked_all += branch_tickets
@@ -489,11 +422,7 @@ def get_realtime_analytics(
             "tickets_sold": branch_tickets,
             "occupancy_percent": occupancy_pct
         })
-    
-    # Sort branches so top-performing branches are shown first
     revenue_by_branch.sort(key=lambda x: (x["revenue_lkr"], x["tickets_sold"]), reverse=True)
-    
-    # Average fill rate calculation
     average_fill_rate_percent = round((total_booked_all / total_capacity_all * 100), 1) if total_capacity_all > 0 else 0.0
     if total_booked_all > 0 and average_fill_rate_percent == 0.0:
         average_fill_rate_percent = 1.0
@@ -511,7 +440,6 @@ def get_realtime_analytics(
             "cancelled": db.query(Booking).filter(Booking.status == BookingStatus.CANCELLED).count()
         }
     }
-
 
 @router.get("/bookings")
 @router.get("/live-bookings")
@@ -538,8 +466,6 @@ def get_live_customer_bookings(
                 seat_labels.append(f"Seat #{bs.seat_id}")
 
         ref = b.payment.transaction_reference if b.payment else f"TXN-LK{b.booking_id}"
-
-        # Resolve customer name and email
         cust_name = b.customer_name or (user.name if user and user.name else None)
         if not cust_name:
             cust_name = b.customer_email.split('@')[0] if b.customer_email else "Customer"
@@ -564,7 +490,6 @@ def get_live_customer_bookings(
         })
         
     return output
-
 
 @router.get("/occupancy-heatmap")
 def get_occupancy_heatmap(
@@ -598,11 +523,8 @@ def get_occupancy_heatmap(
             "booked_seats": booked,
             "fill_rate_percent": pct
         })
-    
-    # Sort so halls with activity are shown first
     result.sort(key=lambda x: (x["booked_seats"], x["fill_rate_percent"]), reverse=True)
     return result
-
 
 @router.get("/waitlist-monitor")
 def get_waitlist_monitor(
@@ -612,8 +534,6 @@ def get_waitlist_monitor(
     """Admin: Real showtimes occupancy monitoring from database."""
     from app.models.showtime import Showtime
     from app.models.booking import Booking, BookingSeat, BookingStatus
-    
-    # Find showtimes that have bookings
     showtimes_with_bookings = (
         db.query(Showtime)
         .join(BookingSeat, Showtime.showtime_id == BookingSeat.showtime_id)
@@ -642,7 +562,6 @@ def get_waitlist_monitor(
         
     return output
 
-
 def format_activity_time(dt):
     if not dt:
         return "Recently", "Recently"
@@ -667,7 +586,6 @@ def format_activity_time(dt):
         rel = f"{days} days ago" if days < 14 else local_dt.strftime("%b %d, %Y")
     return formatted_exact, rel
 
-
 @router.get("/users")
 @router.get("/customers")
 def get_admin_customers(
@@ -679,17 +597,12 @@ def get_admin_customers(
     from app.models.user import User
     from sqlalchemy import or_
     from datetime import datetime
-    
-    # Query all users, strictly excluding dummy/mock seed names
     users = db.query(User).order_by(User.user_id.desc()).all()
     output = []
     
     for u in users:
-        # Exclude dummy/seed user accounts
         if u.email in ["user@quickshow.lk", "test_cust@quickshow.lk"] or (u.name and u.name.strip().lower() == "kasun perera"):
             continue
-            
-        # Match bookings by user_id OR customer_email matching user's email
         confirmed_bookings = db.query(Booking).filter(
             or_(
                 Booking.user_id == u.user_id,
@@ -706,8 +619,6 @@ def get_admin_customers(
         
         booking_dates = [b.created_at for b in confirmed_bookings if b.created_at]
         last_booking = max(booking_dates, default=None)
-        
-        # Most recent movie booked
         recent_movie = None
         if confirmed_bookings:
             latest_b = max(confirmed_bookings, key=lambda x: x.created_at or datetime.min)
@@ -735,7 +646,6 @@ def get_admin_customers(
         
     return output
 
-
 @router.get("/activities")
 def get_admin_activities(
     admin: User = Depends(get_current_admin),
@@ -753,8 +663,6 @@ def get_admin_activities(
     for b in bookings:
         user_name = b.customer_name or (b.user.name if b.user else "Customer")
         user_email = b.customer_email or (b.user.email if b.user else "")
-        
-        # Skip dummy seed entries if any
         if user_email in ["user@quickshow.lk", "test_cust@quickshow.lk"] or (user_name and user_name.strip().lower() == "kasun perera"):
             continue
             
@@ -794,14 +702,9 @@ def get_admin_activities(
                 "amount_lkr": 0.0,
                 "_raw_dt": u.created_at
             })
-            
-    # Sort chronologically descending
     output.sort(key=lambda x: x["_raw_dt"], reverse=True)
     for act in output:
         act.pop("_raw_dt", None)
         
     return output[:30]
-
-
-
 

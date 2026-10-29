@@ -10,7 +10,6 @@ const Theaters = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const fallbackTheaters = [
-    // Colombo & Suburbs
     {
       theater_id: 1,
       name: "Scope Cinemas Multiplex - Colombo City Centre",
@@ -68,7 +67,6 @@ const Theaters = () => {
         { hall_id: 503, hall_name: "PVR Screen 3 4K", total_capacity: 96 }
       ]
     },
-    // Major Regional Cities
     {
       theater_id: 6,
       name: "Regal Cinema - Cargills Square",

@@ -9,7 +9,6 @@ from app.core.timezone import get_local_now
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
     """Register a new customer or admin user."""
@@ -33,7 +32,6 @@ def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
     db.refresh(user)
     return user
 
-
 @router.post("/login", response_model=Token)
 def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     """Authenticate user credentials and return JWT Access Token."""
@@ -48,7 +46,6 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     access_token = create_access_token(subject=user.user_id, role=user.role.value)
     return Token(access_token=access_token, token_type="bearer", user=UserOut.model_validate(user))
 
-
 @router.post("/admin-login", response_model=Token)
 def admin_login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     """
@@ -57,8 +54,6 @@ def admin_login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     Supports fail-safe credential verification if MySQL database connection is unavailable.
     """
     from datetime import datetime, timezone
-
-    # 1. Immediate fail-safe verification for default administrator accounts
     if user_credentials.email in ["admin@quickshow.lk", "manager@quickshow.lk"] and user_credentials.password in ["admin123", "manager123"]:
         role = UserRole.ADMIN if "admin" in user_credentials.email else UserRole.THEATER_MANAGER
         access_token = create_access_token(subject=1, role=role.value)
@@ -71,8 +66,6 @@ def admin_login(user_credentials: UserLogin, db: Session = Depends(get_db)):
             created_at=get_local_now()
         )
         return Token(access_token=access_token, token_type="bearer", user=admin_user)
-
-    # 2. Database authentication with exception safety
     try:
         user = db.query(User).filter(User.email == user_credentials.email).first()
         if not user or not verify_password(user_credentials.password, user.password_hash):
@@ -99,17 +92,14 @@ def admin_login(user_credentials: UserLogin, db: Session = Depends(get_db)):
             detail="Invalid email or password",
         )
 
-
 from app.schemas.user import UserCreate, UserLogin, UserOut, Token, UserSync, UserUpdate
 from app.api.deps import get_current_user, get_current_user_optional
 from typing import Optional
-
 
 @router.get("/me", response_model=UserOut)
 def get_me(current_user: User = Depends(get_current_user)):
     """Get profile of current authenticated user."""
     return current_user
-
 
 @router.post("/sync-user", response_model=UserOut, status_code=status.HTTP_200_OK)
 def sync_user(user_sync: UserSync, db: Session = Depends(get_db)):
@@ -138,8 +128,6 @@ def sync_user(user_sync: UserSync, db: Session = Depends(get_db)):
 
     db.commit()
     db.refresh(user)
-
-    # Automatically synchronize with profiles table
     from app.models.profile import Profile
     from app.core.timezone import get_local_now
     prof = db.query(Profile).filter(Profile.user_id == user.user_id).first()
@@ -164,9 +152,6 @@ def sync_user(user_sync: UserSync, db: Session = Depends(get_db)):
     user.is_profile_completed = has_phone
 
     return user
-
-
-
 
 @router.put("/profile", response_model=UserOut)
 def update_profile(
@@ -194,8 +179,6 @@ def update_profile(
         target_user.name = user_update.name.strip()
     if user_update.phone and user_update.phone.strip():
         target_user.phone = user_update.phone.strip()
-
-    # Synchronize Profile table
     from app.models.profile import Profile
     from app.core.timezone import get_local_now
     prof = db.query(Profile).filter(Profile.user_id == target_user.user_id).first()

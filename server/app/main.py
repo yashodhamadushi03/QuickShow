@@ -10,8 +10,6 @@ import os
 server_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if server_dir not in sys.path:
     sys.path.insert(0, server_dir)
-
-# Automatically inspect, create missing tables/columns, and sync schema without data loss
 try:
     from sync_database import sync_database
     sync_database()
@@ -21,15 +19,12 @@ except Exception as e:
     except Exception as inner_e:
         print(f"[Warning] Auto table creation skipped: {inner_e}")
 
-
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
 )
-
-# CORS Configuration
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -45,8 +40,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Include API Routers under /api
 app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(movies.router, prefix=settings.API_V1_STR)
 app.include_router(showtimes.router, prefix=settings.API_V1_STR)
@@ -57,8 +50,6 @@ app.include_router(fb_orders.router, prefix=settings.API_V1_STR)
 app.include_router(favourites.router, prefix=settings.API_V1_STR)
 app.include_router(users.router, prefix=settings.API_V1_STR)
 
-
-
 @app.get("/")
 def root():
     return {
@@ -66,7 +57,6 @@ def root():
         "docs": "/docs",
         "version": "1.0.0"
     }
-
 
 @app.get(f"{settings.API_V1_STR}/health")
 def healthcheck():

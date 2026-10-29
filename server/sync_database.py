@@ -27,8 +27,6 @@ def sync_database():
         "constraints_added": [],
         "enums_updated": []
     }
-
-    # Step 1: Create any completely missing tables
     print("\n[Step 1] Inspecting Tables & Creating Missing Models...")
     inspector = inspect(engine)
     existing_tables = set(inspector.get_table_names())
@@ -38,7 +36,6 @@ def sync_database():
     if missing_tables:
         print(f"  -> Detected missing tables: {list(missing_tables)}")
         Base.metadata.create_all(bind=engine)
-        # Refresh inspector
         inspector = inspect(engine)
         existing_tables = set(inspector.get_table_names())
         for mt in missing_tables:
@@ -46,8 +43,6 @@ def sync_database():
             print(f"  [CREATED] Table '{mt}' created successfully.")
     else:
         print(f"  [OK] All {len(model_tables)} registered model tables exist in MySQL.")
-
-    # Step 2: Inspect existing tables for missing columns
     print("\n[Step 2] Inspecting Columns per Table...")
     with engine.connect() as conn:
         for table_name, table in Base.metadata.tables.items():
@@ -79,8 +74,6 @@ def sync_database():
                         print(f"  [ADDED] Column `{table_name}`.`{column.name}` successfully added.")
                     except Exception as ex:
                         print(f"  [ERROR] Failed to add column `{table_name}`.`{column.name}`: {ex}")
-
-        # Step 3: Ensure User Role ENUM supports all defined roles
         print("\n[Step 3] Verifying ENUM Types...")
         try:
             conn.execute(text("""
@@ -92,10 +85,7 @@ def sync_database():
             print("  [OK] `users.role` ENUM synchronized.")
         except Exception as ex:
             print(f"  [NOTE] users.role ENUM update skipped or already applied: {ex}")
-
-        # Step 4: Verify Critical Indexes and Composite Unique Constraints
         print("\n[Step 4] Verifying Composite Unique Constraints & Indexes...")
-        # A. uq_showtime_seat on booking_seats
         try:
             bs_indexes = [idx['Key_name'] for idx in conn.execute(text("SHOW INDEX FROM `booking_seats`;")).mappings()]
             if "uq_showtime_seat" not in bs_indexes:
@@ -107,8 +97,6 @@ def sync_database():
                 print("  [OK] Composite unique constraint `uq_showtime_seat` is active.")
         except Exception as ex:
             print(f"  [NOTE] booking_seats index check: {ex}")
-
-        # B. uq_hall_row_seat on seats
         try:
             seat_indexes = [idx['Key_name'] for idx in conn.execute(text("SHOW INDEX FROM `seats`;")).mappings()]
             if "uq_hall_row_seat" not in seat_indexes:
@@ -120,8 +108,6 @@ def sync_database():
                 print("  [OK] Composite unique constraint `uq_hall_row_seat` is active.")
         except Exception as ex:
             print(f"  [NOTE] seats index check: {ex}")
-
-        # C. Performance & Isolation Indexes on bookings, payments, and favourites
         performance_indexes = [
             ("bookings", "idx_bookings_user_created", "CREATE INDEX idx_bookings_user_created ON bookings(user_id, created_at DESC);"),
             ("bookings", "idx_bookings_customer_email", "CREATE INDEX idx_bookings_customer_email ON bookings(customer_email);"),
@@ -142,8 +128,6 @@ def sync_database():
                     print(f"  [OK] User-isolation index `{idx_name}` on `{tbl}` is active.")
             except Exception as ex:
                 print(f"  [NOTE] {tbl} index {idx_name}: {ex}")
-
-        # Step 5: Seed sample F&B concession orders if empty
         print("\n[Step 5] Checking Seed Data for F&B Concessions...")
         try:
             fb_count = conn.execute(text("SELECT COUNT(*) AS cnt FROM `f_b_orders`;")).scalar()
@@ -172,11 +156,8 @@ def sync_database():
                 print(f"  [OK] `f_b_orders` has {fb_count} existing records.")
         except Exception as ex:
             print(f"  [NOTE] F&B seed check: {ex}")
-
-        # Step 6: Synchronize MySQL Database Views, Stored Procedures & Functions
         print("\n[Step 6] Synchronizing Views, Stored Procedures & Functions...")
         try:
-            # Views
             conn.execute(text("""
             CREATE OR REPLACE VIEW `vw_active_bookings` AS
             SELECT 
@@ -239,8 +220,6 @@ def sync_database():
             """))
             conn.commit()
             print("  [OK] Views `vw_active_bookings` and `vw_movie_analytics` synchronized.")
-
-            # Stored Procedures
             conn.execute(text("DROP PROCEDURE IF EXISTS `sp_get_user_bookings`;"))
             conn.execute(text("""
             CREATE PROCEDURE `sp_get_user_bookings`(IN p_user_id INT)
@@ -328,8 +307,6 @@ def sync_database():
             """))
             conn.commit()
             print("  [OK] Stored Procedures `sp_get_user_bookings` and `sp_get_theater_showtimes` synchronized.")
-
-            # Stored Function
             conn.execute(text("DROP FUNCTION IF EXISTS `fn_calculate_user_spend`;"))
             conn.execute(text("""
             CREATE FUNCTION `fn_calculate_user_spend`(p_user_id INT) 
@@ -352,8 +329,6 @@ def sync_database():
             print("  [OK] Stored Function `fn_calculate_user_spend` synchronized.")
         except Exception as ex:
             print(f"  [NOTE] Routines sync warning: {ex}")
-
-        # Step 7: Final Verification & Row Count Summary
         print("\n[Step 7] Final Database Verification Summary:")
         all_tables = [list(r.values())[0] for r in conn.execute(text("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE';")).mappings()]
         for t in sorted(all_tables):

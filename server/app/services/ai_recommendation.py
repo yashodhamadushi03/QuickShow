@@ -5,7 +5,6 @@ from app.models.movie import Movie
 
 logger = logging.getLogger("quickshow.ai")
 
-
 class AIRecommendationEngine:
     @staticmethod
     def get_genre_similarity(movie1: Movie, movie2: Movie) -> float:
@@ -14,19 +13,13 @@ class AIRecommendationEngine:
             return 0.0
 
         score = 0.0
-        
-        # Genre Overlap
         genres1 = set([g.strip().lower() for g in movie1.genre.replace('/', ' ').split()])
         genres2 = set([g.strip().lower() for g in movie2.genre.replace('/', ' ').split()])
         overlap = len(genres1.intersection(genres2))
         if overlap > 0:
             score += overlap * 0.4
-
-        # Language Match
         if movie1.language.lower() == movie2.language.lower():
             score += 0.3
-
-        # Rating Match
         if movie1.rating and movie2.rating and movie1.rating == movie2.rating:
             score += 0.2
 
@@ -66,11 +59,6 @@ class AIRecommendationEngine:
 
         def rate_seat(s):
             row = (s.row_label or "").upper()
-            # Row priority:
-            # E, F: Center-back tiers (Optimal viewing angle & Dolby Atmos acoustic sweet spot)
-            # G, H: VIP Recliner back tier (elevated vantage point)
-            # C, D: Mid rows (Standard view)
-            # A, B: Front rows closest to screen (lowest priority / steep neck angle)
             if row in ["E", "F"]:
                 row_score = 20.0
             elif row in ["G", "H"]:
@@ -81,22 +69,14 @@ class AIRecommendationEngine:
                 row_score = 3.0
             else:
                 row_score = 8.0
-
-            # Center seats score (seats 6 and 7 are exact center of 12-seat row)
             seat_num = getattr(s, "seat_number", 6)
             center_score = 10.0 - abs(6.5 - seat_num)
-
-            # VIP type bonus
             vip_bonus = 3.0 if getattr(s, "seat_type", "Regular") == "VIP" else 0.0
 
             return row_score + center_score + vip_bonus
-
-        # Group available seats by row
         rows_map = {}
         for s in available_seats:
             rows_map.setdefault(s.row_label, []).append(s)
-
-        # Find best contiguous block across rows by evaluating total block score
         best_block = None
         best_block_score = -1.0
 
@@ -104,7 +84,6 @@ class AIRecommendationEngine:
             r_seats.sort(key=lambda x: x.seat_number)
             for i in range(len(r_seats) - count + 1):
                 subset = r_seats[i:i + count]
-                # Verify seats are strictly contiguous
                 is_contiguous = all(
                     subset[j].seat_number + 1 == subset[j + 1].seat_number
                     for j in range(count - 1)
@@ -117,7 +96,5 @@ class AIRecommendationEngine:
 
         if best_block:
             return best_block
-
-        # Fallback if no contiguous block available: Pick top individual seats sorted by sweet spot rating
         available_seats.sort(key=rate_seat, reverse=True)
         return [s.seat_id for s in available_seats[:count]]

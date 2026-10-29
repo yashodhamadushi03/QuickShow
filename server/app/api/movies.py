@@ -12,7 +12,6 @@ from app.services.ai_recommendation import AIRecommendationEngine
 
 router = APIRouter(prefix="/movies", tags=["Movies & Showtimes"])
 
-
 @router.get("", response_model=List[MovieOut])
 def get_movies(
     search: Optional[str] = Query(None, description="Search title"),
@@ -30,7 +29,6 @@ def get_movies(
         query = query.filter(Movie.language.ilike(f"%{language}%"))
     return query.order_by(Movie.release_date.desc()).all()
 
-
 @router.get("/{movie_id}", response_model=MovieOut)
 def get_movie_detail(movie_id: int, db: Session = Depends(get_db)):
     """Get details of a specific movie."""
@@ -39,12 +37,10 @@ def get_movie_detail(movie_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
     return movie
 
-
 @router.get("/{movie_id}/recommendations", response_model=List[MovieOut])
 def get_movie_ai_recommendations(movie_id: int, limit: int = 4, db: Session = Depends(get_db)):
     """AI Recommendation Engine: Suggests similar blockbusters based on genre and language similarity."""
     return AIRecommendationEngine.recommend_similar_movies(movie_id, db, limit=limit)
-
 
 @router.get("/{movie_id}/showtimes", response_model=List[ShowtimeGroupedByTheater])
 def get_movie_showtimes(movie_id: int, db: Session = Depends(get_db)):
@@ -61,8 +57,6 @@ def get_movie_showtimes(movie_id: int, db: Session = Depends(get_db)):
         .order_by(Theater.theater_id, Showtime.start_time)
         .all()
     )
-
-    # Group showtimes by theater
     grouped_map = {}
     for st in showtimes:
         theater = st.hall.theater

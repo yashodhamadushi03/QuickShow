@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from app.core.database import Base
 from app.core.timezone import get_local_now
 
-
 class Profile(Base):
     __tablename__ = "profiles"
 
@@ -16,7 +15,5 @@ class Profile(Base):
     city = Column(String(100), nullable=True)
     preferred_theater_id = Column(Integer, ForeignKey("theaters.theater_id", ondelete="SET NULL"), nullable=True)
     updated_at = Column(DateTime, default=get_local_now, onupdate=get_local_now, nullable=False)
-
-    # Relationships
     user = relationship("User", backref="profile")
     preferred_theater = relationship("Theater", backref="profiles")

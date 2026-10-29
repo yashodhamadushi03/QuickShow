@@ -20,25 +20,15 @@ from app.core.timezone import get_local_now
 
 router = APIRouter(prefix="", tags=["Bookings & Payments"])
 
-
 @router.post("/bookings", response_model=BookingOut, status_code=status.HTTP_201_CREATED)
 def create_booking(
     booking_in: BookingCreate,
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """
-    Concurrency-Safe Seat Reservation Endpoint:
-    - Supports both authenticated users and guest checkout with customer_email.
-    - Resolves real physical seats in the hall to strictly satisfy foreign key constraints.
-    - Wraps operations inside a MySQL database transaction.
-    - Uses SELECT ... FOR UPDATE (pessimistic locking) and MySQL composite unique index 
-      uq_showtime_seat(showtime_id, seat_id) to strictly prevent race conditions and double bookings.
-    """
+    
     if not booking_in.seat_ids:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="At least one seat must be selected.")
-
-    # 1. Resolve user / customer profile
     user_obj = None
     if booking_in.customer_email:
         clean_email = str(booking_in.customer_email).strip().lower()
@@ -72,15 +62,11 @@ def create_booking(
         )
         db.add(user_obj)
         db.flush()
-
-    # 2. Verify showtime exists and belongs correctly to the selected theater and hall
     from app.models.theater import Hall, Theater
     from app.models.movie import Movie
     from datetime import datetime, timezone
 
     st = db.query(Showtime).filter(Showtime.showtime_id == booking_in.showtime_id).first()
-
-    # If hall_id is specified in booking request, verify alignment
     if booking_in.hall_id:
         if st and st.hall_id != booking_in.hall_id:
             target_movie_id = booking_in.movie_id or st.movie_id
@@ -102,8 +88,6 @@ def create_booking(
                     )
                     db.add(st)
                     db.flush()
-
-    # If theater_id is specified in booking request, verify theater alignment
     if booking_in.theater_id and st:
         current_theater_id = st.hall.theater_id if st.hall else None
         if current_theater_id != booking_in.theater_id:
@@ -131,8 +115,6 @@ def create_booking(
                     )
                     db.add(st)
                     db.flush()
-
-    # If showtime was not found by ID, look up by theater / hall / movie
     if not st:
         query = db.query(Showtime).join(Hall, Showtime.hall_id == Hall.hall_id)
         if booking_in.theater_id:
@@ -142,8 +124,6 @@ def create_booking(
         if booking_in.movie_id:
             query = query.filter(Showtime.movie_id == booking_in.movie_id)
         st = query.first()
-
-    # Fallback to active showtimes
     if not st:
         st = db.query(Showtime).order_by(Showtime.showtime_id.desc()).first() or db.query(Showtime).first()
     
@@ -162,9 +142,6 @@ def create_booking(
             db.flush()
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No active showtimes available.")
-
-
-    # 3. Retrieve or generate physical seats for st.hall_id
     hall_seats = (
         db.query(Seat)
         .filter(Seat.hall_id == st.hall_id)
@@ -191,31 +168,24 @@ def create_booking(
             .order_by(Seat.row_label, Seat.seat_number)
             .all()
         )
-
-    # 4. Map requested seat IDs to real physical Seat records for st.hall_id
     hall_seat_map = {s.seat_id: s for s in hall_seats}
     resolved_seats = []
     used_seat_ids = set()
 
     for sid in booking_in.seat_ids:
-        # Physical seat ID in this hall
         if sid in hall_seat_map and sid not in used_seat_ids:
             resolved_seats.append(hall_seat_map[sid])
             used_seat_ids.add(sid)
-        # 1-based index from frontend seat matrix (1..96)
         elif 1 <= sid <= len(hall_seats):
             candidate = hall_seats[sid - 1]
             if candidate.seat_id not in used_seat_ids:
                 resolved_seats.append(candidate)
                 used_seat_ids.add(candidate.seat_id)
         else:
-            # Check if sid belongs to st.hall_id directly
             cand = db.query(Seat).filter(Seat.seat_id == sid, Seat.hall_id == st.hall_id).first()
             if cand and cand.seat_id not in used_seat_ids:
                 resolved_seats.append(cand)
                 used_seat_ids.add(cand.seat_id)
-
-    # Fill any remaining seats with available seats in this hall
     if len(resolved_seats) < len(booking_in.seat_ids):
         reserved_sids = set(
             s[0] for s in db.query(BookingSeat.seat_id)
@@ -238,9 +208,7 @@ def create_booking(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unable to map seats for this showtime.")
 
     try:
-        # Start database transaction
         with db.begin_nested():
-            # 5. Check if any requested seats are already booked or locked (Pessimistic Lock FOR UPDATE)
             conflicting_seats = (
                 db.query(BookingSeat.seat_id)
                 .join(Booking, BookingSeat.booking_id == Booking.booking_id)
@@ -260,7 +228,6 @@ def create_booking(
                         detail="Double-booking conflict detected! One or more seats were just reserved by another user."
                     )
                 else:
-                    # Switch to unreserved seats for fallback showtime
                     free_seats = [
                         s for s in hall_seats
                         if s.seat_id not in [c[0] for c in conflicting_seats] and s.seat_id not in used_seat_ids
@@ -268,12 +235,8 @@ def create_booking(
                     if len(free_seats) >= len(booking_in.seat_ids):
                         resolved_seats = free_seats[:len(booking_in.seat_ids)]
                         final_seat_ids = [s.seat_id for s in resolved_seats]
-
-            # 6. Calculate total amount
             base_p = Decimal(str(st.base_price or "1500.00"))
             total_amount = base_p * Decimal(len(final_seat_ids))
-
-            # 7. Create Pending Booking with customer details
             cust_name = booking_in.customer_name or (user_obj.name if user_obj else "Valued Customer")
             cust_email = booking_in.customer_email or (user_obj.email if user_obj else "customer@quickshow.lk")
             cust_phone = booking_in.customer_phone or (user_obj.phone if user_obj else None)
@@ -289,8 +252,6 @@ def create_booking(
             )
             db.add(booking)
             db.flush()  # Generate booking_id
-
-            # 8. Create BookingSeat records using guaranteed physical seat_ids
             for s in resolved_seats:
                 b_seat = BookingSeat(
                     booking_id=booking.booking_id,
@@ -322,7 +283,6 @@ def create_booking(
             detail=f"An unexpected database error occurred: {str(e)}"
         )
 
-
 @router.get("/bookings/my", response_model=List[BookingOut])
 @router.get("/user/bookings", response_model=List[BookingOut])
 def get_my_bookings(
@@ -338,8 +298,6 @@ def get_my_bookings(
     - Always orders newest bookings first so new reservations immediately appear at the top.
     """
     query = db.query(Booking)
-
-    # 1. Non-admin authenticated user: strictly their own bookings
     if current_user and current_user.role not in [UserRole.ADMIN, UserRole.THEATER_MANAGER]:
         user_email = current_user.email.strip().lower()
         query = query.filter(
@@ -348,7 +306,6 @@ def get_my_bookings(
                 Booking.customer_email.ilike(user_email)
             )
         )
-    # 2. Verified email query param provided (e.g. from Clerk authentication session)
     elif email and email.strip():
         clean_email = email.strip().lower()
         query = query.filter(
@@ -357,7 +314,6 @@ def get_my_bookings(
                 Booking.user.has(User.email.ilike(clean_email))
             )
         )
-    # 3. Authenticated Admin / Theater Manager testing personal bookings
     elif current_user and current_user.role in [UserRole.ADMIN, UserRole.THEATER_MANAGER]:
         query = query.filter(
             or_(
@@ -365,12 +321,10 @@ def get_my_bookings(
                 Booking.customer_email.ilike(current_user.email)
             )
         )
-    # 4. Strict isolation: no user or email identity provided -> return empty list
     else:
         return []
 
     return query.order_by(Booking.created_at.desc()).all()
-
 
 @router.get("/bookings/{booking_id}", response_model=BookingOut)
 def get_booking_details(
@@ -383,8 +337,6 @@ def get_booking_details(
     booking = db.query(Booking).filter(Booking.booking_id == booking_id).first()
     if not booking:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found.")
-
-    # Strict isolation check
     if current_user and current_user.role not in [UserRole.ADMIN, UserRole.THEATER_MANAGER]:
         user_email = current_user.email.strip().lower()
         is_owner = (booking.user_id == current_user.user_id) or (
@@ -409,7 +361,6 @@ def get_booking_details(
 
     return booking
 
-
 @router.post("/payments", response_model=PaymentOut, status_code=status.HTTP_201_CREATED)
 def process_payment(
     payment_in: PaymentCreate,
@@ -430,13 +381,9 @@ def process_payment(
 
     if booking.status == BookingStatus.CANCELLED:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot pay for a cancelled booking.")
-
-    # Determine Sandbox / Demo Mode
     card_raw = (payment_in.card_number or "").replace(" ", "").replace("-", "")
     is_test_card = any(card_raw.startswith(prefix) for prefix in ["4242", "5555", "4000", "5105", "3782"])
     is_sandbox = payment_in.is_sandbox or is_test_card or "sandbox" in payment_in.payment_method.lower()
-
-    # Generate transaction reference
     if is_sandbox:
         txn_ref = f"TXN-SANDBOX-{uuid.uuid4().hex[:8].upper()}"
         payment_method_str = (
@@ -447,8 +394,6 @@ def process_payment(
     else:
         txn_ref = f"TXN-LK{uuid.uuid4().hex[:8].upper()}"
         payment_method_str = payment_in.payment_method
-
-    # Truncate payment_method to max 50 chars for database schema
     payment_method_str = payment_method_str[:50]
 
     payment = Payment(
@@ -459,8 +404,6 @@ def process_payment(
         transaction_reference=txn_ref,
         is_sandbox=is_sandbox
     )
-    
-    # Confirm booking status and save customer details to MySQL
     booking.status = BookingStatus.CONFIRMED
     if payment_in.customer_name:
         booking.customer_name = payment_in.customer_name
@@ -468,8 +411,6 @@ def process_payment(
         booking.customer_email = payment_in.customer_email
     if payment_in.customer_phone:
         booking.customer_phone = payment_in.customer_phone
-
-    # Ensure linked user account is updated
     if booking.user:
         if payment_in.customer_name and (not booking.user.name or booking.user.name == "Guest Customer"):
             booking.user.name = payment_in.customer_name
@@ -480,8 +421,6 @@ def process_payment(
     db.commit()
     db.refresh(payment)
     db.refresh(booking)
-
-    # Gather data for email/SMS notifications
     showtime = booking.showtime
     movie_title = showtime.movie.title if showtime and showtime.movie else "Avatar: The Way of Water"
     theater_name = showtime.hall.theater.name if showtime and showtime.hall and showtime.hall.theater else "Scope Cinemas - Colombo City Centre"
@@ -491,8 +430,6 @@ def process_payment(
     seat_labels = [f"{bs.seat.row_label}{bs.seat.seat_number}" for bs in booking.booking_seats if bs.seat]
     if not seat_labels:
         seat_labels = ["D5", "D6"]
-
-    # Target Email & Phone setup
     recipient_email = payment_in.customer_email
     if not recipient_email and current_user:
         recipient_email = current_user.email
@@ -501,8 +438,6 @@ def process_payment(
 
     recipient_name = payment_in.customer_name or (current_user.name if current_user else "Valued Cinema Guest")
     recipient_phone = payment_in.customer_phone or (current_user.phone if current_user else None)
-
-    # Direct SMTP dispatch to guarantee immediate delivery
     try:
         NotificationService.send_email_ticket(
             user_email=recipient_email,
@@ -517,8 +452,6 @@ def process_payment(
         )
     except Exception as err:
         print("Direct email dispatch warning:", err)
-
-    # Automated SMS ticket dispatch
     if recipient_phone:
         try:
             NotificationService.send_sms_ticket(
@@ -539,7 +472,6 @@ def process_payment(
         else "Payment authorized successfully. Tickets dispatched."
     )
     return payment_out
-
 
 from pydantic import BaseModel
 

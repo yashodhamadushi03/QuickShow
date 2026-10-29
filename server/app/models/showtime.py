@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, Numeric, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
-
 class Showtime(Base):
     __tablename__ = "showtimes"
 
@@ -12,8 +11,6 @@ class Showtime(Base):
     start_time = Column(DateTime, nullable=False, index=True)
     end_time = Column(DateTime, nullable=False)
     base_price = Column(Numeric(10, 2), nullable=False)
-
-    # Relationships
     movie = relationship("Movie", back_populates="showtimes")
     hall = relationship("Hall", back_populates="showtimes")
     bookings = relationship("Booking", back_populates="showtime", cascade="all, delete-orphan")

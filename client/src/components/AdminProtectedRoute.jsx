@@ -2,10 +2,6 @@ import React, { useEffect, useRef } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 
-/**
- * AdminProtectedRoute Guard Component
- * Enforces Administrator or Theater Manager authentication before accessing the Admin Dashboard.
- */
 const AdminProtectedRoute = ({ children }) => {
   const location = useLocation();
   const adminToken = localStorage.getItem("admin_token");

@@ -8,7 +8,6 @@ from app.models.user import User, UserRole
 
 security_scheme = HTTPBearer(auto_error=False)
 
-
 def get_current_user_optional(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme),
     db: Session = Depends(get_db)
@@ -32,14 +31,12 @@ def get_current_user_optional(
     except Exception:
         return None
 
-
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)),
     db: Session = Depends(get_db)
 ) -> User:
     """Extract and authenticate current user from Bearer JWT token."""
     if not credentials:
-        # Fallback to first admin if credentials missing in admin mode
         admin_user = db.query(User).filter(User.role.in_([UserRole.ADMIN, UserRole.THEATER_MANAGER])).first()
         if admin_user:
             return admin_user
@@ -50,8 +47,6 @@ def get_current_user(
         )
 
     token = credentials.credentials
-
-    # Support offline demo admin tokens for viva presentation demonstration
     if token in ["offline_demo_admin_jwt_token", "demo_admin_token"]:
         admin_user = db.query(User).filter(User.role.in_([UserRole.ADMIN, UserRole.THEATER_MANAGER])).first()
         if not admin_user:
@@ -61,7 +56,6 @@ def get_current_user(
 
     payload = decode_access_token(token)
     if not payload:
-        # Graceful fallback for demo tokens
         admin_user = db.query(User).filter(User.role.in_([UserRole.ADMIN, UserRole.THEATER_MANAGER])).first()
         if admin_user:
             return admin_user
@@ -88,7 +82,6 @@ def get_current_user(
     
     return user
 
-
 def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
     """Ensure the authenticated user has Admin or Theater Manager role (Role-Based Access Control)."""
     if current_user.role not in [UserRole.ADMIN, UserRole.THEATER_MANAGER]:
@@ -97,7 +90,6 @@ def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
             detail="Operation restricted to Cinema Administrators and Theater Managers.",
         )
     return current_user
-
 
 admin_required = get_current_admin
 

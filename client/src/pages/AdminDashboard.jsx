@@ -30,8 +30,6 @@ import {
 import toast from "react-hot-toast";
 import MovieManagement from "../components/MovieManagement";
 import { API_BASE_URL } from "../config";
-
-// Precise 12-hour AM/PM and Sri Lankan cinema slot formatter immune to timezone skews
 export const formatShowtimeSlot = (timeVal) => {
   if (!timeVal) return { timeStr: "--:--", slotName: "Custom Slot", hours: 0, minutes: 0 };
 
@@ -56,8 +54,6 @@ export const formatShowtimeSlot = (timeVal) => {
   const period = hours >= 12 ? "PM" : "AM";
   const displayHours = hours % 12 === 0 ? 12 : hours % 12;
   const timeStr = `${String(displayHours).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${period}`;
-
-  // Sri Lankan cinema standard slot categorisation
   let slotName = "Custom Slot";
   if (hours === 10 && minutes === 0) slotName = "Morning Show";
   else if (hours === 13 && minutes === 0) slotName = "Matinee Show";
@@ -84,16 +80,10 @@ const formatDuration = (mins) => {
 const AdminDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminToken, setAdminToken] = useState(localStorage.getItem("admin_token") || "");
-  
-  // Login form state
   const [loginEmail, setLoginEmail] = useState("admin@quickshow.lk");
   const [loginPassword, setLoginPassword] = useState("admin123");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  // Active tab state: 'analytics' | 'bookings' | 'customers' | 'occupancy' | 'showtimes'
   const [activeTab, setActiveTab] = useState("analytics");
-
-  // Dashboard Data State
   const [analytics, setAnalytics] = useState(null);
   const [liveBookings, setLiveBookings] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -106,8 +96,6 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
-
-  // Showtime Scheduler Form State
   const [newHallId, setNewHallId] = useState("");
   const [newMovieId, setNewMovieId] = useState("");
   const [newDate, setNewDate] = useState(new Date().toISOString().split("T")[0]);
@@ -119,8 +107,6 @@ const AdminDashboard = () => {
     if (adminToken) {
       setIsAuthenticated(true);
       fetchDashboardData(adminToken);
-
-      // Auto-poll live bookings & analytics every 8 seconds for real-time synchronization
       const pollTimer = setInterval(() => {
         fetchDashboardData(adminToken, false);
       }, 8000);
@@ -128,8 +114,6 @@ const AdminDashboard = () => {
       return () => clearInterval(pollTimer);
     }
   }, [adminToken]);
-
-  // Refetch live database feed immediately when switching tabs
   useEffect(() => {
     if (adminToken && (activeTab === "bookings" || activeTab === "analytics" || activeTab === "customers")) {
       fetchDashboardData(adminToken, false);
@@ -157,7 +141,6 @@ const AdminDashboard = () => {
         }
       } catch (networkErr) {
         if (networkErr.message?.includes("detail")) throw networkErr;
-        // Fail-safe fallback for default admin credentials when backend is starting or offline
         if (
           (loginEmail === "admin@quickshow.lk" && loginPassword === "admin123") ||
           (loginEmail === "manager@quickshow.lk" && loginPassword === "manager123")
@@ -201,8 +184,6 @@ const AdminDashboard = () => {
   const fetchDashboardData = async (token, showLoader = true) => {
     if (showLoader) setLoading(true);
     const headers = { Authorization: `Bearer ${token}` };
-
-    // Robust bookings fetch supporting both /admin/live-bookings and /admin/bookings
     const fetchLiveBookings = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/admin/live-bookings`, { headers });
@@ -212,8 +193,6 @@ const AdminDashboard = () => {
         return await fetch(`${API_BASE_URL}/admin/bookings`, { headers }).catch(() => ({ ok: false }));
       }
     };
-
-    // Robust customer profiles fetch supporting both /admin/users and /admin/customers
     const fetchCustomerProfiles = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/admin/users`, { headers });
@@ -278,7 +257,6 @@ const AdminDashboard = () => {
 
     try {
       const selectedMovie = adminMovies.find((m) => m.movie_id === parseInt(newMovieId));
-      // Calculate accurate end time strictly based on movie's actual duration
       const durationMin = selectedMovie?.duration_min ? selectedMovie.duration_min : 120;
 
       const [hours, minutes] = newSlotTime.split(":").map(Number);
@@ -347,8 +325,6 @@ const AdminDashboard = () => {
       toast.error("Failed to delete showtime");
     }
   };
-
-  // Pure real database analytics and live feeds (no mock data)
   const displayAnalytics = analytics || {
     total_revenue_lkr: 0.0,
     total_tickets_sold: 0,
@@ -381,9 +357,6 @@ const AdminDashboard = () => {
     (sum, c) => sum + (Number(c.total_bookings) || 0),
     0
   );
-
-
-  // If not authenticated, render Admin Login Security Shield Modal
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#09090b] text-white flex items-center justify-center p-4 selection:bg-rose-500/30">
@@ -452,7 +425,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#09090b] text-white pt-24 pb-20 px-4 sm:px-8 lg:px-12 selection:bg-rose-500/30">
-      {/* Admin Top Banner */}
       <div className="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/80 pb-6">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-xs font-semibold mb-2.5 border border-rose-500/20">
@@ -483,8 +455,6 @@ const AdminDashboard = () => {
           </button>
         </div>
       </div>
-
-      {/* KPI Stats Grid */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 backdrop-blur-sm hover:border-zinc-700/80 transition-all duration-200">
           <div className="flex items-center justify-between mb-3">
@@ -538,8 +508,6 @@ const AdminDashboard = () => {
           <div className="text-xs text-zinc-500 mt-1.5">{displayAnalytics.total_theaters_count || adminTheaters.length || 13} Sri Lankan branches</div>
         </div>
       </div>
-
-      {/* Control Navigation Tabs - Sleek Segmented Control */}
       <div className="max-w-7xl mx-auto mb-6 p-1 bg-zinc-900/80 border border-zinc-800/80 rounded-2xl flex flex-wrap gap-1 backdrop-blur-sm">
         <button
           onClick={() => setActiveTab("movies")}
@@ -622,10 +590,7 @@ const AdminDashboard = () => {
           </span>
         </button>
       </div>
-
-      {/* TAB CONTENT BODY */}
       <div className="max-w-7xl mx-auto">
-        {/* TAB 0: MOVIE MANAGEMENT (CRUD) */}
         {activeTab === "movies" && (
           <MovieManagement
             adminToken={adminToken}
@@ -638,8 +603,6 @@ const AdminDashboard = () => {
             }}
           />
         )}
-
-        {/* TAB 1: ANALYTICS & BRANCH HEATMAPS */}
         {activeTab === "analytics" && (
           <div className="space-y-6">
             <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm">
@@ -691,8 +654,6 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
-
-        {/* TAB 2: LIVE CUSTOMER BOOKINGS */}
         {activeTab === "bookings" && (
           <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm overflow-x-auto">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-5">
@@ -777,11 +738,8 @@ const AdminDashboard = () => {
             </table>
           </div>
         )}
-
-        {/* TAB 3: CUSTOMER PROFILES & ACTIVITY LOGS */}
         {activeTab === "customers" && (
           <div className="space-y-6">
-            {/* Top Customer KPI Metric Bar */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm">
                 <div>
@@ -817,7 +775,6 @@ const AdminDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Customer Profiles Panel */}
               <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                   <div>
@@ -832,8 +789,6 @@ const AdminDashboard = () => {
                     {filteredCustomers.length} of {customers.length} Profiles
                   </span>
                 </div>
-
-                {/* Search Filter Input */}
                 <div className="relative mb-4">
                   <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
@@ -852,8 +807,6 @@ const AdminDashboard = () => {
                     </button>
                   )}
                 </div>
-
-                {/* Customer List */}
                 <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
                   {filteredCustomers && filteredCustomers.length > 0 ? (
                     filteredCustomers.map((c) => {
@@ -953,8 +906,6 @@ const AdminDashboard = () => {
                   )}
                 </div>
               </div>
-
-              {/* Live Activity Logs Panel */}
               <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-5">
                   <div>
@@ -1047,8 +998,6 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
-
-        {/* TAB 4: OCCUPANCY & WAITLIST MONITOR */}
         {activeTab === "occupancy" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
@@ -1112,11 +1061,8 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
-
-        {/* TAB 5: SRI LANKAN NON-CLASHING SHOWTIME ENGINE */}
         {activeTab === "showtimes" && (
           <div className="space-y-6">
-            {/* Standard SL Slots Engine Banner */}
             <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -1130,8 +1076,6 @@ const AdminDashboard = () => {
                   </p>
                 </div>
               </div>
-
-              {/* 5 Standard Slots Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mt-6">
                 {[
                   { name: "Morning Show", time: "10:00 AM", slotTime: "10:00", desc: "First screening" },
@@ -1157,8 +1101,6 @@ const AdminDashboard = () => {
                 ))}
               </div>
             </div>
-
-            {/* Interactive Scheduler Form */}
             <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
               <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2 tracking-tight">
                 <PlusCircle className="w-4 h-4 text-rose-500" /> Schedule Hall Showtime (Interval Clash Protected)
@@ -1254,8 +1196,6 @@ const AdminDashboard = () => {
                     </button>
                   </div>
                 </div>
-
-                {/* Real-time Showtime Calculation & Runtime Window Preview */}
                 {(() => {
                   const selMovie = adminMovies.find((m) => m.movie_id === parseInt(newMovieId));
                   const durMin = selMovie?.duration_min || 120;
@@ -1295,8 +1235,6 @@ const AdminDashboard = () => {
                 })()}
               </form>
             </div>
-
-            {/* Live Scheduled Showtimes Table */}
             <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
                 <div>

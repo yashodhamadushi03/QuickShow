@@ -5,11 +5,8 @@ Enforces Sri Lanka Standard Time (Asia/Colombo, UTC+5:30) across all
 SQLAlchemy models, booking events, and API audit timestamps.
 """
 from datetime import datetime, timezone, timedelta
-
-# Sri Lanka Standard Time (SLST): UTC + 5 hours 30 minutes
 SRI_LANKA_OFFSET = timedelta(hours=5, minutes=30)
 SRI_LANKA_TZ = timezone(SRI_LANKA_OFFSET, name="Asia/Colombo")
-
 
 def get_local_now() -> datetime:
     """
@@ -20,11 +17,9 @@ def get_local_now() -> datetime:
     """
     return datetime.now(SRI_LANKA_TZ).replace(tzinfo=None)
 
-
 def get_local_now_with_tz() -> datetime:
     """Returns the current Sri Lanka local time with explicit timezone attached."""
     return datetime.now(SRI_LANKA_TZ)
-
 
 def to_local_time(dt: datetime) -> datetime:
     """

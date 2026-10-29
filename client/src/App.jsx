@@ -38,8 +38,6 @@ const App = () => {
   const isOnboardingRoute =
     location.pathname.startsWith('/complete-profile') ||
     location.pathname.startsWith('/onboarding');
-
-  // Active user session state isolation & localStorage sync
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -61,7 +59,6 @@ const App = () => {
         }
       }
     } else {
-      // Signed out: purge personal identification to ensure zero cross-user leakage
       const prevEmail = localStorage.getItem("customer_email");
       if (prevEmail) {
         localStorage.removeItem("customer_email");
@@ -73,8 +70,6 @@ const App = () => {
       }
     }
   }, [isLoaded, isSignedIn, user]);
-
-  // Automatically synchronize user profile and check onboarding status in MySQL database
   useEffect(() => {
     if (!isLoaded || !isSignedIn || !user) return;
 
@@ -110,8 +105,6 @@ const App = () => {
         })
         .catch((err) => console.warn('User profile sync to MySQL:', err));
     }
-
-    // Onboarding Check: Ensure user has completed essential profile details (phone number) in MySQL
     if (isAdminRoute || isAuthRoute || isOnboardingRoute) return;
 
     const completedKey = `profile_completed_${user.id}`;
@@ -127,7 +120,6 @@ const App = () => {
               localStorage.setItem('customer_phone', data.phone);
             }
           } else if (data.needs_onboarding) {
-            // Prominent center modal popup dialog right in the middle of the screen
             setShowOnboardingModal(true);
           }
         }
@@ -147,8 +139,6 @@ const App = () => {
 
       {!isAdminRoute && !isAuthRoute && !isOnboardingRoute && <Navbar />}
 
-
-
       <Routes>
         {/* Public Browsing Routes */}
         <Route path='/' element={<Home />} />
@@ -165,7 +155,6 @@ const App = () => {
         {/* Member Onboarding & Profile Setup Routes */}
         <Route path='/complete-profile' element={<CompleteProfilePage />} />
         <Route path='/onboarding' element={<CompleteProfilePage />} />
-
 
         {/* Protected Customer Routes - Seat Booking & Ticket Checkout */}
         <Route

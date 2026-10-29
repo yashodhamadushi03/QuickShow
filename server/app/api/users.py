@@ -1,9 +1,4 @@
-"""
-User Profile Management API Router
------------------------------------
-Handles fetching, updating, and syncing user profile details (full name, phone number,
-bio, avatar, preferred cinema city, etc.) with real-time MySQL persistence.
-"""
+
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -16,7 +11,6 @@ from app.schemas.user import ProfileUpdate, ProfileOut
 from app.api.deps import get_current_user_optional
 
 router = APIRouter(prefix="/users", tags=["User Profiles"])
-
 
 def _get_or_create_profile(user: User, db: Session) -> Profile:
     """Helper to ensure a Profile record exists for the given User in MySQL."""
@@ -32,7 +26,6 @@ def _get_or_create_profile(user: User, db: Session) -> Profile:
         db.add(prof)
         db.flush()
     return prof
-
 
 @router.get("/status")
 def check_user_status(
@@ -78,7 +71,6 @@ def check_user_status(
         "needs_onboarding": not has_phone
     }
 
-
 @router.get("/profile", response_model=ProfileOut)
 def get_user_profile(
     email: Optional[str] = Query(None),
@@ -121,7 +113,6 @@ def get_user_profile(
         updated_at=prof.updated_at
     )
 
-
 @router.post("/profile", response_model=ProfileOut)
 @router.put("/profile", response_model=ProfileOut)
 def update_user_profile(
@@ -141,7 +132,6 @@ def update_user_profile(
         target_user = db.query(User).filter(User.email == clean_email).first()
 
     if not target_user:
-        # If user does not exist yet (e.g. initial onboarding before sync-user finishes), auto-create
         if lookup_email and lookup_email.strip():
             clean_email = lookup_email.strip().lower()
             target_user = User(
@@ -160,8 +150,6 @@ def update_user_profile(
             )
 
     prof = _get_or_create_profile(target_user, db)
-
-    # 1. Update User table fields
     if profile_in.name and profile_in.name.strip():
         target_user.name = profile_in.name.strip()
 
@@ -170,8 +158,6 @@ def update_user_profile(
         clean_phone = phone_val.strip()
         target_user.phone = clean_phone
         prof.phone_number = clean_phone
-
-    # 2. Update Profile table fields
     if profile_in.bio is not None:
         prof.bio = profile_in.bio.strip()
     if profile_in.avatar_url is not None:

@@ -11,7 +11,6 @@ from app.services.ai_recommendation import AIRecommendationEngine
 
 router = APIRouter(prefix="/showtimes", tags=["Showtimes & Seats"])
 
-
 @router.get("/{showtime_id}", response_model=ShowtimeOut)
 def get_showtime(showtime_id: int, db: Session = Depends(get_db)):
     """Get details of a specific showtime."""
@@ -19,7 +18,6 @@ def get_showtime(showtime_id: int, db: Session = Depends(get_db)):
     if not st:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Showtime not found")
     return st
-
 
 @router.get("/{showtime_id}/seats", response_model=List[SeatOut])
 def get_showtime_seat_layout(showtime_id: int, db: Session = Depends(get_db)):
@@ -32,16 +30,12 @@ def get_showtime_seat_layout(showtime_id: int, db: Session = Depends(get_db)):
     st = db.query(Showtime).filter(Showtime.showtime_id == showtime_id).first()
     if not st:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Showtime not found")
-
-    # Retrieve all physical seats in the hall
     all_seats = (
         db.query(Seat)
         .filter(Seat.hall_id == st.hall_id)
         .order_by(Seat.row_label, Seat.seat_number)
         .all()
     )
-
-    # Find all reserved/locked seats for this showtime
     active_bookings = (
         db.query(BookingSeat.seat_id, Booking.status)
         .join(Booking, BookingSeat.booking_id == Booking.booking_id)
@@ -66,7 +60,6 @@ def get_showtime_seat_layout(showtime_id: int, db: Session = Depends(get_db)):
         result.append(seat_dict)
 
     return result
-
 
 @router.get("/{showtime_id}/best-seats", response_model=List[int])
 def get_best_seats_recommendation(

@@ -26,8 +26,6 @@ const ProfileModal = ({ isOpen, onClose }) => {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Initialize and load from MySQL database
   useEffect(() => {
     if (!isOpen) return;
 
@@ -91,7 +89,6 @@ const ProfileModal = ({ isOpen, onClose }) => {
     };
 
     try {
-      // Primary endpoint PUT /api/users/profile, fallback to /api/auth/profile
       let res = await fetch(`${API_BASE_URL}/users/profile`, {
         method: "PUT",
         headers: {

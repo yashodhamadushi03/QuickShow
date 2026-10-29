@@ -13,7 +13,6 @@ try:
         max_overflow=20,
         echo=False
     )
-    # Quick probe connection to verify MySQL availability
     with engine.connect() as conn:
         pass
 except Exception as e:
@@ -28,7 +27,6 @@ except Exception as e:
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
-
 
 def get_db() -> Generator:
     """FastAPI Dependency for Database Session Management"""

@@ -16,8 +16,6 @@ const Navbar = () => {
   const { user } = useUser();
   const { openSignIn } = useClerk();
   const navigate = useNavigate();
-
-  // Live Time Clock Effect (updates every second)
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());

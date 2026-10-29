@@ -3,11 +3,6 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
 
-/**
- * ProtectedRoute Guard Component
- * Enforces authentication before accessing sensitive actions (Seat booking, Checkout, Favourites, My Bookings).
- * Preserves the return URL and route state so users can seamlessly resume after signing in.
- */
 const ProtectedRoute = ({ children, message }) => {
   const { isLoaded, isSignedIn } = useUser();
   const location = useLocation();
@@ -39,8 +34,6 @@ const ProtectedRoute = ({ children, message }) => {
       });
     }
   }, [isLoaded, isSignedIn, location.pathname, message]);
-
-  // Loading state
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white p-4">
@@ -51,8 +44,6 @@ const ProtectedRoute = ({ children, message }) => {
       </div>
     );
   }
-
-  // If unauthenticated, redirect to sign-in with return URL and route state preserved
   if (!isSignedIn) {
     const returnPath = location.pathname + location.search + location.hash;
     return (

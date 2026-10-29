@@ -115,8 +115,6 @@ const DateSelect = ({
   ];
 
   const availableTheaters = theaters.length > 0 ? theaters : defaultTheaters;
-
-  // Selected Theater State
   const [selectedTheater, setSelectedTheater] = useState(() => {
     if (initialTheaterId) {
       const match = availableTheaters.find((t) => String(t.theater_id) === String(initialTheaterId));
@@ -128,8 +126,6 @@ const DateSelect = ({
     }
     return availableTheaters[0];
   });
-
-  // Selected Hall State
   const [selectedHall, setSelectedHall] = useState(() => {
     if (initialHallId && selectedTheater?.halls) {
       const match = selectedTheater.halls.find((h) => String(h.hall_id) === String(initialHallId));
@@ -137,8 +133,6 @@ const DateSelect = ({
     }
     return selectedTheater?.halls?.[0] || { hall_id: 1, hall_name: "Screen 1 - Dolby Atmos" };
   });
-
-  // Keep selected theater in sync if initial props change
   useEffect(() => {
     if (initialTheaterId) {
       const match = availableTheaters.find((t) => String(t.theater_id) === String(initialTheaterId));
@@ -154,15 +148,11 @@ const DateSelect = ({
       }
     }
   }, [initialTheaterId, initialTheaterName, theaters]);
-
-  // Keep selected date valid
   useEffect(() => {
     if (!selectedDate && dates.length > 0) {
       setSelectedDate(dates[0]);
     }
   }, [dateTime, dates]);
-
-  // When selected date changes, set default showtime slot
   useEffect(() => {
     if (selectedDate && dateTime && dateTime[selectedDate]) {
       const slots = dateTime[selectedDate];
@@ -224,8 +214,6 @@ const DateSelect = ({
     if (s.includes("night")) return <Moon className="w-5 h-5 text-indigo-400" />;
     return <Clock className="w-5 h-5 text-rose-400" />;
   };
-
-  // Active slots for selected date with theater and hall bindings
   const activeSlots = (dateTime && dateTime[selectedDate] && dateTime[selectedDate].length > 0)
     ? dateTime[selectedDate].map((s, idx) => ({
         ...s,
@@ -288,7 +276,6 @@ const DateSelect = ({
       movie,
     };
 
-    // Smart authentication check: redirect unauthenticated users to Sign In with preserved booking state
     if (isLoaded && !isSignedIn) {
       toast("Please sign in to select seats and complete your booking.", {
         icon: "🔒",
