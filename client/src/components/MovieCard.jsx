@@ -1,6 +1,7 @@
 import { StarIcon, Heart } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useUser } from '@clerk/clerk-react'
 import timeFormat from '../lib/timeFormat';
 import { FALLBACK_BACKDROP } from '../assets/assets';
 import { isMovieFavourite, toggleFavourite } from '../lib/favourites';
@@ -9,28 +10,45 @@ import toast from 'react-hot-toast';
 const MovieCard = ({movie}) => {
 
     const navigate = useNavigate();
+    const { user: clerkUser } = useUser();
+    const activeEmail =
+        clerkUser?.primaryEmailAddress?.emailAddress ||
+        clerkUser?.emailAddresses?.[0]?.emailAddress ||
+        localStorage.getItem("customer_email") ||
+        "";
+
     const posterSrc = movie.backdrop_path || movie.poster_url || movie.poster_path || FALLBACK_BACKDROP;
     const [isFav, setIsFav] = useState(false);
 
     useEffect(() => {
-        setIsFav(isMovieFavourite(movie));
-    }, [movie]);
+        setIsFav(isMovieFavourite(movie, activeEmail));
+    }, [movie, activeEmail]);
 
     useEffect(() => {
         const handleUpdate = () => {
-            setIsFav(isMovieFavourite(movie));
+            setIsFav(isMovieFavourite(movie, activeEmail));
         };
         window.addEventListener("favouritesUpdated", handleUpdate);
+        window.addEventListener("userChanged", handleUpdate);
         window.addEventListener("storage", handleUpdate);
         return () => {
             window.removeEventListener("favouritesUpdated", handleUpdate);
+            window.removeEventListener("userChanged", handleUpdate);
             window.removeEventListener("storage", handleUpdate);
         };
-    }, [movie]);
+    }, [movie, activeEmail]);
 
     const handleHeartClick = (e) => {
         e.stopPropagation();
-        const nowFav = toggleFavourite(movie);
+        if (!activeEmail) {
+            toast.error("Please sign in to save movies to your favourites!", {
+                icon: "🔒",
+                style: { background: "#0f172a", color: "#fff", border: "1px solid #f43f5e" }
+            });
+            return;
+        }
+
+        const nowFav = toggleFavourite(movie, activeEmail);
         setIsFav(nowFav);
         if (nowFav) {
             toast.success(`"${movie.title}" added to Favourites!`, {

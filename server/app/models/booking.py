@@ -16,12 +16,12 @@ class Booking(Base):
     __tablename__ = "bookings"
 
     booking_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
-    showtime_id = Column(Integer, ForeignKey("showtimes.showtime_id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
+    showtime_id = Column(Integer, ForeignKey("showtimes.showtime_id", ondelete="CASCADE"), nullable=False, index=True)
     total_amount = Column(Numeric(10, 2), nullable=False)
-    status = Column(Enum(BookingStatus, values_callable=lambda obj: [e.value for e in obj]), default=BookingStatus.PENDING, nullable=False)
+    status = Column(Enum(BookingStatus, values_callable=lambda obj: [e.value for e in obj]), default=BookingStatus.PENDING, nullable=False, index=True)
     customer_name = Column(String(100), nullable=True)
-    customer_email = Column(String(150), nullable=True)
+    customer_email = Column(String(150), nullable=True, index=True)
     customer_phone = Column(String(20), nullable=True)
     created_at = Column(DateTime, default=get_local_now, nullable=False)
 

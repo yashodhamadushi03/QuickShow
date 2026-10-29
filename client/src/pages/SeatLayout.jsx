@@ -499,9 +499,12 @@ const SeatLayout = () => {
 
         // Save email and recent booking locally for real-time MyBookings sync
         try {
-          if (customerEmail) localStorage.setItem("customer_email", customerEmail);
+          const cleanEmail = (customerEmail || "").trim().toLowerCase();
+          if (cleanEmail) localStorage.setItem("customer_email", cleanEmail);
           const cachedPass = {
             booking_id: bookingData.booking_id,
+            customer_email: cleanEmail,
+            customer_name: customerName || cardHolder || "Cinema Fan",
             status: "Confirmed",
             total_amount: String(totalCalc),
             created_at: new Date().toISOString(),
@@ -527,9 +530,10 @@ const SeatLayout = () => {
               is_sandbox: paymentData.is_sandbox || isSandboxMode
             }
           };
-          const existingRecent = JSON.parse(localStorage.getItem("quickshow_recent_bookings") || "[]");
+          const userRecentKey = cleanEmail ? `quickshow_recent_bookings_${cleanEmail}` : "quickshow_recent_bookings";
+          const existingRecent = JSON.parse(localStorage.getItem(userRecentKey) || "[]");
           const updatedRecent = [cachedPass, ...existingRecent.filter(b => b.booking_id !== bookingData.booking_id)].slice(0, 15);
-          localStorage.setItem("quickshow_recent_bookings", JSON.stringify(updatedRecent));
+          localStorage.setItem(userRecentKey, JSON.stringify(updatedRecent));
           window.dispatchEvent(new Event("bookingCreated"));
         } catch (storageErr) {
           console.warn("Storage sync warning:", storageErr);
@@ -573,9 +577,12 @@ const SeatLayout = () => {
 
       // Save fallback booking locally for instant MyBookings visibility
       try {
-        if (customerEmail) localStorage.setItem("customer_email", customerEmail);
+        const cleanEmail = (customerEmail || "").trim().toLowerCase();
+        if (cleanEmail) localStorage.setItem("customer_email", cleanEmail);
         const fallbackPass = {
           booking_id: fallbackBookingId,
+          customer_email: cleanEmail,
+          customer_name: customerName || cardHolder || "Cinema Fan",
           status: "Confirmed",
           total_amount: String(totalCalc),
           created_at: new Date().toISOString(),
@@ -594,9 +601,10 @@ const SeatLayout = () => {
             is_sandbox: true
           }
         };
-        const existingRecent = JSON.parse(localStorage.getItem("quickshow_recent_bookings") || "[]");
+        const userRecentKey = cleanEmail ? `quickshow_recent_bookings_${cleanEmail}` : "quickshow_recent_bookings";
+        const existingRecent = JSON.parse(localStorage.getItem(userRecentKey) || "[]");
         const updatedRecent = [fallbackPass, ...existingRecent.filter(b => b.booking_id !== fallbackBookingId)].slice(0, 15);
-        localStorage.setItem("quickshow_recent_bookings", JSON.stringify(updatedRecent));
+        localStorage.setItem(userRecentKey, JSON.stringify(updatedRecent));
         window.dispatchEvent(new Event("bookingCreated"));
       } catch (storageErr) {
         console.warn("Storage sync warning:", storageErr);

@@ -1,55 +1,75 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, Trash2, Film, Sparkles, ArrowRight } from "lucide-react";
+import { Heart, Trash2, Film, Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { useUser } from "@clerk/clerk-react";
 import MovieCard from "../components/MovieCard";
 import BlurCircle from "../components/BlurCircle";
-import { getFavourites, clearAllFavourites } from "../lib/favourites";
+import { getFavourites, clearAllFavourites, getFavouritesStorageKey } from "../lib/favourites";
 import toast from "react-hot-toast";
 
 const Favourite = () => {
-  const [favourites, setFavourites] = useState(getFavourites());
+  const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
+  const activeEmail =
+    clerkUser?.primaryEmailAddress?.emailAddress ||
+    clerkUser?.emailAddresses?.[0]?.emailAddress ||
+    localStorage.getItem("customer_email") ||
+    "";
+
+  const [favourites, setFavourites] = useState(() => getFavourites(activeEmail));
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!isClerkLoaded) return;
+
+    if (!activeEmail) {
+      setFavourites([]);
+      setLoading(false);
+      return;
+    }
+
     const refreshFavourites = async () => {
-      const local = getFavourites();
+      setLoading(true);
+      const local = getFavourites(activeEmail);
       setFavourites(local);
       try {
         const token = localStorage.getItem("token") || "";
-        const email = localStorage.getItem("customer_email") || localStorage.getItem("user_email") || "";
-        const url = email ? `/api/favourites?email=${encodeURIComponent(email)}` : "/api/favourites";
+        const url = `/api/favourites?email=${encodeURIComponent(activeEmail)}`;
         const res = await fetch(url, {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
         if (res.ok) {
           const dbFavs = await res.json();
-          if (Array.isArray(dbFavs) && dbFavs.length > 0) {
-            const currentIds = new Set(local.map((m) => String(m.id || m.movie_id || m._id)));
-            const missing = dbFavs.filter((m) => !currentIds.has(String(m.movie_id || m.id)));
-            if (missing.length > 0) {
-              const merged = [...local, ...missing];
-              setFavourites(merged);
-              localStorage.setItem("quickshow_favourites", JSON.stringify(merged));
-            }
+          if (Array.isArray(dbFavs)) {
+            setFavourites(dbFavs);
+            localStorage.setItem(getFavouritesStorageKey(activeEmail), JSON.stringify(dbFavs));
           }
         }
       } catch (err) {
         console.debug("Favourites backend sync note:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
     refreshFavourites();
-    window.addEventListener("favouritesUpdated", () => setFavourites(getFavourites()));
-    window.addEventListener("storage", () => setFavourites(getFavourites()));
-    return () => {
-      window.removeEventListener("favouritesUpdated", () => setFavourites(getFavourites()));
-      window.removeEventListener("storage", () => setFavourites(getFavourites()));
-    };
-  }, []);
 
-  const handleClearAll = () => {
+    const handleUpdate = () => setFavourites(getFavourites(activeEmail));
+    window.addEventListener("favouritesUpdated", handleUpdate);
+    window.addEventListener("userChanged", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+
+    return () => {
+      window.removeEventListener("favouritesUpdated", handleUpdate);
+      window.removeEventListener("userChanged", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, [isClerkLoaded, activeEmail]);
+
+  const handleClearAll = async () => {
     if (window.confirm("Are you sure you want to remove all saved movies from your favourites?")) {
-      clearAllFavourites();
+      await clearAllFavourites(activeEmail);
+      setFavourites([]);
       toast("Favourites list cleared", { icon: "🗑️" });
     }
   };
@@ -90,7 +110,14 @@ const Favourite = () => {
 
       {/* Content Section */}
       <div className="max-w-7xl mx-auto">
-        {favourites.length > 0 ? (
+        {loading && favourites.length === 0 ? (
+          <div className="flex flex-col justify-center items-center py-28 gap-4">
+            <div className="w-12 h-12 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-slate-400 text-sm font-medium animate-pulse">
+              Retrieving your saved favourites from database...
+            </p>
+          </div>
+        ) : favourites.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center sm:justify-items-stretch">
             {favourites.map((movie) => (
               <MovieCard

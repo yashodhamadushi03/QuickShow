@@ -1,10 +1,23 @@
-// Utilities for managing user Favourite Movies with localStorage & cross-tab synchronization
+// Utilities for managing user Favourite Movies with strict per-user scoping & cross-tab synchronization
 
-const FAVOURITES_KEY = "quickshow_favourites";
-
-export const getFavourites = () => {
+export const getActiveUserEmail = () => {
   try {
-    const raw = localStorage.getItem(FAVOURITES_KEY);
+    return (localStorage.getItem("customer_email") || localStorage.getItem("user_email") || "").trim().toLowerCase();
+  } catch {
+    return "";
+  }
+};
+
+export const getFavouritesStorageKey = (email) => {
+  const targetEmail = (email || getActiveUserEmail()).trim().toLowerCase();
+  return targetEmail ? `quickshow_favourites_${targetEmail}` : "quickshow_favourites_unauth";
+};
+
+export const getFavourites = (email) => {
+  const activeEmail = (email || getActiveUserEmail()).trim().toLowerCase();
+  if (!activeEmail) return [];
+  try {
+    const raw = localStorage.getItem(getFavouritesStorageKey(activeEmail));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -19,21 +32,24 @@ export const getMovieIdentifier = (movie) => {
   return String(movie.movie_id || movie.id || movie._id || "");
 };
 
-export const isMovieFavourite = (movieOrId) => {
+export const isMovieFavourite = (movieOrId, email) => {
   if (!movieOrId) return false;
   const targetId = typeof movieOrId === "object" ? getMovieIdentifier(movieOrId) : String(movieOrId);
   if (!targetId) return false;
 
-  const current = getFavourites();
+  const current = getFavourites(email);
   return current.some((m) => getMovieIdentifier(m) === targetId);
 };
 
-export const addFavourite = (movie) => {
+export const addFavourite = (movie, email) => {
   if (!movie) return false;
+  const activeEmail = (email || getActiveUserEmail()).trim().toLowerCase();
+  if (!activeEmail) return false; // Authentication required to favorite
+
   const targetId = getMovieIdentifier(movie);
   if (!targetId) return false;
 
-  const current = getFavourites();
+  const current = getFavourites(activeEmail);
   const exists = current.some((m) => getMovieIdentifier(m) === targetId);
 
   if (!exists) {
@@ -57,12 +73,11 @@ export const addFavourite = (movie) => {
 
     const updated = [normalizedMovie, ...current];
     try {
-      localStorage.setItem(FAVOURITES_KEY, JSON.stringify(updated));
+      localStorage.setItem(getFavouritesStorageKey(activeEmail), JSON.stringify(updated));
       window.dispatchEvent(new Event("favouritesUpdated"));
 
       // Asynchronously synchronize with MySQL backend database
       const token = localStorage.getItem("token") || "";
-      const email = localStorage.getItem("customer_email") || localStorage.getItem("user_email") || "";
       const numericId = parseInt(targetId, 10);
       if (!isNaN(numericId)) {
         fetch("/api/favourites", {
@@ -71,7 +86,7 @@ export const addFavourite = (movie) => {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {})
           },
-          body: JSON.stringify({ movie_id: numericId, email: email || undefined })
+          body: JSON.stringify({ movie_id: numericId, email: activeEmail })
         }).catch((e) => console.debug("Sync favourite error:", e));
       }
 
@@ -84,24 +99,26 @@ export const addFavourite = (movie) => {
   return true;
 };
 
-export const removeFavourite = (movieOrId) => {
+export const removeFavourite = (movieOrId, email) => {
   if (!movieOrId) return false;
+  const activeEmail = (email || getActiveUserEmail()).trim().toLowerCase();
+  if (!activeEmail) return false;
+
   const targetId = typeof movieOrId === "object" ? getMovieIdentifier(movieOrId) : String(movieOrId);
   if (!targetId) return false;
 
-  const current = getFavourites();
+  const current = getFavourites(activeEmail);
   const updated = current.filter((m) => getMovieIdentifier(m) !== targetId);
 
   try {
-    localStorage.setItem(FAVOURITES_KEY, JSON.stringify(updated));
+    localStorage.setItem(getFavouritesStorageKey(activeEmail), JSON.stringify(updated));
     window.dispatchEvent(new Event("favouritesUpdated"));
 
     // Asynchronously synchronize removal with MySQL backend database
     const token = localStorage.getItem("token") || "";
-    const email = localStorage.getItem("customer_email") || localStorage.getItem("user_email") || "";
     const numericId = parseInt(targetId, 10);
     if (!isNaN(numericId)) {
-      const url = email ? `/api/favourites/${numericId}?email=${encodeURIComponent(email)}` : `/api/favourites/${numericId}`;
+      const url = `/api/favourites/${numericId}?email=${encodeURIComponent(activeEmail)}`;
       fetch(url, {
         method: "DELETE",
         headers: {
@@ -117,20 +134,35 @@ export const removeFavourite = (movieOrId) => {
   }
 };
 
-export const toggleFavourite = (movie) => {
-  if (isMovieFavourite(movie)) {
-    removeFavourite(movie);
+export const toggleFavourite = (movie, email) => {
+  if (isMovieFavourite(movie, email)) {
+    removeFavourite(movie, email);
     return false;
   } else {
-    addFavourite(movie);
+    addFavourite(movie, email);
     return true;
   }
 };
 
-export const clearAllFavourites = () => {
+export const clearAllFavourites = async (email) => {
+  const activeEmail = (email || getActiveUserEmail()).trim().toLowerCase();
+  if (!activeEmail) return false;
+
+  const current = getFavourites(activeEmail);
   try {
-    localStorage.removeItem(FAVOURITES_KEY);
+    localStorage.removeItem(getFavouritesStorageKey(activeEmail));
     window.dispatchEvent(new Event("favouritesUpdated"));
+
+    const token = localStorage.getItem("token") || "";
+    for (const m of current) {
+      const numericId = parseInt(getMovieIdentifier(m), 10);
+      if (!isNaN(numericId)) {
+        fetch(`/api/favourites/${numericId}?email=${encodeURIComponent(activeEmail)}`, {
+          method: "DELETE",
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        }).catch(() => {});
+      }
+    }
     return true;
   } catch (err) {
     console.error("Failed to clear favourites from localStorage:", err);

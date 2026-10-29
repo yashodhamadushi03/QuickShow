@@ -121,11 +121,14 @@ def sync_database():
         except Exception as ex:
             print(f"  [NOTE] seats index check: {ex}")
 
-        # C. Performance Indexes on bookings and payments
+        # C. Performance & Isolation Indexes on bookings, payments, and favourites
         performance_indexes = [
             ("bookings", "idx_bookings_user_created", "CREATE INDEX idx_bookings_user_created ON bookings(user_id, created_at DESC);"),
+            ("bookings", "idx_bookings_customer_email", "CREATE INDEX idx_bookings_customer_email ON bookings(customer_email);"),
             ("bookings", "idx_bookings_status", "CREATE INDEX idx_bookings_status ON bookings(status);"),
-            ("payments", "idx_payments_booking", "CREATE INDEX idx_payments_booking ON payments(booking_id);")
+            ("payments", "idx_payments_booking", "CREATE INDEX idx_payments_booking ON payments(booking_id);"),
+            ("favourites", "idx_favourites_user", "CREATE INDEX idx_favourites_user ON favourites(user_id);"),
+            ("profiles", "idx_profiles_user", "CREATE INDEX idx_profiles_user ON profiles(user_id);")
         ]
         for tbl, idx_name, idx_sql in performance_indexes:
             try:
@@ -134,11 +137,11 @@ def sync_database():
                     conn.execute(text(idx_sql))
                     conn.commit()
                     changes_applied["constraints_added"].append(f"{tbl}.{idx_name}")
-                    print(f"  [ADDED] Performance index `{idx_name}` on `{tbl}`.")
+                    print(f"  [ADDED] User-isolation index `{idx_name}` on `{tbl}`.")
                 else:
-                    print(f"  [OK] Performance index `{idx_name}` on `{tbl}` is active.")
+                    print(f"  [OK] User-isolation index `{idx_name}` on `{tbl}` is active.")
             except Exception as ex:
-                pass
+                print(f"  [NOTE] {tbl} index {idx_name}: {ex}")
 
         # Step 5: Seed sample F&B concession orders if empty
         print("\n[Step 5] Checking Seed Data for F&B Concessions...")

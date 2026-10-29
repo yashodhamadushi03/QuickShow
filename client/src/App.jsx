@@ -38,6 +38,41 @@ const App = () => {
     location.pathname.startsWith('/complete-profile') ||
     location.pathname.startsWith('/onboarding');
 
+  // Active user session state isolation & localStorage sync
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    if (isSignedIn && user) {
+      const email = (user.primaryEmailAddress?.emailAddress || user.emailAddresses?.[0]?.emailAddress || "").trim().toLowerCase();
+      if (email) {
+        const prevEmail = localStorage.getItem("customer_email");
+        if (prevEmail !== email) {
+          localStorage.setItem("customer_email", email);
+          const name =
+            user.fullName ||
+            `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+            user.username ||
+            'Customer';
+          localStorage.setItem("customer_name", name);
+          window.dispatchEvent(new Event("userChanged"));
+          window.dispatchEvent(new Event("favouritesUpdated"));
+          window.dispatchEvent(new Event("bookingCreated"));
+        }
+      }
+    } else {
+      // Signed out: purge personal identification to ensure zero cross-user leakage
+      const prevEmail = localStorage.getItem("customer_email");
+      if (prevEmail) {
+        localStorage.removeItem("customer_email");
+        localStorage.removeItem("customer_name");
+        localStorage.removeItem("customer_phone");
+        window.dispatchEvent(new Event("userChanged"));
+        window.dispatchEvent(new Event("favouritesUpdated"));
+        window.dispatchEvent(new Event("bookingCreated"));
+      }
+    }
+  }, [isLoaded, isSignedIn, user]);
+
   // Automatically synchronize user profile and check onboarding status in MySQL database
   useEffect(() => {
     if (!isLoaded || !isSignedIn || !user) return;

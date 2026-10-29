@@ -25,22 +25,35 @@ const MyBookings = () => {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const { user: clerkUser } = useUser();
+  const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
+
+  const userEmail = (
+    clerkUser?.primaryEmailAddress?.emailAddress ||
+    clerkUser?.emailAddresses?.[0]?.emailAddress ||
+    localStorage.getItem("customer_email") ||
+    ""
+  ).trim().toLowerCase();
 
   const fetchMyBookings = async (showLoader = true) => {
+    if (!isClerkLoaded) return;
+
+    // Strict Isolation: If no authenticated user email exists, display zero bookings
+    if (!userEmail) {
+      setBookings([]);
+      setLoading(false);
+      setIsRefreshing(false);
+      return;
+    }
+
     if (showLoader) setLoading(true);
     setIsRefreshing(true);
 
     try {
       const token = localStorage.getItem("token") || "";
-      const userEmail =
-        clerkUser?.primaryEmailAddress?.emailAddress ||
-        localStorage.getItem("customer_email") ||
-        "";
-      const queryParam = userEmail ? `?email=${encodeURIComponent(userEmail)}` : "";
+      const queryParam = `?email=${encodeURIComponent(userEmail)}`;
 
       let data = null;
-      // 1. Try GET /api/bookings/my (with email param or token)
+      // 1. Primary endpoint: GET /api/bookings/my?email=...
       try {
         const res = await fetch(`${API_BASE_URL}/bookings/my${queryParam}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -52,7 +65,7 @@ const MyBookings = () => {
         console.warn("Primary endpoint /bookings/my error:", e);
       }
 
-      // 2. Try secondary endpoint /api/user/bookings
+      // 2. Secondary endpoint: GET /api/user/bookings?email=...
       if (!data) {
         try {
           const res2 = await fetch(`${API_BASE_URL}/user/bookings${queryParam}`, {
@@ -66,19 +79,30 @@ const MyBookings = () => {
         }
       }
 
-      // Read local cache of instant bookings
+      // Read user-scoped local cache of instant bookings
       let cached = [];
       try {
-        cached = JSON.parse(localStorage.getItem("quickshow_recent_bookings") || "[]");
+        const userRecentKey = `quickshow_recent_bookings_${userEmail}`;
+        const rawUserRecent = localStorage.getItem(userRecentKey);
+        if (rawUserRecent) {
+          cached = JSON.parse(rawUserRecent);
+        }
+        // Strict safety check: ensure cached items strictly belong to current user
+        cached = (Array.isArray(cached) ? cached : []).filter(
+          (b) => !b.customer_email || b.customer_email.toLowerCase() === userEmail
+        );
       } catch (err) {
         cached = [];
       }
 
       if (Array.isArray(data) && data.length > 0) {
-        // Merge with any cached bookings not yet returned in DB, ensuring newest is at the top
-        const dbIds = new Set(data.map((b) => b.booking_id));
+        // Enforce strict filtering on returned records to guarantee no cross-user pollution
+        const userSpecificDbData = data.filter(
+          (b) => !b.customer_email || b.customer_email.toLowerCase() === userEmail
+        );
+        const dbIds = new Set(userSpecificDbData.map((b) => b.booking_id));
         const unmerged = cached.filter((b) => !dbIds.has(b.booking_id));
-        const merged = [...unmerged, ...data];
+        const merged = [...unmerged, ...userSpecificDbData];
         merged.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
         setBookings(merged);
       } else if (cached.length > 0) {
@@ -88,9 +112,12 @@ const MyBookings = () => {
         setBookings([]);
       }
     } catch (err) {
-      console.warn("Backend API unavailable, using cached bookings:", err);
+      console.warn("Backend API unavailable, using user-scoped cached bookings:", err);
       try {
-        const cached = JSON.parse(localStorage.getItem("quickshow_recent_bookings") || "[]");
+        const userRecentKey = `quickshow_recent_bookings_${userEmail}`;
+        const cached = JSON.parse(localStorage.getItem(userRecentKey) || "[]").filter(
+          (b) => !b.customer_email || b.customer_email.toLowerCase() === userEmail
+        );
         setBookings(cached);
       } catch {
         setBookings([]);
@@ -104,18 +131,19 @@ const MyBookings = () => {
   useEffect(() => {
     fetchMyBookings(true);
 
-    // Listen for new booking events dispatched after checkout
-    const handleNewBooking = () => {
+    const handleUpdate = () => {
       fetchMyBookings(false);
     };
 
-    window.addEventListener("bookingCreated", handleNewBooking);
-    window.addEventListener("storage", handleNewBooking);
+    window.addEventListener("bookingCreated", handleUpdate);
+    window.addEventListener("userChanged", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
     return () => {
-      window.removeEventListener("bookingCreated", handleNewBooking);
-      window.removeEventListener("storage", handleNewBooking);
+      window.removeEventListener("bookingCreated", handleUpdate);
+      window.removeEventListener("userChanged", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
     };
-  }, [clerkUser]);
+  }, [isClerkLoaded, userEmail]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white pt-24 sm:pt-28 pb-20 px-4 sm:px-8 md:px-16">

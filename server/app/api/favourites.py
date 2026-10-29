@@ -23,16 +23,18 @@ def get_user_favourites(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Retrieve all favorited movies for the authenticated user or specified email."""
-    target_user = current_user
-    if not target_user and email:
+    """
+    Retrieve all favorited movies strictly for the authenticated user or specified verified email.
+    Guarantees 100% user data isolation: never falls back to any other user's records.
+    """
+    target_user = None
+    if current_user:
+        target_user = current_user
+    elif email and email.strip():
         clean_email = email.strip().lower()
         target_user = db.query(User).filter(User.email == clean_email).first()
 
-    if not target_user:
-        # Default fallback to first customer if unauthenticated in demo mode
-        target_user = db.query(User).filter(User.role == UserRole.CUSTOMER).first()
-
+    # Strict isolation: if user is not authenticated or not found, return empty list
     if not target_user:
         return []
 
@@ -45,15 +47,36 @@ def get_user_favourites(
     return movies
 
 
+@router.get("/ids", response_model=List[int])
+def get_user_favourite_ids(
+    email: Optional[str] = Query(None),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """Retrieve list of favorited movie IDs strictly for the current authenticated user."""
+    target_user = None
+    if current_user:
+        target_user = current_user
+    elif email and email.strip():
+        clean_email = email.strip().lower()
+        target_user = db.query(User).filter(User.email == clean_email).first()
+
+    if not target_user:
+        return []
+
+    favs = db.query(Favourite.movie_id).filter(Favourite.user_id == target_user.user_id).all()
+    return [f[0] for f in favs]
+
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 def add_favourite(
     fav_in: FavouriteCreate,
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Add a movie to user's favourites in MySQL database."""
+    """Add a movie to user's favourites in MySQL database with strict user scoping."""
     target_user = current_user
-    if not target_user and fav_in.email:
+    if not target_user and fav_in.email and fav_in.email.strip():
         clean_email = fav_in.email.strip().lower()
         target_user = db.query(User).filter(User.email == clean_email).first()
         if not target_user:
@@ -67,10 +90,10 @@ def add_favourite(
             db.flush()
 
     if not target_user:
-        target_user = db.query(User).filter(User.role == UserRole.CUSTOMER).first()
-
-    if not target_user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User account required to favorite movie")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authenticated user or valid user email required to favorite movie"
+        )
 
     movie = db.query(Movie).filter(Movie.movie_id == fav_in.movie_id).first()
     if not movie:
@@ -96,22 +119,22 @@ def remove_favourite(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Remove a movie from user's favourites in MySQL database."""
+    """Remove a movie from user's favourites in MySQL database strictly for this user."""
     target_user = current_user
-    if not target_user and email:
+    if not target_user and email and email.strip():
         clean_email = email.strip().lower()
         target_user = db.query(User).filter(User.email == clean_email).first()
 
     if not target_user:
-        target_user = db.query(User).filter(User.role == UserRole.CUSTOMER).first()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authenticated user or valid user email required to remove favourite"
+        )
 
-    if not target_user:
-        return {"status": "success", "message": "Favourite removed"}
-
-    db.query(Favourite).filter(
+    deleted = db.query(Favourite).filter(
         Favourite.user_id == target_user.user_id,
         Favourite.movie_id == movie_id
     ).delete(synchronize_session=False)
     db.commit()
 
-    return {"status": "success", "message": "Movie removed from favourites", "movie_id": movie_id}
+    return {"status": "success", "message": "Movie removed from favourites", "movie_id": movie_id, "deleted": deleted > 0}

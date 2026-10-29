@@ -8,6 +8,7 @@ import { Heart, PlayCircle } from 'lucide-react';
 import DateSelect from '../components/DateSelect';
 import MovieCard from '../components/MovieCard';
 import toast from 'react-hot-toast';
+import { useUser } from '@clerk/clerk-react';
 import { isMovieFavourite, toggleFavourite } from '../lib/favourites';
 
 const MovieDetails = () => {
@@ -94,29 +95,46 @@ const MovieDetails = () => {
     }
   };
 
+  const { user: clerkUser } = useUser();
+  const activeEmail =
+    clerkUser?.primaryEmailAddress?.emailAddress ||
+    clerkUser?.emailAddresses?.[0]?.emailAddress ||
+    localStorage.getItem("customer_email") ||
+    "";
+
   useEffect(() => {
     if (show?.movie) {
-      setIsFav(isMovieFavourite(show.movie));
+      setIsFav(isMovieFavourite(show.movie, activeEmail));
     }
-  }, [show]);
+  }, [show, activeEmail]);
 
   useEffect(() => {
     const handleFavUpdate = () => {
       if (show?.movie) {
-        setIsFav(isMovieFavourite(show.movie));
+        setIsFav(isMovieFavourite(show.movie, activeEmail));
       }
     };
     window.addEventListener("favouritesUpdated", handleFavUpdate);
+    window.addEventListener("userChanged", handleFavUpdate);
     window.addEventListener("storage", handleFavUpdate);
     return () => {
       window.removeEventListener("favouritesUpdated", handleFavUpdate);
+      window.removeEventListener("userChanged", handleFavUpdate);
       window.removeEventListener("storage", handleFavUpdate);
     };
-  }, [show]);
+  }, [show, activeEmail]);
 
   const handleToggleFavourite = () => {
     if (!show?.movie) return;
-    const nowFav = toggleFavourite(show.movie);
+    if (!activeEmail) {
+      toast.error("Please sign in to save movies to your personal favourites!", {
+        icon: "🔒",
+        style: { background: "#0f172a", color: "#fff", border: "1px solid #f43f5e" }
+      });
+      return;
+    }
+
+    const nowFav = toggleFavourite(show.movie, activeEmail);
     setIsFav(nowFav);
     if (nowFav) {
       toast.success(`"${show.movie.title}" added to Favourites!`, {

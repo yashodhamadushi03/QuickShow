@@ -62,17 +62,16 @@ def create_booking(
     elif current_user:
         user_obj = current_user
     if not user_obj:
-        user_obj = db.query(User).filter(User.role == UserRole.CUSTOMER).first()
-        if not user_obj:
-            user_obj = User(
-                name=booking_in.customer_name or "Guest Customer",
-                email=booking_in.customer_email or "guest@quickshow.lk",
-                phone=booking_in.customer_phone,
-                password_hash="guest_hash",
-                role=UserRole.CUSTOMER
-            )
-            db.add(user_obj)
-            db.flush()
+        guest_email = (booking_in.customer_email or f"guest_{uuid.uuid4().hex[:8]}@quickshow.lk").strip().lower()
+        user_obj = User(
+            name=booking_in.customer_name or "Guest Customer",
+            email=guest_email,
+            phone=booking_in.customer_phone,
+            password_hash="guest_hash",
+            role=UserRole.CUSTOMER
+        )
+        db.add(user_obj)
+        db.flush()
 
     # 2. Verify showtime exists and belongs correctly to the selected theater and hall
     from app.models.theater import Hall, Theater
@@ -327,20 +326,30 @@ def create_booking(
 @router.get("/bookings/my", response_model=List[BookingOut])
 @router.get("/user/bookings", response_model=List[BookingOut])
 def get_my_bookings(
-    email: Optional[str] = Query(None, description="Optional customer email to filter personal tickets"),
+    email: Optional[str] = Query(None, description="Customer email to filter personal tickets"),
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
-    Retrieve real-time user bookings directly from MySQL:
-    - Filters by authenticated JWT user, or by email query param (e.g. from Clerk or guest checkout).
-    - If neither is provided, falls back to latest bookings ordered by created_at.desc().
+    Retrieve real-time user bookings directly from MySQL strictly for the requesting profile:
+    - Strictly filters by authenticated JWT user or by verified email query param (e.g. from Clerk).
+    - NEVER returns all bookings or falls back to other users' tickets.
+    - Guarantees 100% data isolation across customer accounts.
     - Always orders newest bookings first so new reservations immediately appear at the top.
     """
     query = db.query(Booking)
 
-    # 1. If email is provided
-    if email and email.strip():
+    # 1. Non-admin authenticated user: strictly their own bookings
+    if current_user and current_user.role not in [UserRole.ADMIN, UserRole.THEATER_MANAGER]:
+        user_email = current_user.email.strip().lower()
+        query = query.filter(
+            or_(
+                Booking.user_id == current_user.user_id,
+                Booking.customer_email.ilike(user_email)
+            )
+        )
+    # 2. Verified email query param provided (e.g. from Clerk authentication session)
+    elif email and email.strip():
         clean_email = email.strip().lower()
         query = query.filter(
             or_(
@@ -348,17 +357,17 @@ def get_my_bookings(
                 Booking.user.has(User.email.ilike(clean_email))
             )
         )
-    # 2. If authenticated via Bearer token
-    elif current_user:
+    # 3. Authenticated Admin / Theater Manager testing personal bookings
+    elif current_user and current_user.role in [UserRole.ADMIN, UserRole.THEATER_MANAGER]:
         query = query.filter(
             or_(
                 Booking.user_id == current_user.user_id,
                 Booking.customer_email.ilike(current_user.email)
             )
         )
-    # 3. Fallback: return recent confirmed/all bookings so guest/sandbox reservations show up
+    # 4. Strict isolation: no user or email identity provided -> return empty list
     else:
-        pass
+        return []
 
     return query.order_by(Booking.created_at.desc()).all()
 
@@ -366,13 +375,38 @@ def get_my_bookings(
 @router.get("/bookings/{booking_id}", response_model=BookingOut)
 def get_booking_details(
     booking_id: int,
+    email: Optional[str] = Query(None),
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Retrieve details of a specific booking."""
+    """Retrieve details of a specific booking with strict ownership verification."""
     booking = db.query(Booking).filter(Booking.booking_id == booking_id).first()
     if not booking:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found.")
+
+    # Strict isolation check
+    if current_user and current_user.role not in [UserRole.ADMIN, UserRole.THEATER_MANAGER]:
+        user_email = current_user.email.strip().lower()
+        is_owner = (booking.user_id == current_user.user_id) or (
+            booking.customer_email and booking.customer_email.strip().lower() == user_email
+        )
+        if not is_owner:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Not authorized to view another user's booking."
+            )
+    elif email and email.strip():
+        clean_email = email.strip().lower()
+        is_owner = (
+            (booking.customer_email and booking.customer_email.strip().lower() == clean_email) or
+            (booking.user and booking.user.email.strip().lower() == clean_email)
+        )
+        if not is_owner:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Not authorized to view another user's booking."
+            )
+
     return booking
 
 
