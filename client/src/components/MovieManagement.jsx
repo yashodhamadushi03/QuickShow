@@ -19,10 +19,11 @@ import {
   ChevronDown
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { API_BASE_URL } from "../config";
 
 const DEFAULT_POSTER = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=600";
 
-const MovieManagement = ({ adminToken, apiBaseUrl = "http://localhost:8000/api", onMoviesUpdated }) => {
+const MovieManagement = ({ adminToken, apiBaseUrl = API_BASE_URL, onMoviesUpdated }) => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
 

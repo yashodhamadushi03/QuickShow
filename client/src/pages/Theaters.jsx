@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MapPin, Film, Sparkles, Phone, ShieldCheck, Search, Navigation } from "lucide-react";
 import { Link } from "react-router-dom";
-
-const API_BASE_URL = "http://localhost:8000/api";
+import { API_BASE_URL } from "../config";
 
 const Theaters = () => {
   const [theaters, setTheaters] = useState([]);

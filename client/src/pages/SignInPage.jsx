@@ -3,8 +3,7 @@ import { useLocation, useNavigate, useSearchParams, Link } from "react-router-do
 import { SignIn, useUser } from "@clerk/clerk-react";
 import { ShieldCheck, User, Ticket, ArrowLeft, Lock, CheckCircle2, Film } from "lucide-react";
 import toast from "react-hot-toast";
-
-const API_BASE_URL = "http://localhost:8000/api";
+import { API_BASE_URL } from "../config";
 
 const SignInPage = () => {
   const [searchParams] = useSearchParams();

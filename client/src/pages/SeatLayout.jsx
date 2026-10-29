@@ -3,8 +3,7 @@ import { useParams, useNavigate, useLocation, useSearchParams } from "react-rout
 import { ShieldCheck, Ticket, CheckCircle2, ArrowLeft, CreditCard, Mail, Sparkles, Share2, Wallet, FlaskConical, Phone, Lock, Zap, MapPin } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useUser } from "@clerk/clerk-react";
-
-const API_BASE_URL = "http://localhost:8000/api";
+import { API_BASE_URL } from "../config";
 
 const SeatLayout = () => {
   const [searchParams] = useSearchParams();

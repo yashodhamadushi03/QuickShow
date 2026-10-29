@@ -17,8 +17,7 @@ import { Link } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import { FALLBACK_POSTER } from "../assets/assets";
 import ProfileModal from "../components/ProfileModal";
-
-const API_BASE_URL = "http://localhost:8000/api";
+import { API_BASE_URL } from "../config";
 
 const MyBookings = () => {
   const [bookings, setBookings] = useState([]);

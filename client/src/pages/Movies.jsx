@@ -4,8 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import BlurCircle from "../components/BlurCircle";
 
 import { FALLBACK_POSTER } from "../assets/assets";
-
-const API_BASE_URL = "http://localhost:8000/api";
+import { API_BASE_URL } from "../config";
 
 const Movies = () => {
   const [searchParams, setSearchParams] = useSearchParams();

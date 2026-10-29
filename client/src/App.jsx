@@ -22,6 +22,7 @@ import OnboardingModal from './components/OnboardingModal';
 
 import { Toaster, toast } from 'react-hot-toast';
 import Footer from './components/Footer';
+import { API_BASE_URL } from './config';
 
 const App = () => {
   const location = useLocation();
@@ -93,7 +94,7 @@ const App = () => {
 
     const syncKey = `synced_${user.id}_${user.updatedAt ? new Date(user.updatedAt).getTime() : ''}`;
     if (!sessionStorage.getItem(syncKey)) {
-      fetch('http://localhost:8000/api/auth/sync-user', {
+      fetch(`${API_BASE_URL}/auth/sync-user`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -116,7 +117,7 @@ const App = () => {
     const completedKey = `profile_completed_${user.id}`;
     if (sessionStorage.getItem(completedKey) === 'true') return;
 
-    fetch(`http://localhost:8000/api/users/status?email=${encodeURIComponent(email)}`)
+    fetch(`${API_BASE_URL}/users/status?email=${encodeURIComponent(email)}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) {

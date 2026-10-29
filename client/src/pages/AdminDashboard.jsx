@@ -29,8 +29,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import MovieManagement from "../components/MovieManagement";
-
-const API_BASE_URL = "http://localhost:8000/api";
+import { API_BASE_URL } from "../config";
 
 // Precise 12-hour AM/PM and Sri Lankan cinema slot formatter immune to timezone skews
 export const formatShowtimeSlot = (timeVal) => {

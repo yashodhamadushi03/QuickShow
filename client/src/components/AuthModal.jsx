@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ShieldCheck, User, X, Lock, ArrowRight } from "lucide-react";
 import { useClerk } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
-
-const API_BASE_URL = "http://localhost:8000/api";
+import { API_BASE_URL } from "../config";
 
 const AuthModal = ({ isOpen, onClose }) => {
   const [activeRole, setActiveRole] = useState("customer"); // 'customer' | 'admin'

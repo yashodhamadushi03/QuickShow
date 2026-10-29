@@ -4,6 +4,13 @@ from app.core.config import settings
 from app.core.database import Base, engine
 from app.api import auth, movies, showtimes, theaters, bookings, admin, fb_orders, favourites, users
 
+import sys
+import os
+
+server_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if server_dir not in sys.path:
+    sys.path.insert(0, server_dir)
+
 # Automatically inspect, create missing tables/columns, and sync schema without data loss
 try:
     from sync_database import sync_database

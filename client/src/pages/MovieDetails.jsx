@@ -10,6 +10,7 @@ import MovieCard from '../components/MovieCard';
 import toast from 'react-hot-toast';
 import { useUser } from '@clerk/clerk-react';
 import { isMovieFavourite, toggleFavourite } from '../lib/favourites';
+import { API_BASE_URL } from '../config';
 
 const MovieDetails = () => {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const MovieDetails = () => {
   const [isFav, setIsFav] = useState(false);
 
   useEffect(() => {
-    fetch(`http://localhost:8000/api/theaters`)
+    fetch(`${API_BASE_URL}/theaters`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) setTheaters(data);
@@ -45,7 +46,7 @@ const MovieDetails = () => {
     // 2. If not in dummy data, try fetching from backend API
     if (!movie) {
       try {
-        const res = await fetch(`http://localhost:8000/api/movies/${id}`);
+        const res = await fetch(`${API_BASE_URL}/movies/${id}`);
         if (res.ok) {
           const apiMovie = await res.json();
           movie = {
