@@ -54,29 +54,188 @@ ON DUPLICATE KEY UPDATE
   role = VALUES(role),
   name = VALUES(name);
 
--- 4. Sample Verification Queries for MySQL Workbench Admin Analytics
--- Aggregate Customer Spend and Booking Count in Sri Lankan Rupees (LKR)
-SELECT 
-    u.user_id,
-    u.name AS customer_name,
-    u.email AS customer_email,
-    u.role,
-    COUNT(b.booking_id) AS total_bookings,
-    COALESCE(SUM(b.total_amount), 0.00) AS total_spent_lkr
-FROM users u
-LEFT JOIN bookings b ON u.user_id = b.user_id
-GROUP BY u.user_id, u.name, u.email, u.role
-ORDER BY total_spent_lkr DESC;
+-- ====================================================================
+-- 4. Database Views for MySQL Workbench Schemas Panel
+-- ====================================================================
 
--- Real-Time Branch Revenue & Occupancy Fill Rates
+-- View 1: Active & Recent Bookings with complete relational details
+CREATE OR REPLACE VIEW `vw_active_bookings` AS
 SELECT 
+    b.booking_id,
+    b.created_at AS booking_date,
+    b.user_id,
+    COALESCE(u.name, b.customer_name, 'Valued Customer') AS customer_name,
+    COALESCE(b.customer_email, u.email) AS customer_email,
+    COALESCE(b.customer_phone, u.phone, 'N/A') AS customer_phone,
+    b.status AS booking_status,
+    m.movie_id,
+    m.title AS movie_title,
+    m.genre AS movie_genre,
+    t.theater_id,
     t.name AS theater_name,
-    COUNT(DISTINCT b.booking_id) AS total_reservations,
-    COALESCE(SUM(b.total_amount), 0.00) AS revenue_lkr
-FROM theaters t
-JOIN halls h ON t.theater_id = h.theater_id
-JOIN showtimes st ON h.hall_id = st.hall_id
-JOIN bookings b ON st.showtime_id = b.showtime_id
-WHERE b.status = 'CONFIRMED'
-GROUP BY t.theater_id, t.name
-ORDER BY revenue_lkr DESC;
+    t.city AS theater_city,
+    h.hall_id,
+    h.hall_name,
+    st.showtime_id,
+    st.start_time AS showtime_start,
+    st.end_time AS showtime_end,
+    b.total_amount,
+    COALESCE(p.payment_method, 'Credit / Debit Card') AS payment_method,
+    COALESCE(p.status, 'Pending') AS payment_status,
+    COALESCE(p.transaction_reference, 'N/A') AS transaction_reference,
+    p.is_sandbox
+FROM bookings b
+JOIN users u ON b.user_id = u.user_id
+JOIN showtimes st ON b.showtime_id = st.showtime_id
+JOIN movies m ON st.movie_id = m.movie_id
+JOIN halls h ON st.hall_id = h.hall_id
+JOIN theaters t ON h.theater_id = t.theater_id
+LEFT JOIN payments p ON b.booking_id = p.booking_id;
+
+-- View 2: Aggregated Movie Box Office & Ticket Analytics
+CREATE OR REPLACE VIEW `vw_movie_analytics` AS
+SELECT 
+    m.movie_id,
+    m.title AS movie_title,
+    m.genre,
+    m.language,
+    m.status AS movie_status,
+    m.rating,
+    COUNT(DISTINCT st.showtime_id) AS total_showtimes,
+    COUNT(DISTINCT b.booking_id) AS total_bookings,
+    COUNT(DISTINCT bs.booking_seat_id) AS total_tickets_sold,
+    COALESCE(SUM(CASE WHEN b.status = 'Confirmed' THEN b.total_amount ELSE 0 END), 0.00) AS total_revenue_lkr,
+    COALESCE(AVG(CASE WHEN b.status = 'Confirmed' THEN b.total_amount ELSE NULL END), 0.00) AS avg_booking_value_lkr
+FROM movies m
+LEFT JOIN showtimes st ON m.movie_id = st.movie_id
+LEFT JOIN bookings b ON st.showtime_id = b.showtime_id
+LEFT JOIN booking_seats bs ON b.booking_id = bs.booking_id AND b.status = 'Confirmed'
+GROUP BY 
+    m.movie_id,
+    m.title,
+    m.genre,
+    m.language,
+    m.status,
+    m.rating;
+
+-- ====================================================================
+-- 5. Stored Procedures & Functions for MySQL Workbench
+-- ====================================================================
+
+-- Procedure 1: sp_get_user_bookings
+DROP PROCEDURE IF EXISTS `sp_get_user_bookings`;
+DELIMITER $$
+CREATE PROCEDURE `sp_get_user_bookings`(IN p_user_id INT)
+BEGIN
+    SELECT 
+        b.booking_id,
+        b.created_at AS booking_date,
+        b.status AS booking_status,
+        b.total_amount,
+        COALESCE(u.name, b.customer_name) AS customer_name,
+        COALESCE(b.customer_email, u.email) AS customer_email,
+        m.title AS movie_title,
+        m.poster_url,
+        t.name AS theater_name,
+        t.city AS theater_city,
+        h.hall_name,
+        st.start_time AS showtime,
+        GROUP_CONCAT(CONCAT(s.row_label, s.seat_number) ORDER BY s.row_label, s.seat_number SEPARATOR ', ') AS reserved_seats,
+        COUNT(bs.seat_id) AS total_seats,
+        COALESCE(p.transaction_reference, 'N/A') AS transaction_reference,
+        COALESCE(p.payment_method, 'Credit / Debit Card') AS payment_method,
+        COALESCE(p.status, 'Pending') AS payment_status,
+        p.is_sandbox
+    FROM bookings b
+    JOIN users u ON b.user_id = u.user_id
+    JOIN showtimes st ON b.showtime_id = st.showtime_id
+    JOIN movies m ON st.movie_id = m.movie_id
+    JOIN halls h ON st.hall_id = h.hall_id
+    JOIN theaters t ON h.theater_id = t.theater_id
+    LEFT JOIN booking_seats bs ON b.booking_id = bs.booking_id
+    LEFT JOIN seats s ON bs.seat_id = s.seat_id
+    LEFT JOIN payments p ON b.booking_id = p.booking_id
+    WHERE b.user_id = p_user_id
+    GROUP BY 
+        b.booking_id,
+        b.created_at,
+        b.status,
+        b.total_amount,
+        u.name,
+        b.customer_name,
+        b.customer_email,
+        u.email,
+        m.title,
+        m.poster_url,
+        t.name,
+        t.city,
+        h.hall_name,
+        st.start_time,
+        p.transaction_reference,
+        p.payment_method,
+        p.status,
+        p.is_sandbox
+    ORDER BY b.created_at DESC;
+END$$
+DELIMITER ;
+
+-- Procedure 2: sp_get_theater_showtimes
+DROP PROCEDURE IF EXISTS `sp_get_theater_showtimes`;
+DELIMITER $$
+CREATE PROCEDURE `sp_get_theater_showtimes`(IN p_theater_id INT)
+BEGIN
+    SELECT 
+        st.showtime_id,
+        st.start_time,
+        st.end_time,
+        st.base_price,
+        m.movie_id,
+        m.title AS movie_title,
+        m.genre,
+        m.duration_min,
+        m.language,
+        m.rating,
+        m.poster_url,
+        h.hall_id,
+        h.hall_name,
+        h.total_capacity,
+        t.theater_id,
+        t.name AS theater_name,
+        t.city AS theater_city
+    FROM showtimes st
+    JOIN movies m ON st.movie_id = m.movie_id
+    JOIN halls h ON st.hall_id = h.hall_id
+    JOIN theaters t ON h.theater_id = t.theater_id
+    WHERE t.theater_id = p_theater_id
+    ORDER BY st.start_time ASC;
+END$$
+DELIMITER ;
+
+-- Function 1: fn_calculate_user_spend
+DROP FUNCTION IF EXISTS `fn_calculate_user_spend`;
+DELIMITER $$
+CREATE FUNCTION `fn_calculate_user_spend`(p_user_id INT) 
+RETURNS DECIMAL(10,2)
+READS SQL DATA
+DETERMINISTIC
+BEGIN
+    DECLARE total_spend DECIMAL(10,2) DEFAULT 0.00;
+    
+    SELECT COALESCE(SUM(total_amount), 0.00)
+    INTO total_spend
+    FROM bookings
+    WHERE user_id = p_user_id 
+      AND status = 'Confirmed';
+      
+    RETURN total_spend;
+END$$
+DELIMITER ;
+
+-- ====================================================================
+-- 6. Verification Queries for MySQL Workbench Admin Analytics
+-- ====================================================================
+SELECT * FROM vw_active_bookings LIMIT 10;
+SELECT * FROM vw_movie_analytics;
+CALL sp_get_user_bookings(7);
+CALL sp_get_theater_showtimes(1);
+SELECT fn_calculate_user_spend(7) AS total_user_spent_lkr;
