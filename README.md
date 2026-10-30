@@ -8,11 +8,23 @@
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
+> [!IMPORTANT]
+> ### 🚀 Live Web Application: [https://quickshow-frontend-kappa.vercel.app](https://quickshow-frontend-kappa.vercel.app)
+> **Direct 1-Click Access**: Anyone (lecturers, evaluators, and users) can immediately test the live application without setup.
+
 QuickShow LK is a feature-complete, cloud-native cinema management, ticket reservation, and smart multiplex platform built specifically for the Sri Lankan theater ecosystem. It combines dynamic scheduling, concurrency-safe seat booking with database transactions, automated entrance ticket dispatches, an interactive seat selection matrix, and an islandwide multiplex network.
 
 ---
 
 ## 🌐 Live Production Deployments
+
+> ### 🌟 **Primary Live Application Showcase**
+> **Click below to open the fully deployed QuickShow platform in your browser:**
+> 
+> ### 👉 **[https://quickshow-frontend-kappa.vercel.app](https://quickshow-frontend-kappa.vercel.app)** 👈
+> 
+> [![View Live QuickShow Application](https://img.shields.io/badge/%F0%9F%9A%80%20View%20Live%20QuickShow%20Application-Visit%20Platform-E50914?style=for-the-badge&logo=vercel&logoColor=white)](https://quickshow-frontend-kappa.vercel.app)
+> [![Interactive API Swagger Docs](https://img.shields.io/badge/%F0%9F%93%96%20Interactive%20API%20Documentation-Swagger%20UI-005571?style=for-the-badge&logo=fastapi&logoColor=white)](https://quickshow-backend-plum.vercel.app/docs)
 
 Both the Frontend and Backend applications are live in production on **Vercel**, backed by a high-availability **TiDB Cloud Serverless MySQL** database cluster:
 
