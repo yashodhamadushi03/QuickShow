@@ -9,8 +9,8 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
 > [!IMPORTANT]
-> ### 🚀 Live Web Application: [https://quickshow-frontend-kappa.vercel.app](https://quickshow-frontend-kappa.vercel.app)
-> **Direct 1-Click Access**: Anyone (lecturers, evaluators, and users) can immediately test the live application without setup.
+> ### 🚀 Live Application: [https://quickshow-frontend-kappa.vercel.app](https://quickshow-frontend-kappa.vercel.app)
+> Access the live cinema booking platform, interactive seat reservation system, and admin dashboard.
 
 QuickShow LK is a feature-complete, cloud-native cinema management, ticket reservation, and smart multiplex platform built specifically for the Sri Lankan theater ecosystem. It combines dynamic scheduling, concurrency-safe seat booking with database transactions, automated entrance ticket dispatches, an interactive seat selection matrix, and an islandwide multiplex network.
 
@@ -18,8 +18,8 @@ QuickShow LK is a feature-complete, cloud-native cinema management, ticket reser
 
 ## 🌐 Live Production Deployments
 
-> ### 🌟 **Primary Live Application Showcase**
-> **Click below to open the fully deployed QuickShow platform in your browser:**
+> ### 🌟 **Live Platform Access**
+> **Experience the live QuickShow application and admin portal:**
 > 
 > ### 👉 **[https://quickshow-frontend-kappa.vercel.app](https://quickshow-frontend-kappa.vercel.app)** 👈
 > 
