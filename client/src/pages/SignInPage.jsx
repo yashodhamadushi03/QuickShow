@@ -25,9 +25,9 @@ const SignInPage = () => {
 
   useEffect(() => {
     if (isLoaded && isSignedIn && activeTab === "customer") {
-      navigate("/complete-profile", { replace: true, state: location.state });
+      navigate(returnUrl, { replace: true, state: location.state });
     }
-  }, [isLoaded, isSignedIn, activeTab, navigate, location.state]);
+  }, [isLoaded, isSignedIn, activeTab, navigate, location.state, returnUrl]);
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
@@ -165,8 +165,8 @@ const SignInPage = () => {
               routing="path"
               path="/sign-in"
               signUpUrl="/sign-up"
-              fallbackRedirectUrl="/complete-profile"
-              forceRedirectUrl="/complete-profile"
+              fallbackRedirectUrl={returnUrl}
+              forceRedirectUrl={returnUrl}
 
               appearance={{
                 elements: {

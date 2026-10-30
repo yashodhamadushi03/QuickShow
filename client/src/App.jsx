@@ -119,8 +119,6 @@ const App = () => {
             if (data.phone) {
               localStorage.setItem('customer_phone', data.phone);
             }
-          } else if (data.needs_onboarding) {
-            setShowOnboardingModal(true);
           }
         }
       })
