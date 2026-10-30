@@ -1,132 +1,82 @@
-# QuickShow Backend API 🎬🎟️
+# 🎬 QuickShow Backend API — FastAPI & TiDB Cloud
 
-A robust, production-ready Python backend for **QuickShow**, an online cinema management and ticket reservation platform. Built with **FastAPI**, **SQLAlchemy ORM**, **PyMySQL**, **Alembic**, and **MySQL Database**.
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live_API-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://quickshow-backend-plum.vercel.app/docs)
+[![TiDB Cloud](https://img.shields.io/badge/TiDB_Cloud-MySQL_Serverless-E60000?style=for-the-badge&logo=mysql&logoColor=white)](https://tidbcloud.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white)](https://www.sqlalchemy.org/)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
----
-
-## 🛠️ Features & Highlights
-
-- **FastAPI Framework**: Asynchronous, high-performance RESTful API endpoints with auto-generated OpenAPI (`/docs`) documentation.
-- **MySQL Database Integration**: Designed and compatible with **MySQL Workbench**.
-- **Concurrency-Safe Ticket Booking**:
-  - Uses MySQL database transactions and `SELECT ... FOR UPDATE` pessimistic locking.
-  - Enforces a composite unique index `(showtime_id, seat_id)` in MySQL to strictly prevent double-booking race conditions.
-- **Role-Based JWT Authentication**: Secure Customer vs. Cinema Admin access control with bcrypt password hashing.
-- **Automated Ticket Dispatch**:
-  - **HTML Email Ticket**: Dispatches a styled HTML entrance pass upon successful payment using SMTP.
-  - **SMS Ticket Passcode**: Dispatches a text message with entry reference code via Twilio API gateway.
-- **Alembic Migrations**: Fully managed schema versioning.
+Production RESTful backend API for **QuickShow**, deployed as a serverless application on **Vercel** and powered by a distributed **TiDB Cloud Serverless MySQL** database cluster.
 
 ---
 
-## 📁 Project Structure
+## 🌐 Live Production Endpoints
 
-```
-server/
-├── app/
-│   ├── api/             # FastAPI Route Controllers
-│   │   ├── admin.py     # Admin Movie, Theater, Hall & Showtime endpoints
-│   │   ├── auth.py      # Registration, JWT Login, User Profile
-│   │   ├── bookings.py  # Concurrency-Safe Seat Reservations & Payments
-│   │   ├── deps.py      # Authentication & Role Authorization Dependencies
-│   │   ├── movies.py    # Public Movie & Showtime Listings
-│   │   ├── showtimes.py # Showtime Seat Grid & Status Layout
-│   │   └── theaters.py  # Cinema Theaters & Halls Endpoints
-│   ├── core/            # Configuration, Security, DB Engine
-│   │   ├── config.py    # Settings using pydantic-settings
-│   │   ├── database.py  # SQLAlchemy engine & SessionLocal
-│   │   └── security.py  # Bcrypt & JWT management
-│   ├── models/          # SQLAlchemy Relational Models
-│   │   ├── booking.py   # Booking & BookingSeat (Composite Unique Constraint)
-│   │   ├── movie.py     # Movie Model (Now Showing vs Coming Soon)
-│   │   ├── payment.py   # Payment Transaction Records
-│   │   ├── showtime.py  # Movie Showtimes
-│   │   ├── theater.py   # Theater, Hall & Seat Grid Models
-│   │   └── user.py      # Customer & Admin User Accounts
-│   ├── schemas/         # Pydantic Request/Response Models
-│   ├── services/
-│   │   └── notification.py # Automated HTML Email & SMS Dispatch
-│   ├── seed.py          # Database Seeder Script
-│   └── main.py          # FastAPI Application Entrypoint
-├── alembic/             # Database Migration Scripts
-├── alembic.ini          # Alembic Configuration
-├── quickshow_db.sql     # MySQL Workbench Ready SQL Schema
-├── requirements.txt     # Python Dependencies
-├── .env.example         # Environment Template
-└── README.md            # Setup Documentation
-```
+- **Live Base URL:** **[https://quickshow-backend-plum.vercel.app](https://quickshow-backend-plum.vercel.app)**
+- **Interactive Swagger Documentation:** **[https://quickshow-backend-plum.vercel.app/docs](https://quickshow-backend-plum.vercel.app/docs)**
+- **ReDoc API Documentation:** **[https://quickshow-backend-plum.vercel.app/redoc](https://quickshow-backend-plum.vercel.app/redoc)**
+- **OpenAPI Schema:** `https://quickshow-backend-plum.vercel.app/api/openapi.json`
 
 ---
 
-## 🚀 Quick Setup Guide
+## 🛠️ Features & Architecture
 
-### 1. Prerequisites
-- Python 3.10+
-- MySQL Server (v8.0+) & MySQL Workbench
+- **Serverless FastAPI**: Optimized for low-latency serverless execution on Vercel's Fluid compute platform.
+- **TiDB Cloud MySQL**: Distributed, serverless MySQL 8.0-compatible database located in AWS Singapore (`ap-southeast-1`), with automated TLS/SSL verification.
+- **Connection Resilience**: SQLAlchemy engine configured with `pool_pre_ping=True` and `pool_recycle=300` to prevent socket timeouts across cloud gateways.
+- **Concurrency-Safe Bookings**: Pessimistic database locking (`SELECT ... FOR UPDATE`) and composite unique constraints (`uq_showtime_seat`) preventing double bookings.
+- **Database Views**:
+  - `vw_active_bookings`: Consolidated view joining bookings, customers, showtimes, movies, and theaters.
+  - `vw_movie_analytics`: Live box office aggregations per movie (total tickets, revenue in LKR, average booking value).
 
-### 2. Configure MySQL Database in MySQL Workbench
-1. Open **MySQL Workbench** and connect to your MySQL Server.
-2. Open the included file [`quickshow_db.sql`](file:///c:/Users/yashodha/Desktop/CAMPUS/My%20Creations/QuickShow/server/quickshow_db.sql).
-3. Execute the script (⚡ icon) to create the `quickshow_db` schema, tables, foreign keys, and composite unique indexes.
+---
 
-Alternatively, create the database in MySQL shell:
-```sql
-CREATE DATABASE quickshow_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
+## ⚙️ Environment Variables
 
-### 3. Setup Virtual Environment & Dependencies
-In terminal inside `server/` directory:
-```bash
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-# Mac/Linux:
-source venv/bin/activate
+Configure these in `server/.env` (or in Vercel project environment variables):
 
-pip install -r requirements.txt
-```
+```env
+# TiDB Cloud MySQL Connection URL
+DATABASE_URL=mysql+pymysql://6xAdRhFkJrPN6Ad.root:FvL1SHud1J7yEI96@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/quickshowDB?ssl_verify_cert=true&ssl_verify_identity=true
 
-### 4. Configure Environment Variables
-Copy `.env.example` to `.env` and set your MySQL credentials:
-```ini
-MYSQL_USER="root"
-MYSQL_PASSWORD="your_mysql_password"
-MYSQL_DB="quickshow_db"
-DATABASE_URL="mysql+pymysql://root:your_mysql_password@localhost:3306/quickshow_db"
+# Security Key for JWT Authentication
+SECRET_KEY=quickshow_jwt_secret_key_production_ready_2026_super_secure
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
 
-# Optional Email (SMTP) & SMS (Twilio) Notifications
-SMTP_HOST="smtp.gmail.com"
+# SMTP Email Configuration
+SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER="your_email@gmail.com"
-SMTP_PASSWORD="your_app_password"
-
-TWILIO_ACCOUNT_SID="your_twilio_sid"
-TWILIO_AUTH_TOKEN="your_twilio_auth_token"
-TWILIO_PHONE_NUMBER="+15550001111"
+SMTP_USER=yashodhamadushi03@gmail.com
+SMTP_PASSWORD=xqmgnjpgamwrcpxv
+EMAILS_FROM=yashodhamadushi03@gmail.com
 ```
 
-### 5. Seed Sample Data
-Run the included seeder to populate sample movies, theaters, halls, seats grid (A-E x 10), showtimes, and admin/customer accounts:
-```bash
-python -m app.seed
-```
+---
 
-Default Login Accounts created by Seeder:
-- **Cinema Admin**: `admin@quickshow.com` | Password: `admin123`
-- **Customer**: `user@quickshow.com` | Password: `user123`
+## 💻 Local Development & Database Sync
 
-### 6. Run FastAPI Server
-Start Uvicorn server:
 ```bash
+# 1. Create and activate virtual environment
+python -m venv venv
+.\venv\Scripts\activate   # Windows
+source venv/bin/activate  # macOS / Linux
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Synchronize database schema and inspect tables
+python sync_database.py
+
+# 4. Start local development server
 uvicorn app.main:app --reload --port 8000
 ```
 
-Access the API Documentation:
-- **Interactive Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **ReDoc UI**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
-
 ---
 
-## 🧪 Testing Concurrency Protection
+## ☁️ Vercel Deployment Settings
 
-Try sending two concurrent `POST /api/bookings` requests for the exact same `seat_ids` and `showtime_id`. The database transaction locks the requested seats and enforces `uq_showtime_seat` composite unique constraint. One request will succeed (`201 Created`), while the second request will immediately abort and return `400 Bad Request` with message: *"Seat reservation failed: Seats are already booked or locked by another transaction."*
+- **Application Preset**: `FastAPI`
+- **Root Directory**: `server`
+- **Entrypoint**: `main.py` (auto-detected)
+- **Dependencies**: `requirements.txt` (auto-installed)
