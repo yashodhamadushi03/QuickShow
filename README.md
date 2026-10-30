@@ -1,6 +1,6 @@
 # 🎬 QuickShow LK — Advanced Online Cinema Management & Ticket Reservation Platform
 
-[![Vercel Frontend](https://img.shields.io/badge/Vercel-Frontend_Live-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://quickshow-frontend.vercel.app)
+[![Vercel Frontend](https://img.shields.io/badge/Vercel-Frontend_Live-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://quickshow-frontend-kappa.vercel.app)
 [![Vercel Backend](https://img.shields.io/badge/Vercel-Backend_API-000000?style=for-the-badge&logo=fastapi&logoColor=white)](https://quickshow-backend-plum.vercel.app/docs)
 [![TiDB Cloud](https://img.shields.io/badge/TiDB_Cloud-MySQL_Serverless-E60000?style=for-the-badge&logo=mysql&logoColor=white)](https://tidbcloud.com)
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -18,7 +18,7 @@ Both the Frontend and Backend applications are live in production on **Vercel**,
 
 | Component | Platform | Live URL / Endpoint | Status |
 | :--- | :--- | :--- | :--- |
-| **Frontend Application** | Vercel Edge Network | **[https://quickshow-frontend.vercel.app](https://quickshow-frontend.vercel.app)** | ![Active](https://img.shields.io/badge/Status-Live-brightgreen) |
+| **Frontend Application** | Vercel Edge Network | **[https://quickshow-frontend-kappa.vercel.app](https://quickshow-frontend-kappa.vercel.app)** | ![Active](https://img.shields.io/badge/Status-Live-brightgreen) |
 | **Backend REST API** | Vercel Serverless Functions | **[https://quickshow-backend-plum.vercel.app](https://quickshow-backend-plum.vercel.app)** | ![Active](https://img.shields.io/badge/Status-Live-brightgreen) |
 | **Interactive API Docs (Swagger)** | FastAPI OpenAPI | **[https://quickshow-backend-plum.vercel.app/docs](https://quickshow-backend-plum.vercel.app/docs)** | ![Active](https://img.shields.io/badge/Docs-Swagger_UI-blue) |
 | **Alternative API Docs (ReDoc)** | FastAPI ReDoc | **[https://quickshow-backend-plum.vercel.app/redoc](https://quickshow-backend-plum.vercel.app/redoc)** | ![Active](https://img.shields.io/badge/Docs-ReDoc-purple) |
@@ -144,7 +144,7 @@ QuickShow/
 4. Configure Environment Variables:
    - `VITE_API_BASE_URL`: `https://quickshow-backend-plum.vercel.app/api`
    - `VITE_CLERK_PUBLISHABLE_KEY`: *(Your Clerk key from `client/.env`)*
-5. Click **Deploy**. The frontend goes live at `https://quickshow-frontend.vercel.app`.
+5. Click **Deploy**. The frontend goes live at `https://quickshow-frontend-kappa.vercel.app`.
 
 ---
 

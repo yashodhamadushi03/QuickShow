@@ -1,6 +1,6 @@
 # 🎬 QuickShow Frontend — React & Vite Application
 
-[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live_Frontend-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://quickshow-frontend.vercel.app)
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live_Frontend-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://quickshow-frontend-kappa.vercel.app)
 [![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-Build_Tool-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
@@ -11,7 +11,7 @@ The official frontend application for the **QuickShow** cinema management and ti
 
 ## 🌐 Live Production Application
 
-- **Live Frontend URL:** **[https://quickshow-frontend.vercel.app](https://quickshow-frontend.vercel.app)**
+- **Live Frontend URL:** **[https://quickshow-frontend-kappa.vercel.app](https://quickshow-frontend-kappa.vercel.app)**
 - **Connected Backend API:** **[https://quickshow-backend-plum.vercel.app/api](https://quickshow-backend-plum.vercel.app/api)**
 
 ---
