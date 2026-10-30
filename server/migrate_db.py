@@ -3,13 +3,16 @@ from app.core.config import settings
 
 def run_migration():
     print(f"Connecting to MySQL server: {settings.MYSQL_SERVER}:{settings.MYSQL_PORT}, database: {settings.MYSQL_DB}...")
-    conn = pymysql.connect(
-        host=settings.MYSQL_SERVER,
-        port=settings.MYSQL_PORT,
-        user=settings.MYSQL_USER,
-        password=settings.MYSQL_PASSWORD,
-        database=settings.MYSQL_DB
-    )
+    connect_kwargs = {
+        "host": settings.MYSQL_SERVER,
+        "port": settings.MYSQL_PORT,
+        "user": settings.MYSQL_USER,
+        "password": settings.MYSQL_PASSWORD,
+        "database": settings.MYSQL_DB
+    }
+    if "tidbcloud.com" in settings.MYSQL_SERVER:
+        connect_kwargs["ssl"] = {"check_hostname": False}
+    conn = pymysql.connect(**connect_kwargs)
     cur = conn.cursor(pymysql.cursors.DictCursor)
 
     try:

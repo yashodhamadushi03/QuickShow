@@ -128,8 +128,21 @@ def sync_database():
                     print(f"  [OK] User-isolation index `{idx_name}` on `{tbl}` is active.")
             except Exception as ex:
                 print(f"  [NOTE] {tbl} index {idx_name}: {ex}")
-        print("\n[Step 5] Checking Seed Data for F&B Concessions...")
+        print("\n[Step 5] Checking Seed Data for Core Tables & Concessions...")
         try:
+            user_count = conn.execute(text("SELECT COUNT(*) AS cnt FROM `users`;")).scalar()
+            if user_count == 0:
+                conn.execute(text("""
+                INSERT INTO `users` (`user_id`, `name`, `email`, `password_hash`, `phone`, `role`, `created_at`)
+                VALUES 
+                    (1, 'System Administrator', 'admin@quickshow.lk', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeg6Lruj3vjPGga31lW', '+94771234567', 'admin', NOW()),
+                    (2, 'Colombo City Manager', 'manager@quickshow.lk', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeg6Lruj3vjPGga31lW', '+94112083000', 'theater_manager', NOW()),
+                    (3, 'Kasun Perera', 'user@quickshow.lk', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeg6Lruj3vjPGga31lW', '+94719876543', 'customer', NOW())
+                ON DUPLICATE KEY UPDATE name = VALUES(name), role = VALUES(role);
+                """))
+                conn.commit()
+                print("  [SEEDED] Initial users populated.")
+
             fb_count = conn.execute(text("SELECT COUNT(*) AS cnt FROM `f_b_orders`;")).scalar()
             if fb_count == 0:
                 print("  -> Seeding default cinema concessions into `f_b_orders`...")
@@ -155,7 +168,8 @@ def sync_database():
             else:
                 print(f"  [OK] `f_b_orders` has {fb_count} existing records.")
         except Exception as ex:
-            print(f"  [NOTE] F&B seed check: {ex}")
+            print(f"  [NOTE] Seed check: {ex}")
+
         print("\n[Step 6] Synchronizing Views, Stored Procedures & Functions...")
         try:
             conn.execute(text("""
@@ -220,6 +234,10 @@ def sync_database():
             """))
             conn.commit()
             print("  [OK] Views `vw_active_bookings` and `vw_movie_analytics` synchronized.")
+        except Exception as ex:
+            print(f"  [NOTE] Views sync warning: {ex}")
+
+        try:
             conn.execute(text("DROP PROCEDURE IF EXISTS `sp_get_user_bookings`;"))
             conn.execute(text("""
             CREATE PROCEDURE `sp_get_user_bookings`(IN p_user_id INT)
@@ -307,6 +325,10 @@ def sync_database():
             """))
             conn.commit()
             print("  [OK] Stored Procedures `sp_get_user_bookings` and `sp_get_theater_showtimes` synchronized.")
+        except Exception as ex:
+            print(f"  [NOTE] Stored Procedures skipped (unsupported on this engine): {ex}")
+
+        try:
             conn.execute(text("DROP FUNCTION IF EXISTS `fn_calculate_user_spend`;"))
             conn.execute(text("""
             CREATE FUNCTION `fn_calculate_user_spend`(p_user_id INT) 
@@ -328,7 +350,7 @@ def sync_database():
             conn.commit()
             print("  [OK] Stored Function `fn_calculate_user_spend` synchronized.")
         except Exception as ex:
-            print(f"  [NOTE] Routines sync warning: {ex}")
+            print(f"  [NOTE] Stored Functions skipped (unsupported on this engine): {ex}")
         print("\n[Step 7] Final Database Verification Summary:")
         all_tables = [list(r.values())[0] for r in conn.execute(text("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE';")).mappings()]
         for t in sorted(all_tables):

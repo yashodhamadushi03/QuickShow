@@ -21,7 +21,13 @@ dist
 *.log
 logs
 
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+
 # OS / Editor
 .DS_Store
 .vscode
 .idea
+
