@@ -10,14 +10,15 @@ import os
 server_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if server_dir not in sys.path:
     sys.path.insert(0, server_dir)
-try:
-    from sync_database import sync_database
-    sync_database()
-except Exception as e:
+if not os.environ.get("VERCEL"):
     try:
-        Base.metadata.create_all(bind=engine)
-    except Exception as inner_e:
-        print(f"[Warning] Auto table creation skipped: {inner_e}")
+        from sync_database import sync_database
+        sync_database()
+    except Exception as e:
+        try:
+            Base.metadata.create_all(bind=engine)
+        except Exception as inner_e:
+            print(f"[Warning] Auto table creation skipped: {inner_e}")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
