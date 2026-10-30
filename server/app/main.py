@@ -32,6 +32,7 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://quickshow-frontend.vercel.app",
+    "https://quickshow-frontend-kappa.vercel.app",
     "https://quickshow-frontend-plum.vercel.app",
     "https://quickshow.vercel.app",
 ]
