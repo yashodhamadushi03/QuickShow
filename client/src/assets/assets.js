@@ -67,8 +67,8 @@ export const SL_SHOWTIME_SLOTS = [
 
 export const dummyShowsData = [
     {
-        "_id": "324544",
-        "id": 324544,
+        "_id": "1",
+        "id": 1,
         "title": "Avatar: The Way of Water",
         "overview": "Jake Sully lives with his newfound family formed on the extrasolar moon Pandora. Once a familiar threat returns, Jake must work with Neytiri to protect their land.",
         "poster_path": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800",
@@ -86,8 +86,8 @@ export const dummyShowsData = [
         "runtime": 192,
     },
     {
-        "_id": "1232546",
-        "id": 1232546,
+        "_id": "2",
+        "id": 2,
         "title": "Dune: Part Two",
         "overview": "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.",
         "poster_path": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800",
@@ -105,8 +105,8 @@ export const dummyShowsData = [
         "runtime": 166,
     },
     {
-        "_id": "552524",
-        "id": 552524,
+        "_id": "3",
+        "id": 3,
         "title": "Kandak Sema",
         "overview": "A poignant Sri Lankan cinema masterpiece depicting cross-cultural romance, resilience, and personal triumph across majestic rural tea plantations.",
         "poster_path": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800",
@@ -124,8 +124,8 @@ export const dummyShowsData = [
         "runtime": 135,
     },
     {
-        "_id": "668489",
-        "id": 668489,
+        "_id": "4",
+        "id": 4,
         "title": "The Greatest Of All Time (GOAT)",
         "overview": "An action-packed Tamil sci-fi espionage thriller featuring Thalapathy Vijay in high-octane suspense and double agent intrigue across international borders.",
         "poster_path": "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800",

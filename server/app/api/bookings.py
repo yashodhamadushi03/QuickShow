@@ -59,10 +59,11 @@ def create_booking(
 ):
     """
     Create a new booking, reserve requested seats, and trigger ticket confirmation
-    notification with accurate booking details without race conditions.
+    notification with accurate booking details without race conditions or data mix-ups.
     """
-    if not booking_in.seat_ids:
+    if not booking_in.seat_ids and not booking_in.seat_labels:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="At least one seat must be selected.")
+
     user_obj = None
     if booking_in.customer_email:
         clean_email = str(booking_in.customer_email).strip().lower()
@@ -97,166 +98,91 @@ def create_booking(
         db.add(user_obj)
         db.flush()
 
-    # Eagerly load showtime and related movie/hall/theater
-    st = (
-        db.query(Showtime)
-        .options(
-            joinedload(Showtime.movie),
-            joinedload(Showtime.hall).joinedload(Hall.theater)
-        )
-        .filter(Showtime.showtime_id == booking_in.showtime_id)
-        .first()
-    )
+    # 1. Resolve target movie, hall, and theater IDs explicitly
+    target_movie_id = booking_in.movie_id
+    target_hall_id = booking_in.hall_id
+    target_theater_id = booking_in.theater_id
 
-    if booking_in.hall_id:
-        if st and st.hall_id != booking_in.hall_id:
-            target_movie_id = booking_in.movie_id or st.movie_id
-            matching_st = (
-                db.query(Showtime)
-                .options(
-                    joinedload(Showtime.movie),
-                    joinedload(Showtime.hall).joinedload(Hall.theater)
-                )
-                .filter(
-                    Showtime.hall_id == booking_in.hall_id,
-                    Showtime.movie_id == target_movie_id
-                )
-                .first()
-            )
-            if matching_st:
-                st = matching_st
-            else:
-                hl = db.query(Hall).filter(Hall.hall_id == booking_in.hall_id).first()
-                if hl:
-                    st = Showtime(
-                        movie_id=target_movie_id,
-                        hall_id=hl.hall_id,
-                        start_time=st.start_time if st else get_local_now(),
-                        end_time=st.end_time if st else get_local_now(),
-                        base_price=st.base_price if st else Decimal("1500.00")
-                    )
-                    db.add(st)
-                    db.flush()
+    # If hall_id not given but theater_id given, resolve default hall for theater
+    if not target_hall_id and target_theater_id:
+        hl = db.query(Hall).filter(Hall.theater_id == target_theater_id).first()
+        if hl:
+            target_hall_id = hl.hall_id
 
-    if booking_in.theater_id and st:
-        current_theater_id = st.hall.theater_id if st.hall else None
-        if current_theater_id != booking_in.theater_id:
-            target_movie_id = booking_in.movie_id or st.movie_id
-            theater_st = (
-                db.query(Showtime)
-                .options(
-                    joinedload(Showtime.movie),
-                    joinedload(Showtime.hall).joinedload(Hall.theater)
-                )
-                .join(Hall, Showtime.hall_id == Hall.hall_id)
-                .filter(
-                    Hall.theater_id == booking_in.theater_id,
-                    Showtime.movie_id == target_movie_id
-                )
-                .first()
-            )
-            if theater_st:
-                st = theater_st
-            else:
-                hl = db.query(Hall).filter(Hall.theater_id == booking_in.theater_id).first()
-                if hl:
-                    st = Showtime(
-                        movie_id=target_movie_id,
-                        hall_id=hl.hall_id,
-                        start_time=st.start_time if st else get_local_now(),
-                        end_time=st.end_time if st else get_local_now(),
-                        base_price=st.base_price if st else Decimal("1500.00")
-                    )
-                    db.add(st)
-                    db.flush()
-
-    if not st:
-        query = (
-            db.query(Showtime)
-            .options(
-                joinedload(Showtime.movie),
-                joinedload(Showtime.hall).joinedload(Hall.theater)
-            )
-            .join(Hall, Showtime.hall_id == Hall.hall_id)
-        )
-        if booking_in.theater_id:
-            query = query.filter(Hall.theater_id == booking_in.theater_id)
-        if booking_in.hall_id:
-            query = query.filter(Showtime.hall_id == booking_in.hall_id)
-        if booking_in.movie_id:
-            query = query.filter(Showtime.movie_id == booking_in.movie_id)
-        st = query.first()
-
-    if not st:
+    # 2. Inspect requested showtime_id if provided
+    st = None
+    if booking_in.showtime_id:
         st = (
             db.query(Showtime)
             .options(
                 joinedload(Showtime.movie),
                 joinedload(Showtime.hall).joinedload(Hall.theater)
             )
-            .order_by(Showtime.showtime_id.desc())
+            .filter(Showtime.showtime_id == booking_in.showtime_id)
             .first()
-            or db.query(Showtime)
+        )
+
+    # 3. Check if st accurately matches the target movie, hall, and theater
+    st_matches_movie = (st is not None and (not target_movie_id or st.movie_id == target_movie_id))
+    st_matches_hall = (st is not None and (not target_hall_id or st.hall_id == target_hall_id))
+    st_matches_theater = (
+        st is not None and (
+            not target_theater_id or
+            (st.hall and st.hall.theater_id == target_theater_id)
+        )
+    )
+
+    if not (st and st_matches_movie and st_matches_hall and st_matches_theater):
+        # Look for existing showtime that correctly aligns with movie, hall, and theater
+        q = (
+            db.query(Showtime)
             .options(
                 joinedload(Showtime.movie),
                 joinedload(Showtime.hall).joinedload(Hall.theater)
             )
-            .first()
         )
-    
-    if not st:
-        mv = db.query(Movie).first()
-        hl = db.query(Hall).first()
-        if mv and hl:
+        if target_movie_id:
+            q = q.filter(Showtime.movie_id == target_movie_id)
+        if target_hall_id:
+            q = q.filter(Showtime.hall_id == target_hall_id)
+        elif target_theater_id:
+            q = q.join(Hall, Showtime.hall_id == Hall.hall_id).filter(Hall.theater_id == target_theater_id)
+
+        matching_st = q.first()
+        if matching_st:
+            st = matching_st
+        else:
+            # Create a matching showtime to guarantee foreign key integrity
+            if not target_movie_id:
+                mv = db.query(Movie).first()
+                target_movie_id = mv.movie_id if mv else 1
+            if not target_hall_id:
+                if target_theater_id:
+                    hl = db.query(Hall).filter(Hall.theater_id == target_theater_id).first()
+                    target_hall_id = hl.hall_id if hl else 1
+                else:
+                    hl = db.query(Hall).first()
+                    target_hall_id = hl.hall_id if hl else 1
+
             st = Showtime(
-                movie_id=mv.movie_id,
-                hall_id=hl.hall_id,
+                movie_id=target_movie_id,
+                hall_id=target_hall_id,
                 start_time=get_local_now(),
                 end_time=get_local_now(),
                 base_price=Decimal("1500.00")
             )
             db.add(st)
             db.flush()
-        else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No active showtimes available.")
 
-    # Accurately resolve movie, hall, and theater models to eliminate data mix-ups
-    movie_obj = st.movie if (st and st.movie) else None
-    if not movie_obj and st and st.movie_id:
-        movie_obj = db.query(Movie).filter(Movie.movie_id == st.movie_id).first()
-    if not movie_obj and booking_in.movie_id:
-        movie_obj = db.query(Movie).filter(Movie.movie_id == booking_in.movie_id).first()
+    # Ensure movie, hall, and theater models are populated on st
+    if not st.movie and st.movie_id:
+        st.movie = db.query(Movie).filter(Movie.movie_id == st.movie_id).first()
+    if not st.hall and st.hall_id:
+        st.hall = db.query(Hall).filter(Hall.hall_id == st.hall_id).first()
+    if st.hall and not st.hall.theater and st.hall.theater_id:
+        st.hall.theater = db.query(Theater).filter(Theater.theater_id == st.hall.theater_id).first()
 
-    hall_obj = st.hall if (st and st.hall) else None
-    if not hall_obj and st and st.hall_id:
-        hall_obj = db.query(Hall).filter(Hall.hall_id == st.hall_id).first()
-    if not hall_obj and booking_in.hall_id:
-        hall_obj = db.query(Hall).filter(Hall.hall_id == booking_in.hall_id).first()
-
-    theater_obj = hall_obj.theater if (hall_obj and hall_obj.theater) else None
-    if not theater_obj and hall_obj and hall_obj.theater_id:
-        theater_obj = db.query(Theater).filter(Theater.theater_id == hall_obj.theater_id).first()
-    if not theater_obj and booking_in.theater_id:
-        theater_obj = db.query(Theater).filter(Theater.theater_id == booking_in.theater_id).first()
-
-    movie_title = movie_obj.title if (movie_obj and movie_obj.title) else "Cinema Movie"
-    theater_name = theater_obj.name if (theater_obj and theater_obj.name) else "QuickShow Cinema"
-    hall_name = hall_obj.hall_name if (hall_obj and hall_obj.hall_name) else "Standard Screen"
-
-    if st and st.start_time:
-        if isinstance(st.start_time, str):
-            try:
-                from datetime import datetime
-                dt = datetime.fromisoformat(st.start_time)
-                showtime_str = dt.strftime("%A, %b %d, %Y at %I:%M %p")
-            except Exception:
-                showtime_str = st.start_time
-        else:
-            showtime_str = st.start_time.strftime("%A, %b %d, %Y at %I:%M %p")
-    else:
-        showtime_str = get_local_now().strftime("%A, %b %d, %Y at %I:%M %p")
-
-    # Map physical seats
+    # 4. Ensure complete physical seat layout (Rows A-H, 1-12) exists in database for this hall
     hall_seats = (
         db.query(Seat)
         .filter(Seat.hall_id == st.hall_id)
@@ -264,10 +190,12 @@ def create_booking(
         .all()
     )
 
-    if not hall_seats:
-        rows = ["A", "B", "C", "D", "E", "F", "G", "H"]
-        for r_label in rows:
-            for s_num in range(1, 13):
+    rows = ["A", "B", "C", "D", "E", "F", "G", "H"]
+    existing_coords = {(s.row_label, s.seat_number): s for s in hall_seats}
+    seats_added = False
+    for r_label in rows:
+        for s_num in range(1, 13):
+            if (r_label, s_num) not in existing_coords:
                 s_type = "VIP" if r_label in ["G", "H"] else "Regular"
                 new_s = Seat(
                     hall_id=st.hall_id,
@@ -276,6 +204,10 @@ def create_booking(
                     seat_type=s_type
                 )
                 db.add(new_s)
+                existing_coords[(r_label, s_num)] = new_s
+                seats_added = True
+
+    if seats_added:
         db.flush()
         hall_seats = (
             db.query(Seat)
@@ -284,26 +216,53 @@ def create_booking(
             .all()
         )
 
-    hall_seat_map = {s.seat_id: s for s in hall_seats}
+    hall_seat_by_id = {s.seat_id: s for s in hall_seats}
+    hall_seat_by_coord = {(s.row_label, s.seat_number): s for s in hall_seats}
+
+    # 5. Map requested seats accurately to eliminate array index and coordinate mismatches
     resolved_seats = []
     used_seat_ids = set()
 
-    for sid in booking_in.seat_ids:
-        if sid in hall_seat_map and sid not in used_seat_ids:
-            resolved_seats.append(hall_seat_map[sid])
-            used_seat_ids.add(sid)
-        elif 1 <= sid <= len(hall_seats):
-            candidate = hall_seats[sid - 1]
-            if candidate.seat_id not in used_seat_ids:
-                resolved_seats.append(candidate)
-                used_seat_ids.add(candidate.seat_id)
-        else:
-            cand = db.query(Seat).filter(Seat.seat_id == sid, Seat.hall_id == st.hall_id).first()
-            if cand and cand.seat_id not in used_seat_ids:
-                resolved_seats.append(cand)
-                used_seat_ids.add(cand.seat_id)
+    # A. If seat_labels provided (e.g. ['E5', 'E6']), map directly by coordinate
+    if booking_in.seat_labels:
+        for lbl in booking_in.seat_labels:
+            lbl_clean = lbl.strip().upper()
+            if len(lbl_clean) >= 2:
+                r_lbl = lbl_clean[0]
+                try:
+                    s_num = int(lbl_clean[1:])
+                    matched_s = hall_seat_by_coord.get((r_lbl, s_num))
+                    if matched_s and matched_s.seat_id not in used_seat_ids:
+                        resolved_seats.append(matched_s)
+                        used_seat_ids.add(matched_s.seat_id)
+                except ValueError:
+                    pass
 
-    if len(resolved_seats) < len(booking_in.seat_ids):
+    # B. For seat_ids: check direct seat_id, then standard 12-per-row grid index
+    target_count = len(booking_in.seat_labels) if booking_in.seat_labels else len(booking_in.seat_ids)
+    if len(resolved_seats) < target_count:
+        for sid in booking_in.seat_ids:
+            if sid in hall_seat_by_id and sid not in used_seat_ids:
+                resolved_seats.append(hall_seat_by_id[sid])
+                used_seat_ids.add(sid)
+            elif 1 <= sid <= 96:
+                # 1-based standard grid index (1..12 = Row A, 13..24 = Row B, etc.)
+                r_idx = (sid - 1) // 12
+                s_num = ((sid - 1) % 12) + 1
+                if 0 <= r_idx < len(rows):
+                    r_lbl = rows[r_idx]
+                    matched_s = hall_seat_by_coord.get((r_lbl, s_num))
+                    if matched_s and matched_s.seat_id not in used_seat_ids:
+                        resolved_seats.append(matched_s)
+                        used_seat_ids.add(matched_s.seat_id)
+            else:
+                cand = db.query(Seat).filter(Seat.seat_id == sid, Seat.hall_id == st.hall_id).first()
+                if cand and cand.seat_id not in used_seat_ids:
+                    resolved_seats.append(cand)
+                    used_seat_ids.add(cand.seat_id)
+
+    # C. Graceful fallback if any requested seats could not be resolved
+    if len(resolved_seats) < target_count:
         reserved_sids = set(
             s[0] for s in db.query(BookingSeat.seat_id)
             .join(Booking, BookingSeat.booking_id == Booking.booking_id)
@@ -317,19 +276,14 @@ def create_booking(
             if s.seat_id not in used_seat_ids and s.seat_id not in reserved_sids:
                 resolved_seats.append(s)
                 used_seat_ids.add(s.seat_id)
-                if len(resolved_seats) == len(booking_in.seat_ids):
+                if len(resolved_seats) == target_count:
                     break
 
     final_seat_ids = [s.seat_id for s in resolved_seats]
     if not final_seat_ids:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unable to map seats for this showtime.")
 
-    seat_labels = [
-        f"{s.row_label}{s.seat_number}"
-        for s in resolved_seats
-        if s and s.row_label and s.seat_number
-    ]
-
+    # 6. Database Transaction & Concurrency Lock
     try:
         with db.begin_nested():
             conflicting_seats = (
@@ -345,24 +299,10 @@ def create_booking(
             )
 
             if conflicting_seats:
-                if booking_in.showtime_id == st.showtime_id:
-                    raise HTTPException(
-                        status_code=status.HTTP_409_CONFLICT,
-                        detail="Double-booking conflict detected! One or more seats were just reserved by another user."
-                    )
-                else:
-                    free_seats = [
-                        s for s in hall_seats
-                        if s.seat_id not in [c[0] for c in conflicting_seats] and s.seat_id not in used_seat_ids
-                    ]
-                    if len(free_seats) >= len(booking_in.seat_ids):
-                        resolved_seats = free_seats[:len(booking_in.seat_ids)]
-                        final_seat_ids = [s.seat_id for s in resolved_seats]
-                        seat_labels = [
-                            f"{s.row_label}{s.seat_number}"
-                            for s in resolved_seats
-                            if s and s.row_label and s.seat_number
-                        ]
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Double-booking conflict detected! One or more seats were just reserved by another user."
+                )
 
             base_p = Decimal(str(st.base_price or "1500.00"))
             total_amount = base_p * Decimal(len(final_seat_ids))
@@ -395,19 +335,54 @@ def create_booking(
             db.flush()
 
         db.commit()
-        db.refresh(booking)
+
+        # 7. Query the exact freshly-committed database transaction record (ensuring zero stale data)
+        fresh_booking = (
+            db.query(Booking)
+            .options(
+                joinedload(Booking.showtime).joinedload(Showtime.movie),
+                joinedload(Booking.showtime).joinedload(Showtime.hall).joinedload(Hall.theater),
+                joinedload(Booking.booking_seats).joinedload(BookingSeat.seat),
+                joinedload(Booking.user)
+            )
+            .filter(Booking.booking_id == booking.booking_id)
+            .first()
+        )
+
+        # Extract data directly from freshly-committed DB transaction record
+        fresh_st = fresh_booking.showtime
+        movie_title = fresh_st.movie.title if (fresh_st and fresh_st.movie) else "Cinema Movie"
+        theater_name = fresh_st.hall.theater.name if (fresh_st and fresh_st.hall and fresh_st.hall.theater) else "QuickShow Cinema"
+        hall_name = fresh_st.hall.hall_name if (fresh_st and fresh_st.hall) else "Screen 1"
+
+        if fresh_st and fresh_st.start_time:
+            if isinstance(fresh_st.start_time, str):
+                try:
+                    from datetime import datetime
+                    dt = datetime.fromisoformat(fresh_st.start_time)
+                    showtime_str = dt.strftime("%A, %b %d, %Y at %I:%M %p")
+                except Exception:
+                    showtime_str = fresh_st.start_time
+            else:
+                showtime_str = fresh_st.start_time.strftime("%A, %b %d, %Y at %I:%M %p")
+        else:
+            showtime_str = get_local_now().strftime("%A, %b %d, %Y at %I:%M %p")
+
+        seat_labels = [
+            f"{bs.seat.row_label}{bs.seat.seat_number}"
+            for bs in fresh_booking.booking_seats
+            if bs.seat and bs.seat.row_label and bs.seat.seat_number
+        ]
+        booking_ref = f"QS-BK{fresh_booking.booking_id:06d}"
+        total_float = float(fresh_booking.total_amount)
+        recipient_email = fresh_booking.customer_email
+        recipient_name = fresh_booking.customer_name or "Valued Customer"
+        recipient_phone = fresh_booking.customer_phone
 
         # Trigger ticket confirmation notification upon booking creation
-        # Extract primitives before async execution to avoid detached session race conditions
-        booking_ref = f"QS-BK{booking.booking_id:06d}"
-        total_float = float(total_amount)
-        recipient_email = cust_email
-        recipient_name = cust_name
-        recipient_phone = cust_phone
-
         if recipient_email and "@" in recipient_email and not recipient_email.endswith("@quickshow.internal"):
             # Mark dispatched to prevent duplicate race conditions when /payments is immediately invoked
-            email_tracker.mark_dispatched(booking.booking_id)
+            email_tracker.mark_dispatched(fresh_booking.booking_id)
 
             if background_tasks:
                 background_tasks.add_task(
@@ -447,7 +422,7 @@ def create_booking(
                 except Exception as err:
                     logger.warning(f"Direct booking email dispatch warning: {err}")
 
-        return booking
+        return fresh_booking
 
     except IntegrityError as ie:
         db.rollback()
@@ -484,7 +459,8 @@ def get_my_bookings(
         .options(
             joinedload(Booking.showtime).joinedload(Showtime.movie),
             joinedload(Booking.showtime).joinedload(Showtime.hall).joinedload(Hall.theater),
-            joinedload(Booking.booking_seats).joinedload(BookingSeat.seat)
+            joinedload(Booking.booking_seats).joinedload(BookingSeat.seat),
+            joinedload(Booking.payment)
         )
     )
     if current_user and current_user.role not in [UserRole.ADMIN, UserRole.THEATER_MANAGER]:
@@ -528,7 +504,8 @@ def get_booking_details(
         .options(
             joinedload(Booking.showtime).joinedload(Showtime.movie),
             joinedload(Booking.showtime).joinedload(Showtime.hall).joinedload(Hall.theater),
-            joinedload(Booking.booking_seats).joinedload(BookingSeat.seat)
+            joinedload(Booking.booking_seats).joinedload(BookingSeat.seat),
+            joinedload(Booking.payment)
         )
         .filter(Booking.booking_id == booking_id)
         .first()
@@ -628,77 +605,76 @@ def process_payment(
 
     db.add(payment)
     db.commit()
-    db.refresh(payment)
-    db.refresh(booking)
 
-    # Gather data for email/SMS notifications accurately from database entities
-    showtime = booking.showtime
-    movie_obj = showtime.movie if (showtime and showtime.movie) else None
-    if not movie_obj and showtime and showtime.movie_id:
-        movie_obj = db.query(Movie).filter(Movie.movie_id == showtime.movie_id).first()
+    # Query the exact freshly-committed database transaction records
+    fresh_booking = (
+        db.query(Booking)
+        .options(
+            joinedload(Booking.showtime).joinedload(Showtime.movie),
+            joinedload(Booking.showtime).joinedload(Showtime.hall).joinedload(Hall.theater),
+            joinedload(Booking.booking_seats).joinedload(BookingSeat.seat),
+            joinedload(Booking.user),
+            joinedload(Booking.payment)
+        )
+        .filter(Booking.booking_id == payment_in.booking_id)
+        .first()
+    )
+    fresh_payment = (
+        db.query(Payment)
+        .filter(Payment.payment_id == payment.payment_id)
+        .first()
+    )
 
-    hall_obj = showtime.hall if (showtime and showtime.hall) else None
-    if not hall_obj and showtime and showtime.hall_id:
-        hall_obj = db.query(Hall).filter(Hall.hall_id == showtime.hall_id).first()
+    fresh_st = fresh_booking.showtime
+    movie_title = fresh_st.movie.title if (fresh_st and fresh_st.movie) else "Cinema Movie"
+    theater_name = fresh_st.hall.theater.name if (fresh_st and fresh_st.hall and fresh_st.hall.theater) else "QuickShow Cinema"
+    hall_name = fresh_st.hall.hall_name if (fresh_st and fresh_st.hall) else "Screen 1"
 
-    theater_obj = hall_obj.theater if (hall_obj and hall_obj.theater) else None
-    if not theater_obj and hall_obj and hall_obj.theater_id:
-        theater_obj = db.query(Theater).filter(Theater.theater_id == hall_obj.theater_id).first()
-
-    movie_title = movie_obj.title if (movie_obj and movie_obj.title) else "Cinema Movie"
-    theater_name = theater_obj.name if (theater_obj and theater_obj.name) else "QuickShow Cinema"
-    hall_name = hall_obj.hall_name if (hall_obj and hall_obj.hall_name) else "Screen 1"
-
-    if showtime and showtime.start_time:
-        if isinstance(showtime.start_time, str):
+    if fresh_st and fresh_st.start_time:
+        if isinstance(fresh_st.start_time, str):
             try:
                 from datetime import datetime
-                dt = datetime.fromisoformat(showtime.start_time)
+                dt = datetime.fromisoformat(fresh_st.start_time)
                 start_time_str = dt.strftime("%A, %b %d, %Y at %I:%M %p")
             except Exception:
-                start_time_str = showtime.start_time
+                start_time_str = fresh_st.start_time
         else:
-            start_time_str = showtime.start_time.strftime("%A, %b %d, %Y at %I:%M %p")
+            start_time_str = fresh_st.start_time.strftime("%A, %b %d, %Y at %I:%M %p")
     else:
         start_time_str = get_local_now().strftime("%A, %b %d, %Y at %I:%M %p")
 
-    # Accurately resolve seat labels from booked seats
     seat_labels = [
         f"{bs.seat.row_label}{bs.seat.seat_number}"
-        for bs in booking.booking_seats
+        for bs in fresh_booking.booking_seats
         if bs.seat and bs.seat.row_label and bs.seat.seat_number
     ]
-    if not seat_labels and booking.booking_seats:
-        seat_ids = [bs.seat_id for bs in booking.booking_seats]
-        seats = db.query(Seat).filter(Seat.seat_id.in_(seat_ids)).order_by(Seat.row_label, Seat.seat_number).all()
-        seat_labels = [f"{s.row_label}{s.seat_number}" for s in seats if s.row_label and s.seat_number]
 
     recipient_email = (
         payment_in.customer_email
-        or booking.customer_email
-        or (booking.user.email if booking.user else None)
+        or fresh_booking.customer_email
+        or (fresh_booking.user.email if fresh_booking.user else None)
         or (current_user.email if current_user else None)
     )
     recipient_name = (
         payment_in.customer_name
-        or booking.customer_name
-        or (booking.user.name if booking.user else None)
+        or fresh_booking.customer_name
+        or (fresh_booking.user.name if fresh_booking.user else None)
         or (current_user.name if current_user else None)
         or "Valued Customer"
     )
     recipient_phone = (
         payment_in.customer_phone
-        or booking.customer_phone
-        or (booking.user.phone if booking.user else None)
+        or fresh_booking.customer_phone
+        or (fresh_booking.user.phone if fresh_booking.user else None)
         or (current_user.phone if current_user else None)
     )
 
-    # Check if email was already dispatched upon booking creation to prevent duplicate race conditions
-    already_dispatched = email_tracker.was_dispatched(booking.booking_id)
+    already_dispatched = email_tracker.was_dispatched(fresh_booking.booking_id)
 
     if not already_dispatched and recipient_email and "@" in recipient_email:
-        email_tracker.mark_dispatched(booking.booking_id)
-        total_float = float(booking.total_amount)
+        email_tracker.mark_dispatched(fresh_booking.booking_id)
+        total_float = float(fresh_payment.amount)
+        txn_ref = fresh_payment.transaction_reference
 
         if background_tasks:
             background_tasks.add_task(
@@ -738,11 +714,11 @@ def process_payment(
             except Exception as err:
                 logger.warning(f"Direct payment email dispatch warning: {err}")
 
-    payment_out = PaymentOut.model_validate(payment)
-    payment_out.is_sandbox = is_sandbox
+    payment_out = PaymentOut.model_validate(fresh_payment)
+    payment_out.is_sandbox = fresh_payment.is_sandbox
     payment_out.message = (
         "Sandbox test payment authorized successfully. Tickets dispatched via Email and SMS."
-        if is_sandbox
+        if fresh_payment.is_sandbox
         else "Payment authorized successfully. Tickets dispatched."
     )
     return payment_out

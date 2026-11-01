@@ -11,6 +11,7 @@ from app.schemas.payment import PaymentOut
 class BookingCreate(BaseModel):
     showtime_id: int
     seat_ids: List[int]
+    seat_labels: Optional[List[str]] = None
     customer_email: Optional[EmailStr] = None
     customer_name: Optional[str] = None
     customer_phone: Optional[str] = None

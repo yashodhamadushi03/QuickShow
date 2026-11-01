@@ -7,7 +7,7 @@ import { API_BASE_URL } from "../config";
 
 const SeatLayout = () => {
   const [searchParams] = useSearchParams();
-  const { id: showtimeIdParam, date: dateParam } = useParams();
+  const { id: routeMovieIdParam, date: dateParam } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { user: clerkUser } = useUser();
@@ -17,12 +17,34 @@ const SeatLayout = () => {
   const selectedSlot = passedState.selectedSlot;
   const passedMovie = passedState.movie;
 
-  const theaterId = passedState.theaterId || searchParams.get("theater_id") || selectedSlot?.theater_id;
-  const theaterName = passedState.theaterName || searchParams.get("theater_name") || selectedSlot?.theater;
-  const hallId = passedState.hallId || searchParams.get("hall_id") || selectedSlot?.hall_id;
-  const hallName = passedState.hallName || searchParams.get("hall_name") || selectedSlot?.hall;
+  const targetMovieId =
+    (passedMovie && (passedMovie.movie_id || passedMovie.id || passedMovie._id)) ||
+    passedState.movieId ||
+    passedState.movie_id ||
+    (searchParams.get("movie_id") ? parseInt(searchParams.get("movie_id")) : null) ||
+    (routeMovieIdParam ? parseInt(routeMovieIdParam) : null);
 
-  const showtimeId = parseInt(passedState.showtimeId) || parseInt(searchParams.get("showtime_id")) || parseInt(showtimeIdParam) || 1;
+  const theaterId =
+    passedState.theaterId ||
+    (searchParams.get("theater_id") ? parseInt(searchParams.get("theater_id")) : null) ||
+    selectedSlot?.theater_id;
+  const theaterName =
+    passedState.theaterName ||
+    searchParams.get("theater_name") ||
+    selectedSlot?.theater;
+  const hallId =
+    passedState.hallId ||
+    (searchParams.get("hall_id") ? parseInt(searchParams.get("hall_id")) : null) ||
+    selectedSlot?.hall_id;
+  const hallName =
+    passedState.hallName ||
+    searchParams.get("hall_name") ||
+    selectedSlot?.hall;
+
+  const explicitShowtimeId =
+    (passedState.showtimeId ? parseInt(passedState.showtimeId) : null) ||
+    (selectedSlot?.showtime_id ? parseInt(selectedSlot.showtime_id) : null) ||
+    (searchParams.get("showtime_id") ? parseInt(searchParams.get("showtime_id")) : null);
 
   const formatHeaderDate = (dStr) => {
     if (!dStr) return "Today";
@@ -89,92 +111,146 @@ const SeatLayout = () => {
 
   useEffect(() => {
     fetchShowtimeAndSeats();
-  }, [showtimeId]);
+  }, [targetMovieId, explicitShowtimeId, theaterId, hallId]);
 
   const fetchShowtimeAndSeats = async () => {
     try {
-      let activeShowtimeId = showtimeId;
+      let activeShowtimeId = explicitShowtimeId;
       let fetchedShowtime = null;
-      const stRes = await fetch(`${API_BASE_URL}/showtimes/${activeShowtimeId}`);
-      if (stRes.ok) {
-        const candidate = await stRes.json();
-        if (!theaterId || String(candidate.hall?.theater_id) === String(theaterId)) {
-          fetchedShowtime = candidate;
+
+      // 1. If explicitShowtimeId was given, verify it belongs to targetMovieId
+      if (activeShowtimeId) {
+        try {
+          const stRes = await fetch(`${API_BASE_URL}/showtimes/${activeShowtimeId}`);
+          if (stRes.ok) {
+            const candidate = await stRes.json();
+            const matchesMovie = !targetMovieId || candidate.movie_id === parseInt(targetMovieId);
+            const matchesTheater = !theaterId || String(candidate.hall?.theater_id) === String(theaterId);
+            if (matchesMovie && matchesTheater) {
+              fetchedShowtime = candidate;
+            }
+          }
+        } catch (e) {
+          console.warn("Direct showtime lookup failed:", e);
         }
       }
-      if (!fetchedShowtime) {
-        const movieIdCandidate = passedMovie?.movie_id || passedMovie?.id || passedMovie?._id || parseInt(showtimeIdParam);
-        if (movieIdCandidate) {
-          try {
-            const mStRes = await fetch(`${API_BASE_URL}/movies/${movieIdCandidate}/showtimes`);
-            if (mStRes.ok) {
-              const grouped = await mStRes.json();
-              const matchedGroup = grouped.find((g) =>
-                (theaterId && String(g.theater_id) === String(theaterId)) ||
-                (theaterName && g.theater_name?.toLowerCase().includes(theaterName.toLowerCase()))
-              ) || grouped[0];
+
+      // 2. Query /movies/{targetMovieId}/showtimes to find a matching showtime
+      if (!fetchedShowtime && targetMovieId) {
+        try {
+          const mStRes = await fetch(`${API_BASE_URL}/movies/${targetMovieId}/showtimes`);
+          if (mStRes.ok) {
+            const grouped = await mStRes.json();
+            if (Array.isArray(grouped) && grouped.length > 0) {
+              const matchedGroup = grouped.find((g) => {
+                const gTheaterId = g.theater?.theater_id || g.theater_id;
+                const gTheaterName = g.theater?.name || g.theater_name || "";
+                if (theaterId && String(gTheaterId) === String(theaterId)) return true;
+                if (theaterName && gTheaterName.toLowerCase().includes(theaterName.toLowerCase())) return true;
+                return false;
+              }) || grouped[0];
 
               if (matchedGroup && matchedGroup.showtimes?.length > 0) {
-                const matchedSt = (hallId && matchedGroup.showtimes.find((s) => String(s.hall_id) === String(hallId))) || matchedGroup.showtimes[0];
+                const matchedSt =
+                  (hallId && matchedGroup.showtimes.find((s) => String(s.hall_id) === String(hallId))) ||
+                  matchedGroup.showtimes[0];
                 fetchedShowtime = matchedSt;
                 activeShowtimeId = fetchedShowtime.showtime_id;
               }
             }
-          } catch (e) {
-            console.warn("Could not query movie showtimes:", e);
           }
+        } catch (e) {
+          console.warn("Could not query movie showtimes:", e);
+        }
+      }
+
+      // 3. Fallback movie details if showtime was not directly found in DB
+      let movieDetail = fetchedShowtime?.movie || passedMovie;
+      if (!movieDetail && targetMovieId) {
+        try {
+          const movieRes = await fetch(`${API_BASE_URL}/movies/${targetMovieId}`);
+          if (movieRes.ok) {
+            movieDetail = await movieRes.json();
+          }
+        } catch (e) {
+          console.warn("Could not query movie detail:", e);
         }
       }
 
       const activeBasePrice = selectedSlot?.price || (fetchedShowtime?.base_price ? parseFloat(fetchedShowtime.base_price) : 1500.00);
+      const activeMovieTitle = movieDetail?.title || passedMovie?.title || "Cinema Movie";
+      const activeMoviePoster = movieDetail?.poster_url || movieDetail?.poster_path || passedMovie?.poster_path;
+      const activeTheaterName = theaterName || fetchedShowtime?.hall?.theater?.name || selectedSlot?.theater || "Scope Cinemas Multiplex - Colombo City Centre";
+      const activeHallName = hallName || fetchedShowtime?.hall?.hall_name || selectedSlot?.hall || "Screen 1 - Dolby Atmos";
 
       if (fetchedShowtime) {
         setShowtime({
           ...fetchedShowtime,
           base_price: activeBasePrice,
+          movie: {
+            ...(fetchedShowtime.movie || {}),
+            movie_id: targetMovieId ? parseInt(targetMovieId) : (fetchedShowtime.movie_id || 1),
+            title: activeMovieTitle,
+            poster_url: activeMoviePoster,
+          },
           hall: {
             ...fetchedShowtime.hall,
-            hall_name: hallName || fetchedShowtime.hall?.hall_name || selectedSlot?.hall || "Screen 1 - Dolby Atmos",
+            hall_name: activeHallName,
             theater: {
               ...(fetchedShowtime.hall?.theater || {}),
-              theater_id: theaterId || fetchedShowtime.hall?.theater?.theater_id || 1,
-              name: theaterName || fetchedShowtime.hall?.theater?.name || selectedSlot?.theater || "Scope Cinemas Multiplex - Colombo City Centre"
+              theater_id: theaterId ? parseInt(theaterId) : (fetchedShowtime.hall?.theater?.theater_id || 1),
+              name: activeTheaterName,
             }
           }
         });
       } else {
         setShowtime({
-          showtime_id: activeShowtimeId,
+          showtime_id: activeShowtimeId || 1,
+          movie_id: targetMovieId ? parseInt(targetMovieId) : 1,
           base_price: activeBasePrice,
-          movie: { title: passedMovie?.title || "Cinema Movie" },
+          movie: {
+            movie_id: targetMovieId ? parseInt(targetMovieId) : 1,
+            title: activeMovieTitle,
+            poster_url: activeMoviePoster,
+          },
           hall: {
-            hall_id: hallId || 1,
-            hall_name: hallName || selectedSlot?.hall || "Screen 1 - Dolby Atmos",
+            hall_id: hallId ? parseInt(hallId) : 1,
+            hall_name: activeHallName,
             theater: {
-              theater_id: theaterId || 1,
-              name: theaterName || selectedSlot?.theater || "Scope Cinemas Multiplex - Colombo City Centre"
+              theater_id: theaterId ? parseInt(theaterId) : 1,
+              name: activeTheaterName,
             }
           }
         });
       }
-      const seatsRes = await fetch(`${API_BASE_URL}/showtimes/${activeShowtimeId}/seats`);
-      if (seatsRes.ok) {
-        const seatsData = await seatsRes.json();
-        setSeats(seatsData.length > 0 ? seatsData : generateSriLankanSeatMatrix());
+
+      if (activeShowtimeId) {
+        const seatsRes = await fetch(`${API_BASE_URL}/showtimes/${activeShowtimeId}/seats`);
+        if (seatsRes.ok) {
+          const seatsData = await seatsRes.json();
+          setSeats(seatsData.length > 0 ? seatsData : generateSriLankanSeatMatrix());
+        } else {
+          setSeats(generateSriLankanSeatMatrix());
+        }
       } else {
         setSeats(generateSriLankanSeatMatrix());
       }
     } catch (err) {
       console.warn("Backend API unavailable, using fallback Sri Lanka seat matrix.", err);
       setShowtime({
-        showtime_id: showtimeId,
+        showtime_id: explicitShowtimeId || 1,
+        movie_id: targetMovieId ? parseInt(targetMovieId) : 1,
         base_price: selectedSlot?.price || 1500.00,
-        movie: { title: passedMovie?.title || "Cinema Movie" },
+        movie: {
+          movie_id: targetMovieId ? parseInt(targetMovieId) : 1,
+          title: passedMovie?.title || "Cinema Movie",
+          poster_url: passedMovie?.poster_path
+        },
         hall: {
-          hall_id: hallId || 1,
+          hall_id: hallId ? parseInt(hallId) : 1,
           hall_name: hallName || selectedSlot?.hall || "Screen 1 - Dolby Atmos",
           theater: {
-            theater_id: theaterId || 1,
+            theater_id: theaterId ? parseInt(theaterId) : 1,
             name: theaterName || selectedSlot?.theater || "Scope Cinemas Multiplex - Colombo City Centre"
           }
         }
@@ -405,14 +481,15 @@ const SeatLayout = () => {
           Authorization: token ? `Bearer ${token}` : "",
         },
         body: JSON.stringify({
-          showtime_id: showtime?.showtime_id || showtimeId,
+          showtime_id: showtime?.showtime_id || explicitShowtimeId || 1,
           seat_ids: selectedSeatIds,
+          seat_labels: seatLabels,
           customer_email: customerEmail,
           customer_name: customerName || cardHolder || "Cinema Fan",
           customer_phone: customerPhone,
           theater_id: theaterId ? parseInt(theaterId) : (showtime?.hall?.theater?.theater_id || undefined),
           hall_id: hallId ? parseInt(hallId) : (showtime?.hall?.hall_id || undefined),
-          movie_id: passedMovie?.movie_id || passedMovie?.id || (showtime?.movie?.movie_id || undefined),
+          movie_id: targetMovieId ? parseInt(targetMovieId) : (showtime?.movie?.movie_id || undefined),
         }),
       });
 
@@ -443,8 +520,23 @@ const SeatLayout = () => {
 
       if (paymentRes.ok) {
         const paymentData = await paymentRes.json();
-        const activeTheaterName = theaterName || showtime?.hall?.theater?.name || selectedSlot?.theater || "Scope Cinemas Multiplex";
-        const activeHallName = hallName || showtime?.hall?.hall_name || selectedSlot?.hall || "Screen 1 - Dolby Atmos";
+        const activeTheaterName =
+          bookingData.showtime?.hall?.theater?.name ||
+          theaterName ||
+          showtime?.hall?.theater?.name ||
+          selectedSlot?.theater ||
+          "Scope Cinemas Multiplex";
+        const activeHallName =
+          bookingData.showtime?.hall?.hall_name ||
+          hallName ||
+          showtime?.hall?.hall_name ||
+          selectedSlot?.hall ||
+          "Screen 1 - Dolby Atmos";
+        const activeMovieTitle =
+          bookingData.showtime?.movie?.title ||
+          showtime?.movie?.title ||
+          passedMovie?.title ||
+          "Cinema Movie";
 
         setBookingConfirmation({
           bookingId: bookingData.booking_id,
@@ -469,7 +561,12 @@ const SeatLayout = () => {
             total_amount: String(totalCalc),
             created_at: new Date().toISOString(),
             showtime: {
-              movie: showtime?.movie || passedMovie || { title: "Cinema Movie" },
+              showtime_id: bookingData.showtime_id || showtime?.showtime_id,
+              movie: bookingData.showtime?.movie || {
+                movie_id: targetMovieId ? parseInt(targetMovieId) : undefined,
+                title: activeMovieTitle,
+                poster_url: showtime?.movie?.poster_url || passedMovie?.poster_path
+              },
               hall: {
                 hall_id: hallId || showtime?.hall?.hall_id || 1,
                 hall_name: activeHallName,
@@ -478,12 +575,14 @@ const SeatLayout = () => {
                   name: activeTheaterName,
                 }
               },
-              start_time: showtime?.start_time || new Date().toISOString()
+              start_time: bookingData.showtime?.start_time || showtime?.start_time || new Date().toISOString()
             },
-            booking_seats: selectedSeatIds.map(id => {
-              const s = seats.find(x => x.seat_id === id);
-              return { seat: { row_label: s?.row_label || "A", seat_number: s?.seat_number || id } };
-            }),
+            booking_seats: (bookingData.booking_seats && bookingData.booking_seats.length > 0)
+              ? bookingData.booking_seats
+              : selectedSeatIds.map(id => {
+                  const s = seats.find(x => x.seat_id === id);
+                  return { seat: { row_label: s?.row_label || "A", seat_number: s?.seat_number || id } };
+                }),
             payment: {
               transaction_reference: paymentData.transaction_reference,
               payment_method: paymentData.payment_method,
@@ -521,8 +620,8 @@ const SeatLayout = () => {
           body: JSON.stringify({
             customer_email: customerEmail,
             customer_name: customerName || cardHolder || "Cinema Fan",
-            movie_title: showtime?.movie?.title || passedMovie?.title || "Avatar: The Way of Water",
-            theater_name: showtime?.hall?.theater?.name || selectedSlot?.theater || "Scope Cinemas - Colombo City Centre",
+            movie_title: showtime?.movie?.title || passedMovie?.title || "Cinema Movie",
+            theater_name: theaterName || showtime?.hall?.theater?.name || selectedSlot?.theater || "Scope Cinemas Multiplex",
             hall_name: showtime?.hall?.hall_name || selectedSlot?.hall || "Screen 1 - Dolby Atmos",
             seats: seatLabels,
             total: totalCalc,

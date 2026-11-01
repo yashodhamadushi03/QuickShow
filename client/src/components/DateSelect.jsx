@@ -245,20 +245,24 @@ const DateSelect = ({
       return toast.error("Please choose one of the available showtimes.");
     }
 
-    const showIdToUse = selectedSlot.showId || 1;
+    const resolvedMovieId = id || movie?.movie_id || movie?.id || movie?._id;
+    const realShowtimeId = selectedSlot.showtime_id || (selectedSlot.showId && selectedSlot.movie_id ? selectedSlot.showId : null);
     const theaterIdToUse = selectedTheater?.theater_id || selectedSlot.theater_id || 1;
     const theaterNameToUse = selectedTheater?.name || selectedSlot.theater || "Scope Cinemas Multiplex - Colombo City Centre";
     const hallIdToUse = selectedHall?.hall_id || selectedSlot.hall_id || 1;
     const hallNameToUse = selectedHall?.hall_name || selectedSlot.hall || "Screen 1 - Dolby Atmos";
 
     const queryParams = new URLSearchParams();
+    if (resolvedMovieId) queryParams.set("movie_id", resolvedMovieId);
     queryParams.set("theater_id", theaterIdToUse);
     queryParams.set("theater_name", theaterNameToUse);
     queryParams.set("hall_id", hallIdToUse);
     queryParams.set("hall_name", hallNameToUse);
-    queryParams.set("showtime_id", showIdToUse);
+    if (realShowtimeId) {
+      queryParams.set("showtime_id", realShowtimeId);
+    }
 
-    const targetUrl = `/movies/${id}/${selectedDate}?${queryParams.toString()}`;
+    const targetUrl = `/movies/${resolvedMovieId || id}/${selectedDate}?${queryParams.toString()}`;
     const bookingState = {
       selectedDate,
       selectedSlot: {
@@ -268,7 +272,9 @@ const DateSelect = ({
         hall_id: hallIdToUse,
         hall: hallNameToUse,
       },
-      showtimeId: showIdToUse,
+      showtimeId: realShowtimeId || undefined,
+      movieId: resolvedMovieId ? parseInt(resolvedMovieId) : undefined,
+      movie_id: resolvedMovieId ? parseInt(resolvedMovieId) : undefined,
       theaterId: theaterIdToUse,
       theaterName: theaterNameToUse,
       hallId: hallIdToUse,
