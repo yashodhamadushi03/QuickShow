@@ -25,6 +25,22 @@ class NotificationService:
         Sends an HTML confirmation email with ticket details and unique entrance passcode.
         Uses SMTP settings from app config. Logs graceful fallback if SMTP is unavailable.
         """
+        if not user_email or not str(user_email).strip():
+            logger.warning("Email dispatch skipped: user_email is empty.")
+            return False
+
+        if isinstance(seat_labels, str):
+            seat_labels = [seat_labels]
+        elif not seat_labels:
+            seat_labels = []
+
+        user_name = user_name or "Valued Customer"
+        movie_title = movie_title or "Cinema Movie"
+        theater_name = theater_name or "QuickShow Cinema"
+        hall_name = hall_name or "Standard Hall"
+        showtime_str = showtime_str or "Scheduled Showtime"
+        transaction_ref = transaction_ref or "QS-TICKET"
+
         seats_display = ", ".join(seat_labels) if seat_labels else "N/A"
         
         subject = f"🎟️ QuickShow Ticket Pass: {movie_title} [{transaction_ref}]"
@@ -76,7 +92,7 @@ class NotificationService:
                         </div>
                         <div class="info-item">
                             <div class="label">Total Paid</div>
-                            <div class="value">LKR {total_amount:,.2f}</div>
+                            <div class="value">LKR {float(total_amount):,.2f}</div>
                         </div>
                     </div>
 
@@ -94,7 +110,7 @@ class NotificationService:
         smtp_port = getattr(settings, "SMTP_PORT", 587) or 587
         smtp_user = getattr(settings, "SMTP_USER", "yashodhamadushi03@gmail.com") or "yashodhamadushi03@gmail.com"
         smtp_password = getattr(settings, "SMTP_PASSWORD", "xqmgnjpgamwrcpxv") or "xqmgnjpgamwrcpxv"
-        emails_from = "yashodhamadushi03@gmail.com"
+        emails_from = getattr(settings, "EMAILS_FROM", None) or smtp_user or "yashodhamadushi03@gmail.com"
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
@@ -102,16 +118,16 @@ class NotificationService:
         msg["To"] = user_email
         msg.attach(MIMEText(html_content, "html"))
         try:
-            with smtplib.SMTP(smtp_host, smtp_port, timeout=12) as server:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
                 server.starttls()
                 server.login(smtp_user, smtp_password)
                 server.sendmail(emails_from, user_email, msg.as_string())
-            logger.info(f"HTML Ticket Email dispatched successfully to {user_email} via TLS (587)")
+            logger.info(f"HTML Ticket Email dispatched successfully to {user_email} via TLS ({smtp_port})")
             return True
         except Exception as tls_err:
-            logger.warning(f"Port 587 TLS dispatch warning: {tls_err}. Retrying via Port 465 SSL...")
+            logger.warning(f"Port {smtp_port} TLS dispatch warning: {tls_err}. Retrying via Port 465 SSL...")
             try:
-                with smtplib.SMTP_SSL(smtp_host, 465, timeout=12) as server_ssl:
+                with smtplib.SMTP_SSL(smtp_host, 465, timeout=10) as server_ssl:
                     server_ssl.login(smtp_user, smtp_password)
                     server_ssl.sendmail(emails_from, user_email, msg.as_string())
                 logger.info(f"HTML Ticket Email dispatched successfully to {user_email} via SSL (465)")
@@ -123,7 +139,7 @@ class NotificationService:
             f"To: {user_email}\n"
             f"Subject: {subject}\n"
             f"Movie: {movie_title} | Theater: {theater_name} | Seats: {seats_display}\n"
-            f"Ref: {transaction_ref} | Amount: LKR {total_amount:,.2f}\n"
+            f"Ref: {transaction_ref} | Amount: LKR {float(total_amount):,.2f}\n"
         )
         return False
 
@@ -139,9 +155,18 @@ class NotificationService:
         Sends a concise SMS text message with ticket pass code to registered phone.
         Integrates with Twilio API gateway if credentials are available.
         """
-        if not phone_number:
+        if not phone_number or not str(phone_number).strip():
             logger.info("SMS notification skipped: User phone number not provided.")
             return False
+
+        if isinstance(seat_labels, str):
+            seat_labels = [seat_labels]
+        elif not seat_labels:
+            seat_labels = []
+
+        movie_title = movie_title or "Cinema Movie"
+        showtime_str = showtime_str or "Scheduled Showtime"
+        transaction_ref = transaction_ref or "QS-TICKET"
 
         seats_display = ", ".join(seat_labels) if seat_labels else "N/A"
         message_body = (

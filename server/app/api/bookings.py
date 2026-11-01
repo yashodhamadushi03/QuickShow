@@ -1,15 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
 from typing import List, Optional
 import uuid
+import logging
+import threading
+import time
 from decimal import Decimal
+from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.models.user import User, UserRole
 from app.models.showtime import Showtime
-from app.models.theater import Seat
+from app.models.theater import Theater, Hall, Seat
+from app.models.movie import Movie
 from app.models.booking import Booking, BookingSeat, BookingStatus
 from app.models.payment import Payment, PaymentStatus
 from app.schemas.booking import BookingCreate, BookingOut
@@ -18,15 +23,44 @@ from app.api.deps import get_current_user_optional
 from app.services.notification import NotificationService
 from app.core.timezone import get_local_now
 
+logger = logging.getLogger("quickshow.bookings")
+
+class EmailDispatchTracker:
+    """Thread-safe tracker to prevent duplicate ticket email dispatches and asynchronous race conditions."""
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._dispatched = {}  # booking_id -> timestamp
+
+    def mark_dispatched(self, booking_id: int):
+        with self._lock:
+            now = time.time()
+            self._dispatched[booking_id] = now
+            # Evict entries older than 10 minutes
+            self._dispatched = {k: v for k, v in self._dispatched.items() if now - v < 600}
+
+    def was_dispatched(self, booking_id: int) -> bool:
+        with self._lock:
+            now = time.time()
+            ts = self._dispatched.get(booking_id)
+            if ts and (now - ts < 300):
+                return True
+            return False
+
+email_tracker = EmailDispatchTracker()
+
 router = APIRouter(prefix="", tags=["Bookings & Payments"])
 
 @router.post("/bookings", response_model=BookingOut, status_code=status.HTTP_201_CREATED)
 def create_booking(
     booking_in: BookingCreate,
+    background_tasks: BackgroundTasks,
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    
+    """
+    Create a new booking, reserve requested seats, and trigger ticket confirmation
+    notification with accurate booking details without race conditions.
+    """
     if not booking_in.seat_ids:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="At least one seat must be selected.")
     user_obj = None
@@ -62,18 +96,33 @@ def create_booking(
         )
         db.add(user_obj)
         db.flush()
-    from app.models.theater import Hall, Theater
-    from app.models.movie import Movie
-    from datetime import datetime, timezone
 
-    st = db.query(Showtime).filter(Showtime.showtime_id == booking_in.showtime_id).first()
+    # Eagerly load showtime and related movie/hall/theater
+    st = (
+        db.query(Showtime)
+        .options(
+            joinedload(Showtime.movie),
+            joinedload(Showtime.hall).joinedload(Hall.theater)
+        )
+        .filter(Showtime.showtime_id == booking_in.showtime_id)
+        .first()
+    )
+
     if booking_in.hall_id:
         if st and st.hall_id != booking_in.hall_id:
             target_movie_id = booking_in.movie_id or st.movie_id
-            matching_st = db.query(Showtime).filter(
-                Showtime.hall_id == booking_in.hall_id,
-                Showtime.movie_id == target_movie_id
-            ).first()
+            matching_st = (
+                db.query(Showtime)
+                .options(
+                    joinedload(Showtime.movie),
+                    joinedload(Showtime.hall).joinedload(Hall.theater)
+                )
+                .filter(
+                    Showtime.hall_id == booking_in.hall_id,
+                    Showtime.movie_id == target_movie_id
+                )
+                .first()
+            )
             if matching_st:
                 st = matching_st
             else:
@@ -88,12 +137,17 @@ def create_booking(
                     )
                     db.add(st)
                     db.flush()
+
     if booking_in.theater_id and st:
         current_theater_id = st.hall.theater_id if st.hall else None
         if current_theater_id != booking_in.theater_id:
             target_movie_id = booking_in.movie_id or st.movie_id
             theater_st = (
                 db.query(Showtime)
+                .options(
+                    joinedload(Showtime.movie),
+                    joinedload(Showtime.hall).joinedload(Hall.theater)
+                )
                 .join(Hall, Showtime.hall_id == Hall.hall_id)
                 .filter(
                     Hall.theater_id == booking_in.theater_id,
@@ -115,8 +169,16 @@ def create_booking(
                     )
                     db.add(st)
                     db.flush()
+
     if not st:
-        query = db.query(Showtime).join(Hall, Showtime.hall_id == Hall.hall_id)
+        query = (
+            db.query(Showtime)
+            .options(
+                joinedload(Showtime.movie),
+                joinedload(Showtime.hall).joinedload(Hall.theater)
+            )
+            .join(Hall, Showtime.hall_id == Hall.hall_id)
+        )
         if booking_in.theater_id:
             query = query.filter(Hall.theater_id == booking_in.theater_id)
         if booking_in.hall_id:
@@ -124,8 +186,23 @@ def create_booking(
         if booking_in.movie_id:
             query = query.filter(Showtime.movie_id == booking_in.movie_id)
         st = query.first()
+
     if not st:
-        st = db.query(Showtime).order_by(Showtime.showtime_id.desc()).first() or db.query(Showtime).first()
+        st = (
+            db.query(Showtime)
+            .options(
+                joinedload(Showtime.movie),
+                joinedload(Showtime.hall).joinedload(Hall.theater)
+            )
+            .order_by(Showtime.showtime_id.desc())
+            .first()
+            or db.query(Showtime)
+            .options(
+                joinedload(Showtime.movie),
+                joinedload(Showtime.hall).joinedload(Hall.theater)
+            )
+            .first()
+        )
     
     if not st:
         mv = db.query(Movie).first()
@@ -142,6 +219,44 @@ def create_booking(
             db.flush()
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No active showtimes available.")
+
+    # Accurately resolve movie, hall, and theater models to eliminate data mix-ups
+    movie_obj = st.movie if (st and st.movie) else None
+    if not movie_obj and st and st.movie_id:
+        movie_obj = db.query(Movie).filter(Movie.movie_id == st.movie_id).first()
+    if not movie_obj and booking_in.movie_id:
+        movie_obj = db.query(Movie).filter(Movie.movie_id == booking_in.movie_id).first()
+
+    hall_obj = st.hall if (st and st.hall) else None
+    if not hall_obj and st and st.hall_id:
+        hall_obj = db.query(Hall).filter(Hall.hall_id == st.hall_id).first()
+    if not hall_obj and booking_in.hall_id:
+        hall_obj = db.query(Hall).filter(Hall.hall_id == booking_in.hall_id).first()
+
+    theater_obj = hall_obj.theater if (hall_obj and hall_obj.theater) else None
+    if not theater_obj and hall_obj and hall_obj.theater_id:
+        theater_obj = db.query(Theater).filter(Theater.theater_id == hall_obj.theater_id).first()
+    if not theater_obj and booking_in.theater_id:
+        theater_obj = db.query(Theater).filter(Theater.theater_id == booking_in.theater_id).first()
+
+    movie_title = movie_obj.title if (movie_obj and movie_obj.title) else "Cinema Movie"
+    theater_name = theater_obj.name if (theater_obj and theater_obj.name) else "QuickShow Cinema"
+    hall_name = hall_obj.hall_name if (hall_obj and hall_obj.hall_name) else "Standard Screen"
+
+    if st and st.start_time:
+        if isinstance(st.start_time, str):
+            try:
+                from datetime import datetime
+                dt = datetime.fromisoformat(st.start_time)
+                showtime_str = dt.strftime("%A, %b %d, %Y at %I:%M %p")
+            except Exception:
+                showtime_str = st.start_time
+        else:
+            showtime_str = st.start_time.strftime("%A, %b %d, %Y at %I:%M %p")
+    else:
+        showtime_str = get_local_now().strftime("%A, %b %d, %Y at %I:%M %p")
+
+    # Map physical seats
     hall_seats = (
         db.query(Seat)
         .filter(Seat.hall_id == st.hall_id)
@@ -168,6 +283,7 @@ def create_booking(
             .order_by(Seat.row_label, Seat.seat_number)
             .all()
         )
+
     hall_seat_map = {s.seat_id: s for s in hall_seats}
     resolved_seats = []
     used_seat_ids = set()
@@ -186,6 +302,7 @@ def create_booking(
             if cand and cand.seat_id not in used_seat_ids:
                 resolved_seats.append(cand)
                 used_seat_ids.add(cand.seat_id)
+
     if len(resolved_seats) < len(booking_in.seat_ids):
         reserved_sids = set(
             s[0] for s in db.query(BookingSeat.seat_id)
@@ -206,6 +323,12 @@ def create_booking(
     final_seat_ids = [s.seat_id for s in resolved_seats]
     if not final_seat_ids:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unable to map seats for this showtime.")
+
+    seat_labels = [
+        f"{s.row_label}{s.seat_number}"
+        for s in resolved_seats
+        if s and s.row_label and s.seat_number
+    ]
 
     try:
         with db.begin_nested():
@@ -235,6 +358,12 @@ def create_booking(
                     if len(free_seats) >= len(booking_in.seat_ids):
                         resolved_seats = free_seats[:len(booking_in.seat_ids)]
                         final_seat_ids = [s.seat_id for s in resolved_seats]
+                        seat_labels = [
+                            f"{s.row_label}{s.seat_number}"
+                            for s in resolved_seats
+                            if s and s.row_label and s.seat_number
+                        ]
+
             base_p = Decimal(str(st.base_price or "1500.00"))
             total_amount = base_p * Decimal(len(final_seat_ids))
             cust_name = booking_in.customer_name or (user_obj.name if user_obj else "Valued Customer")
@@ -252,6 +381,7 @@ def create_booking(
             )
             db.add(booking)
             db.flush()  # Generate booking_id
+
             for s in resolved_seats:
                 b_seat = BookingSeat(
                     booking_id=booking.booking_id,
@@ -259,12 +389,64 @@ def create_booking(
                     showtime_id=st.showtime_id,
                     price=base_p
                 )
+                b_seat.seat = s
                 db.add(b_seat)
             
             db.flush()
 
         db.commit()
         db.refresh(booking)
+
+        # Trigger ticket confirmation notification upon booking creation
+        # Extract primitives before async execution to avoid detached session race conditions
+        booking_ref = f"QS-BK{booking.booking_id:06d}"
+        total_float = float(total_amount)
+        recipient_email = cust_email
+        recipient_name = cust_name
+        recipient_phone = cust_phone
+
+        if recipient_email and "@" in recipient_email and not recipient_email.endswith("@quickshow.internal"):
+            # Mark dispatched to prevent duplicate race conditions when /payments is immediately invoked
+            email_tracker.mark_dispatched(booking.booking_id)
+
+            if background_tasks:
+                background_tasks.add_task(
+                    NotificationService.send_email_ticket,
+                    user_email=recipient_email,
+                    user_name=recipient_name,
+                    movie_title=movie_title,
+                    theater_name=theater_name,
+                    hall_name=hall_name,
+                    showtime_str=showtime_str,
+                    seat_labels=seat_labels,
+                    total_amount=total_float,
+                    transaction_ref=booking_ref
+                )
+                if recipient_phone:
+                    background_tasks.add_task(
+                        NotificationService.send_sms_ticket,
+                        phone_number=recipient_phone,
+                        movie_title=movie_title,
+                        showtime_str=showtime_str,
+                        seat_labels=seat_labels,
+                        transaction_ref=booking_ref
+                    )
+            else:
+                try:
+                    NotificationService.send_email_ticket(
+                        user_email=recipient_email,
+                        user_name=recipient_name,
+                        movie_title=movie_title,
+                        theater_name=theater_name,
+                        hall_name=hall_name,
+                        showtime_str=showtime_str,
+                        seat_labels=seat_labels,
+                        total_amount=total_float,
+                        transaction_ref=booking_ref
+                    )
+                except Exception as err:
+                    logger.warning(f"Direct booking email dispatch warning: {err}")
+
         return booking
 
     except IntegrityError as ie:
@@ -297,7 +479,14 @@ def get_my_bookings(
     - Guarantees 100% data isolation across customer accounts.
     - Always orders newest bookings first so new reservations immediately appear at the top.
     """
-    query = db.query(Booking)
+    query = (
+        db.query(Booking)
+        .options(
+            joinedload(Booking.showtime).joinedload(Showtime.movie),
+            joinedload(Booking.showtime).joinedload(Showtime.hall).joinedload(Hall.theater),
+            joinedload(Booking.booking_seats).joinedload(BookingSeat.seat)
+        )
+    )
     if current_user and current_user.role not in [UserRole.ADMIN, UserRole.THEATER_MANAGER]:
         user_email = current_user.email.strip().lower()
         query = query.filter(
@@ -334,7 +523,16 @@ def get_booking_details(
     db: Session = Depends(get_db)
 ):
     """Retrieve details of a specific booking with strict ownership verification."""
-    booking = db.query(Booking).filter(Booking.booking_id == booking_id).first()
+    booking = (
+        db.query(Booking)
+        .options(
+            joinedload(Booking.showtime).joinedload(Showtime.movie),
+            joinedload(Booking.showtime).joinedload(Showtime.hall).joinedload(Hall.theater),
+            joinedload(Booking.booking_seats).joinedload(BookingSeat.seat)
+        )
+        .filter(Booking.booking_id == booking_id)
+        .first()
+    )
     if not booking:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found.")
     if current_user and current_user.role not in [UserRole.ADMIN, UserRole.THEATER_MANAGER]:
@@ -370,9 +568,19 @@ def process_payment(
 ):
     """
     Process payment for a pending booking, confirm reservation, and dispatch
-    automated Email and SMS ticket notifications via background tasks and direct dispatch.
+    automated Email and SMS ticket notifications without race conditions.
     """
-    booking = db.query(Booking).filter(Booking.booking_id == payment_in.booking_id).first()
+    booking = (
+        db.query(Booking)
+        .options(
+            joinedload(Booking.showtime).joinedload(Showtime.movie),
+            joinedload(Booking.showtime).joinedload(Showtime.hall).joinedload(Hall.theater),
+            joinedload(Booking.booking_seats).joinedload(BookingSeat.seat),
+            joinedload(Booking.user)
+        )
+        .filter(Booking.booking_id == payment_in.booking_id)
+        .first()
+    )
     if not booking:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found.")
 
@@ -381,6 +589,7 @@ def process_payment(
 
     if booking.status == BookingStatus.CANCELLED:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot pay for a cancelled booking.")
+
     card_raw = (payment_in.card_number or "").replace(" ", "").replace("-", "")
     is_test_card = any(card_raw.startswith(prefix) for prefix in ["4242", "5555", "4000", "5105", "3782"])
     is_sandbox = payment_in.is_sandbox or is_test_card or "sandbox" in payment_in.payment_method.lower()
@@ -421,48 +630,113 @@ def process_payment(
     db.commit()
     db.refresh(payment)
     db.refresh(booking)
+
+    # Gather data for email/SMS notifications accurately from database entities
     showtime = booking.showtime
-    movie_title = showtime.movie.title if showtime and showtime.movie else "Avatar: The Way of Water"
-    theater_name = showtime.hall.theater.name if showtime and showtime.hall and showtime.hall.theater else "Scope Cinemas - Colombo City Centre"
-    hall_name = showtime.hall.hall_name if showtime and showtime.hall else "Screen 1 - Dolby Atmos"
-    start_time_str = showtime.start_time.strftime("%A, %b %d, %Y at %I:%M %p") if showtime and showtime.start_time else "Today at 7:30 PM"
+    movie_obj = showtime.movie if (showtime and showtime.movie) else None
+    if not movie_obj and showtime and showtime.movie_id:
+        movie_obj = db.query(Movie).filter(Movie.movie_id == showtime.movie_id).first()
 
-    seat_labels = [f"{bs.seat.row_label}{bs.seat.seat_number}" for bs in booking.booking_seats if bs.seat]
-    if not seat_labels:
-        seat_labels = ["D5", "D6"]
-    recipient_email = payment_in.customer_email
-    if not recipient_email and current_user:
-        recipient_email = current_user.email
-    if not recipient_email:
-        recipient_email = "yashodhamadushi03@gmail.com"
+    hall_obj = showtime.hall if (showtime and showtime.hall) else None
+    if not hall_obj and showtime and showtime.hall_id:
+        hall_obj = db.query(Hall).filter(Hall.hall_id == showtime.hall_id).first()
 
-    recipient_name = payment_in.customer_name or (current_user.name if current_user else "Valued Cinema Guest")
-    recipient_phone = payment_in.customer_phone or (current_user.phone if current_user else None)
-    try:
-        NotificationService.send_email_ticket(
-            user_email=recipient_email,
-            user_name=recipient_name,
-            movie_title=movie_title,
-            theater_name=theater_name,
-            hall_name=hall_name,
-            showtime_str=start_time_str,
-            seat_labels=seat_labels,
-            total_amount=float(booking.total_amount),
-            transaction_ref=txn_ref
-        )
-    except Exception as err:
-        print("Direct email dispatch warning:", err)
-    if recipient_phone:
-        try:
-            NotificationService.send_sms_ticket(
-                phone_number=recipient_phone,
+    theater_obj = hall_obj.theater if (hall_obj and hall_obj.theater) else None
+    if not theater_obj and hall_obj and hall_obj.theater_id:
+        theater_obj = db.query(Theater).filter(Theater.theater_id == hall_obj.theater_id).first()
+
+    movie_title = movie_obj.title if (movie_obj and movie_obj.title) else "Cinema Movie"
+    theater_name = theater_obj.name if (theater_obj and theater_obj.name) else "QuickShow Cinema"
+    hall_name = hall_obj.hall_name if (hall_obj and hall_obj.hall_name) else "Screen 1"
+
+    if showtime and showtime.start_time:
+        if isinstance(showtime.start_time, str):
+            try:
+                from datetime import datetime
+                dt = datetime.fromisoformat(showtime.start_time)
+                start_time_str = dt.strftime("%A, %b %d, %Y at %I:%M %p")
+            except Exception:
+                start_time_str = showtime.start_time
+        else:
+            start_time_str = showtime.start_time.strftime("%A, %b %d, %Y at %I:%M %p")
+    else:
+        start_time_str = get_local_now().strftime("%A, %b %d, %Y at %I:%M %p")
+
+    # Accurately resolve seat labels from booked seats
+    seat_labels = [
+        f"{bs.seat.row_label}{bs.seat.seat_number}"
+        for bs in booking.booking_seats
+        if bs.seat and bs.seat.row_label and bs.seat.seat_number
+    ]
+    if not seat_labels and booking.booking_seats:
+        seat_ids = [bs.seat_id for bs in booking.booking_seats]
+        seats = db.query(Seat).filter(Seat.seat_id.in_(seat_ids)).order_by(Seat.row_label, Seat.seat_number).all()
+        seat_labels = [f"{s.row_label}{s.seat_number}" for s in seats if s.row_label and s.seat_number]
+
+    recipient_email = (
+        payment_in.customer_email
+        or booking.customer_email
+        or (booking.user.email if booking.user else None)
+        or (current_user.email if current_user else None)
+    )
+    recipient_name = (
+        payment_in.customer_name
+        or booking.customer_name
+        or (booking.user.name if booking.user else None)
+        or (current_user.name if current_user else None)
+        or "Valued Customer"
+    )
+    recipient_phone = (
+        payment_in.customer_phone
+        or booking.customer_phone
+        or (booking.user.phone if booking.user else None)
+        or (current_user.phone if current_user else None)
+    )
+
+    # Check if email was already dispatched upon booking creation to prevent duplicate race conditions
+    already_dispatched = email_tracker.was_dispatched(booking.booking_id)
+
+    if not already_dispatched and recipient_email and "@" in recipient_email:
+        email_tracker.mark_dispatched(booking.booking_id)
+        total_float = float(booking.total_amount)
+
+        if background_tasks:
+            background_tasks.add_task(
+                NotificationService.send_email_ticket,
+                user_email=recipient_email,
+                user_name=recipient_name,
                 movie_title=movie_title,
+                theater_name=theater_name,
+                hall_name=hall_name,
                 showtime_str=start_time_str,
                 seat_labels=seat_labels,
+                total_amount=total_float,
                 transaction_ref=txn_ref
             )
-        except Exception as sms_err:
-            print("Direct SMS dispatch warning:", sms_err)
+            if recipient_phone:
+                background_tasks.add_task(
+                    NotificationService.send_sms_ticket,
+                    phone_number=recipient_phone,
+                    movie_title=movie_title,
+                    showtime_str=start_time_str,
+                    seat_labels=seat_labels,
+                    transaction_ref=txn_ref
+                )
+        else:
+            try:
+                NotificationService.send_email_ticket(
+                    user_email=recipient_email,
+                    user_name=recipient_name,
+                    movie_title=movie_title,
+                    theater_name=theater_name,
+                    hall_name=hall_name,
+                    showtime_str=start_time_str,
+                    seat_labels=seat_labels,
+                    total_amount=total_float,
+                    transaction_ref=txn_ref
+                )
+            except Exception as err:
+                logger.warning(f"Direct payment email dispatch warning: {err}")
 
     payment_out = PaymentOut.model_validate(payment)
     payment_out.is_sandbox = is_sandbox
@@ -473,16 +747,15 @@ def process_payment(
     )
     return payment_out
 
-from pydantic import BaseModel
-
 class DirectEmailRequest(BaseModel):
     customer_email: str
     customer_name: Optional[str] = "Valued Customer"
-    movie_title: Optional[str] = "Avatar: The Way of Water"
-    theater_name: Optional[str] = "Scope Cinemas - Colombo City Centre"
-    hall_name: Optional[str] = "Screen 1 - Dolby Atmos"
-    seats: Optional[List[str]] = ["D5", "D6"]
-    total: Optional[float] = 3000.0
+    movie_title: Optional[str] = "Cinema Movie"
+    theater_name: Optional[str] = "QuickShow Cinema"
+    hall_name: Optional[str] = "Screen 1"
+    showtime_str: Optional[str] = "Today at 7:30 PM"
+    seats: Optional[List[str]] = None
+    total: Optional[float] = 1500.0
     txn_ref: Optional[str] = None
 
 @router.post("/send-direct-email")
@@ -494,13 +767,12 @@ def send_direct_ticket_email(req: DirectEmailRequest):
     sent = NotificationService.send_email_ticket(
         user_email=req.customer_email,
         user_name=req.customer_name or "Valued Customer",
-        movie_title=req.movie_title or "Avatar: The Way of Water",
-        theater_name=req.theater_name or "Scope Cinemas - Colombo City Centre",
+        movie_title=req.movie_title or "Cinema Movie",
+        theater_name=req.theater_name or "QuickShow Cinema",
         hall_name=req.hall_name or "Screen 1",
-        showtime_str="Today at 7:30 PM",
-        seat_labels=req.seats or ["D5", "D6"],
-        total_amount=req.total or 3000.0,
+        showtime_str=req.showtime_str or "Today at 7:30 PM",
+        seat_labels=req.seats or [],
+        total_amount=req.total or 1500.0,
         transaction_ref=ref
     )
     return {"status": "success" if sent else "simulated", "email": req.customer_email, "ref": ref}
-
