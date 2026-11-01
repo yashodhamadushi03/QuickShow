@@ -242,15 +242,25 @@ const MyBookings = () => {
 
               const rawAmount = parseFloat(booking.total_amount || 0);
 
-              const formattedDate = booking.showtime?.start_time
-                ? new Date(booking.showtime.start_time).toLocaleString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : "Upcoming Screening";
+              let formattedDate = "Upcoming Screening";
+              if (booking.show_date && booking.show_time) {
+                try {
+                  const dParts = String(booking.show_date).split("-");
+                  const d = dParts.length === 3 ? new Date(dParts[0], dParts[1] - 1, dParts[2]) : new Date(booking.show_date);
+                  const dayName = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+                  formattedDate = `${dayName} at ${booking.show_time}`;
+                } catch {
+                  formattedDate = `${booking.show_date} at ${booking.show_time}`;
+                }
+              } else if (booking.showtime?.start_time) {
+                formattedDate = new Date(booking.showtime.start_time).toLocaleString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+              }
 
               return (
                 <div

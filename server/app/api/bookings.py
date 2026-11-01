@@ -8,6 +8,8 @@ import logging
 import threading
 import time
 from decimal import Decimal
+from datetime import datetime, timedelta
+import re
 from pydantic import BaseModel
 
 from app.core.database import get_db
@@ -24,6 +26,35 @@ from app.services.notification import NotificationService
 from app.core.timezone import get_local_now
 
 logger = logging.getLogger("quickshow.bookings")
+
+def parse_screening_datetime(date_str: Optional[str], time_str: Optional[str]) -> Optional[datetime]:
+    """Parse scheduled screening date and time into exact datetime object."""
+    if not date_str:
+        return None
+    date_clean = date_str.split("T")[0].strip()
+    hour = 19
+    minute = 15
+    if time_str:
+        t_clean = time_str.strip().upper()
+        m = re.search(r'(\d{1,2}):(\d{2})\s*(AM|PM)?', t_clean)
+        if m:
+            h = int(m.group(1))
+            mn = int(m.group(2))
+            meridiem = m.group(3)
+            if meridiem == "PM" and h < 12:
+                h += 12
+            elif meridiem == "AM" and h == 12:
+                h = 0
+            hour = h
+            minute = mn
+    try:
+        parts = [int(p) for p in date_clean.split("-")]
+        if len(parts) == 3:
+            return datetime(parts[0], parts[1], parts[2], hour, minute, 0)
+    except Exception:
+        pass
+    return None
+
 
 class EmailDispatchTracker:
     """Thread-safe tracker to prevent duplicate ticket email dispatches and asynchronous race conditions."""
@@ -98,6 +129,18 @@ def create_booking(
         db.add(user_obj)
         db.flush()
 
+    # 0. Parse scheduled screening datetime from request payload
+    scheduled_dt = None
+    if booking_in.start_time:
+        try:
+            dt_raw = booking_in.start_time.replace("T", " ").strip()
+            if len(dt_raw) >= 16:
+                scheduled_dt = datetime.fromisoformat(dt_raw)
+        except Exception:
+            pass
+    if not scheduled_dt and booking_in.show_date:
+        scheduled_dt = parse_screening_datetime(booking_in.show_date, booking_in.show_time)
+
     # 1. Resolve target movie, hall, and theater IDs explicitly
     target_movie_id = booking_in.movie_id
     target_hall_id = booking_in.hall_id
@@ -132,46 +175,59 @@ def create_booking(
         )
     )
 
-    if not (st and st_matches_movie and st_matches_hall and st_matches_theater):
-        # Look for existing showtime that correctly aligns with movie, hall, and theater
+    needs_alignment = not (st and st_matches_movie and st_matches_hall and st_matches_theater)
+    if needs_alignment:
+        if not target_movie_id:
+            mv = db.query(Movie).first()
+            target_movie_id = mv.movie_id if mv else 1
+        if not target_hall_id:
+            if target_theater_id:
+                hl = db.query(Hall).filter(Hall.theater_id == target_theater_id).first()
+                target_hall_id = hl.hall_id if hl else 1
+            else:
+                hl = db.query(Hall).first()
+                target_hall_id = hl.hall_id if hl else 1
+
+        # Look for existing showtime that correctly aligns with movie, hall, and scheduled time
         q = (
             db.query(Showtime)
             .options(
                 joinedload(Showtime.movie),
                 joinedload(Showtime.hall).joinedload(Hall.theater)
             )
+            .filter(
+                Showtime.movie_id == target_movie_id,
+                Showtime.hall_id == target_hall_id
+            )
         )
-        if target_movie_id:
-            q = q.filter(Showtime.movie_id == target_movie_id)
-        if target_hall_id:
-            q = q.filter(Showtime.hall_id == target_hall_id)
-        elif target_theater_id:
-            q = q.join(Hall, Showtime.hall_id == Hall.hall_id).filter(Hall.theater_id == target_theater_id)
+        if scheduled_dt:
+            matching_st = q.filter(Showtime.start_time == scheduled_dt).first()
+        else:
+            matching_st = q.order_by(Showtime.start_time.desc()).first()
 
-        matching_st = q.first()
         if matching_st:
             st = matching_st
         else:
-            # Create a matching showtime to guarantee foreign key integrity
-            if not target_movie_id:
-                mv = db.query(Movie).first()
-                target_movie_id = mv.movie_id if mv else 1
-            if not target_hall_id:
-                if target_theater_id:
-                    hl = db.query(Hall).filter(Hall.theater_id == target_theater_id).first()
-                    target_hall_id = hl.hall_id if hl else 1
-                else:
-                    hl = db.query(Hall).first()
-                    target_hall_id = hl.hall_id if hl else 1
+            if not scheduled_dt:
+                now = get_local_now()
+                scheduled_dt = datetime(now.year, now.month, now.day, 19, 15, 0)
+                if scheduled_dt < now:
+                    scheduled_dt += timedelta(days=1)
 
             st = Showtime(
                 movie_id=target_movie_id,
                 hall_id=target_hall_id,
-                start_time=get_local_now(),
-                end_time=get_local_now(),
+                start_time=scheduled_dt,
+                end_time=scheduled_dt + timedelta(hours=2, minutes=30),
                 base_price=Decimal("1500.00")
             )
             db.add(st)
+            db.flush()
+    elif scheduled_dt and st:
+        # If showtime start_time was previously set to creation time, align it to scheduled screening
+        if abs((st.start_time - get_local_now()).total_seconds()) < 180 and st.start_time != scheduled_dt:
+            st.start_time = scheduled_dt
+            st.end_time = scheduled_dt + timedelta(hours=2, minutes=30)
             db.flush()
 
     # Ensure movie, hall, and theater models are populated on st
@@ -310,6 +366,10 @@ def create_booking(
             cust_email = booking_in.customer_email or (user_obj.email if user_obj else "customer@quickshow.lk")
             cust_phone = booking_in.customer_phone or (user_obj.phone if user_obj else None)
 
+            v_code = f"QS-VERIFY-{uuid.uuid4().hex[:8].upper()}"
+            s_date = booking_in.show_date or (st.start_time.strftime("%Y-%m-%d") if st and st.start_time else None)
+            s_time = booking_in.show_time or (st.start_time.strftime("%I:%M %p") if st and st.start_time else None)
+
             booking = Booking(
                 user_id=user_obj.user_id,
                 showtime_id=st.showtime_id,
@@ -318,6 +378,9 @@ def create_booking(
                 customer_name=cust_name,
                 customer_email=cust_email,
                 customer_phone=cust_phone,
+                show_date=s_date,
+                show_time=s_time,
+                verification_code=v_code,
             )
             db.add(booking)
             db.flush()  # Generate booking_id
@@ -355,10 +418,15 @@ def create_booking(
         theater_name = fresh_st.hall.theater.name if (fresh_st and fresh_st.hall and fresh_st.hall.theater) else "QuickShow Cinema"
         hall_name = fresh_st.hall.hall_name if (fresh_st and fresh_st.hall) else "Screen 1"
 
-        if fresh_st and fresh_st.start_time:
+        if fresh_booking.show_date and fresh_booking.show_time:
+            dt = parse_screening_datetime(fresh_booking.show_date, fresh_booking.show_time)
+            if dt:
+                showtime_str = dt.strftime("%A, %b %d, %Y at %I:%M %p")
+            else:
+                showtime_str = f"{fresh_booking.show_date} at {fresh_booking.show_time}"
+        elif fresh_st and fresh_st.start_time:
             if isinstance(fresh_st.start_time, str):
                 try:
-                    from datetime import datetime
                     dt = datetime.fromisoformat(fresh_st.start_time)
                     showtime_str = dt.strftime("%A, %b %d, %Y at %I:%M %p")
                 except Exception:
@@ -366,7 +434,7 @@ def create_booking(
             else:
                 showtime_str = fresh_st.start_time.strftime("%A, %b %d, %Y at %I:%M %p")
         else:
-            showtime_str = get_local_now().strftime("%A, %b %d, %Y at %I:%M %p")
+            showtime_str = "Scheduled Screening" 
 
         seat_labels = [
             f"{bs.seat.row_label}{bs.seat.seat_number}"
@@ -395,7 +463,8 @@ def create_booking(
                     showtime_str=showtime_str,
                     seat_labels=seat_labels,
                     total_amount=total_float,
-                    transaction_ref=booking_ref
+                    transaction_ref=booking_ref,
+                    verification_code=fresh_booking.verification_code or booking_ref
                 )
                 if recipient_phone:
                     background_tasks.add_task(
@@ -404,7 +473,8 @@ def create_booking(
                         movie_title=movie_title,
                         showtime_str=showtime_str,
                         seat_labels=seat_labels,
-                        transaction_ref=booking_ref
+                        transaction_ref=booking_ref,
+                        verification_code=fresh_booking.verification_code or booking_ref
                     )
             else:
                 try:
@@ -417,7 +487,8 @@ def create_booking(
                         showtime_str=showtime_str,
                         seat_labels=seat_labels,
                         total_amount=total_float,
-                        transaction_ref=booking_ref
+                        transaction_ref=booking_ref,
+                        verification_code=fresh_booking.verification_code or booking_ref
                     )
                 except Exception as err:
                     logger.warning(f"Direct booking email dispatch warning: {err}")
@@ -696,7 +767,8 @@ def process_payment(
                     movie_title=movie_title,
                     showtime_str=start_time_str,
                     seat_labels=seat_labels,
-                    transaction_ref=txn_ref
+                    transaction_ref=txn_ref,
+                    verification_code=booking.verification_code or txn_ref
                 )
         else:
             try:
@@ -709,7 +781,8 @@ def process_payment(
                     showtime_str=start_time_str,
                     seat_labels=seat_labels,
                     total_amount=total_float,
-                    transaction_ref=txn_ref
+                    transaction_ref=txn_ref,
+                    verification_code=booking.verification_code or txn_ref
                 )
             except Exception as err:
                 logger.warning(f"Direct payment email dispatch warning: {err}")
@@ -733,6 +806,7 @@ class DirectEmailRequest(BaseModel):
     seats: Optional[List[str]] = None
     total: Optional[float] = 1500.0
     txn_ref: Optional[str] = None
+    verification_code: Optional[str] = None
 
 @router.post("/send-direct-email")
 def send_direct_ticket_email(req: DirectEmailRequest):
@@ -749,6 +823,7 @@ def send_direct_ticket_email(req: DirectEmailRequest):
         showtime_str=req.showtime_str or "Today at 7:30 PM",
         seat_labels=req.seats or [],
         total_amount=req.total or 1500.0,
-        transaction_ref=ref
+        transaction_ref=ref,
+        verification_code=req.verification_code or ref
     )
     return {"status": "success" if sent else "simulated", "email": req.customer_email, "ref": ref}

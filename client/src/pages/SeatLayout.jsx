@@ -472,6 +472,10 @@ const SeatLayout = () => {
     });
     const totalCalc = calculateTotal();
 
+    const activeShowDate = selectedDate || (showtime?.start_time ? showtime.start_time.split("T")[0] : new Date().toISOString().split("T")[0]);
+    const activeShowTime = selectedSlot?.time || selectedSlot?.displayTime || (showtime?.start_time ? new Date(showtime.start_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "07:15 PM");
+    const activeStartTime = activeShowDate && (selectedSlot?.time24 || selectedSlot?.time) ? `${activeShowDate} ${selectedSlot.time24 || selectedSlot.time}` : undefined;
+
     try {
       const token = localStorage.getItem("token") || "";
       const bookingRes = await fetch(`${API_BASE_URL}/bookings`, {
@@ -490,6 +494,9 @@ const SeatLayout = () => {
           theater_id: theaterId ? parseInt(theaterId) : (showtime?.hall?.theater?.theater_id || undefined),
           hall_id: hallId ? parseInt(hallId) : (showtime?.hall?.hall_id || undefined),
           movie_id: targetMovieId ? parseInt(targetMovieId) : (showtime?.movie?.movie_id || undefined),
+          show_date: activeShowDate,
+          show_time: activeShowTime,
+          start_time: activeStartTime,
         }),
       });
 
@@ -547,6 +554,10 @@ const SeatLayout = () => {
           phone: customerPhone,
           theater: activeTheaterName,
           hall: activeHallName,
+          movieTitle: activeMovieTitle,
+          showDate: activeShowDate,
+          showTime: activeShowTime,
+          verificationCode: bookingData.verification_code,
           isSandbox: paymentData.is_sandbox || isSandboxMode,
           paymentMethod: paymentData.payment_method,
         });
@@ -559,6 +570,9 @@ const SeatLayout = () => {
             customer_name: customerName || cardHolder || "Cinema Fan",
             status: "Confirmed",
             total_amount: String(totalCalc),
+            show_date: activeShowDate,
+            show_time: activeShowTime,
+            verification_code: bookingData.verification_code,
             created_at: new Date().toISOString(),
             showtime: {
               showtime_id: bookingData.showtime_id || showtime?.showtime_id,
@@ -575,7 +589,7 @@ const SeatLayout = () => {
                   name: activeTheaterName,
                 }
               },
-              start_time: bookingData.showtime?.start_time || showtime?.start_time || new Date().toISOString()
+              start_time: bookingData.showtime?.start_time || `${activeShowDate}T${selectedSlot?.time24 || "19:15"}:00`
             },
             booking_seats: (bookingData.booking_seats && bookingData.booking_seats.length > 0)
               ? bookingData.booking_seats
@@ -623,9 +637,11 @@ const SeatLayout = () => {
             movie_title: showtime?.movie?.title || passedMovie?.title || "Cinema Movie",
             theater_name: theaterName || showtime?.hall?.theater?.name || selectedSlot?.theater || "Scope Cinemas Multiplex",
             hall_name: showtime?.hall?.hall_name || selectedSlot?.hall || "Screen 1 - Dolby Atmos",
+            showtime_str: `${formatHeaderDate(activeShowDate)} at ${activeShowTime}`,
             seats: seatLabels,
             total: totalCalc,
             txn_ref: fallbackTxn,
+            verification_code: fallbackTxn,
           }),
         });
       } catch (emailErr) {
@@ -760,6 +776,14 @@ const SeatLayout = () => {
           </p>
 
           <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-left mb-6 space-y-3">
+            <div className="flex justify-between text-sm sm:text-base">
+              <span className="text-slate-400">Movie Title</span>
+              <span className="font-extrabold text-rose-400 text-right">{bookingConfirmation.movieTitle || showtime?.movie?.title || passedMovie?.title || "Cinema Movie"}</span>
+            </div>
+            <div className="flex justify-between text-sm sm:text-base">
+              <span className="text-slate-400">Movie Showtime</span>
+              <span className="font-bold text-white text-right">{formatHeaderDate(bookingConfirmation.showDate || selectedDate)} at {bookingConfirmation.showTime || selectedSlot?.time || "07:15 PM"}</span>
+            </div>
             <div className="flex justify-between text-sm sm:text-base">
               <span className="text-slate-400">Cinema Location</span>
               <span className="font-bold text-white text-right">{bookingConfirmation.theater || theaterName || showtime?.hall?.theater?.name || "Scope Cinemas Multiplex"}</span>

@@ -18,6 +18,9 @@ class BookingCreate(BaseModel):
     theater_id: Optional[int] = None
     hall_id: Optional[int] = None
     movie_id: Optional[int] = None
+    show_date: Optional[str] = None
+    show_time: Optional[str] = None
+    start_time: Optional[str] = None
 
 
 
@@ -40,6 +43,9 @@ class BookingOut(BaseModel):
     customer_name: Optional[str] = None
     customer_email: Optional[str] = None
     customer_phone: Optional[str] = None
+    show_date: Optional[str] = None
+    show_time: Optional[str] = None
+    verification_code: Optional[str] = None
     created_at: datetime
     showtime: Optional[ShowtimeOut] = None
     booking_seats: List[BookingSeatOut] = []
